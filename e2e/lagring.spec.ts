@@ -86,6 +86,9 @@ test('PDF får én side i skiltets størrelse', async ({ page }) => {
   const pdf = await page.pdf({ preferCSSPageSize: true, printBackground: true });
   const tekst = pdf.toString('latin1');
   expect(tekst.match(/\/Type\s*\/Page\b/g)).toHaveLength(1);
+  // Fontene skal bygges inn – ikke byttes ut med Times (skjer med variable fonter)
+  expect(tekst).toMatch(/SourceSerif4/);
+  expect(tekst).not.toMatch(/TimesNewRoman/);
   const [, b, h] = /\/MediaBox\s*\[\s*0 0 ([\d.]+) ([\d.]+)\s*\]/.exec(tekst)!;
   // 841 × 594 mm i punkter (1 pt = 1/72 tomme)
   expect(Number(b)).toBeCloseTo((841 / 25.4) * 72, 0);
