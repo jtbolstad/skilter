@@ -3,12 +3,15 @@ import { FORMATER, type Formatnavn } from '../modell/oppsett';
 import type { Kart, Skilt } from '../modell/typer';
 import { useSkilt } from '../store';
 import { CardEgenskaper } from './CardPanel';
+import { KartlagSeksjoner, RuteEgenskaper, StedsnavnEgenskaper, Stilprove } from './RutePanel';
 import { DpiVarsel, Felt, input, knapp, Seksjon } from './Skjema';
 import { useForhandsvisning } from './useForhandsvisning';
 
 export function Sidepanel({ skilt }: { skilt: Skilt }) {
   const valg = useSkilt((t) => t.valg);
   const card = valg.type === 'card' ? skilt.cards.find((c) => c.id === valg.id) : undefined;
+  const rute = valg.type === 'rute' ? skilt.ruter.find((r) => r.id === valg.id) : undefined;
+  const sted = valg.type === 'stedsnavn' ? skilt.stedsnavn.find((s) => s.id === valg.id) : undefined;
 
   return (
     <aside className="flex w-80 shrink-0 flex-col gap-5 overflow-y-auto border-l border-stone-200 bg-white p-4 text-sm">
@@ -16,6 +19,8 @@ export function Sidepanel({ skilt }: { skilt: Skilt }) {
       {valg.type === 'skilt' && <SkiltEgenskaper skilt={skilt} />}
       {valg.type === 'kart' && <KartEgenskaper kart={skilt.kart} />}
       {card && <CardEgenskaper card={card} />}
+      {rute && <RuteEgenskaper key={rute.id} rute={rute} />}
+      {sted && <StedsnavnEgenskaper key={sted.id} sted={sted} />}
     </aside>
   );
 }
@@ -36,6 +41,16 @@ function Lagliste({ skilt }: { skilt: Skilt }) {
         <button className={rad(valg.type === 'kart')} onClick={() => velg({ type: 'kart' })}>
           🗺️ Kart
         </button>
+        {skilt.ruter.map((r) => (
+          <button
+            key={r.id}
+            className={`${rad(valg.type === 'rute' && valg.id === r.id)} pl-6`}
+            onClick={() => velg({ type: 'rute', id: r.id })}
+          >
+            <Stilprove stil={r.stil} bredde={24} />
+            <span className="truncate">{r.navn}</span>
+          </button>
+        ))}
         {skilt.cards.map((c) => (
           <button
             key={c.id}
@@ -230,6 +245,8 @@ function KartEgenskaper({ kart }: { kart: Kart }) {
           </button>
         )}
       </Seksjon>
+
+      <KartlagSeksjoner kart={kart} />
 
       <Seksjon tittel="Nordpil">
         <label className="flex items-center gap-2">

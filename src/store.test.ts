@@ -63,3 +63,48 @@ describe('store', () => {
     expect(s().modus.type).toBe('normal');
   });
 });
+
+describe('ruter og stedsnavn', () => {
+  beforeEach(lagProsjekt);
+
+  it('ny rute starter tegning, og tom rute fjernes når tegningen avsluttes', () => {
+    const id = s().nyRute(0);
+    expect(s().modus).toEqual({ type: 'tegn-rute', ruteId: id });
+    expect(s().skilt!.ruter[0]).toMatchObject({ navn: 'Pilegrimsleden', glattet: true });
+    s().leggTilRutepunkter(id, [punkt(0.1, 0.1)]);
+    s().avsluttTegning();
+    expect(s().skilt!.ruter).toEqual([]);
+    expect(s().modus.type).toBe('normal');
+  });
+
+  it('rute med nok punkter beholdes', () => {
+    const id = s().nyRute(1);
+    s().leggTilRutepunkter(id, [punkt(0.1, 0.1), punkt(0.2, 0.3)]);
+    s().velg({ type: 'kart' });
+    expect(s().skilt!.ruter).toHaveLength(1);
+    expect(s().modus.type).toBe('normal');
+  });
+
+  it('tom rute fjernes når noe annet velges', () => {
+    s().nyRute(0);
+    s().velg({ type: 'kart' });
+    expect(s().skilt!.ruter).toEqual([]);
+    expect(s().valg).toEqual({ type: 'kart' });
+  });
+
+  it('tegning fortsetter når samme rute velges', () => {
+    const id = s().nyRute(0);
+    s().velg({ type: 'rute', id });
+    expect(s().modus.type).toBe('tegn-rute');
+  });
+
+  it('stedsnavn opprettes, endres og slettes', () => {
+    const id = s().nyttStedsnavn(punkt(0.4, 0.4));
+    expect(s().valg).toEqual({ type: 'stedsnavn', id });
+    s().endreStedsnavn(id, { tekst: 'Tangen', kursiv: true });
+    expect(s().skilt!.stedsnavn[0]).toMatchObject({ tekst: 'Tangen', kursiv: true });
+    s().slettStedsnavn(id);
+    expect(s().skilt!.stedsnavn).toEqual([]);
+    expect(s().valg.type).toBe('kart');
+  });
+});

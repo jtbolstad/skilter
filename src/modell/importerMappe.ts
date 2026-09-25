@@ -74,8 +74,11 @@ export async function importerMappe(mappe: Prosjektmappe): Promise<Skilt> {
       visMalestokk: true,
       visNordpil: true,
       nordRotasjon: 0,
+      tegnforklaring: { vis: true, hjorne: 'so' },
     },
     punkter: [],
+    ruter: [],
+    stedsnavn: [],
     cards,
   };
 }

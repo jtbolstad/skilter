@@ -127,7 +127,19 @@ function Arbeidsflate() {
 
   useEffect(() => {
     const tast = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') useSkilt.getState().settModus({ type: 'normal' });
+      const s = useSkilt.getState();
+      const iSkjema = e.target instanceof HTMLElement && e.target.closest('input, textarea, select');
+      if (s.modus.type === 'tegn-rute') {
+        const ruteId = s.modus.ruteId;
+        if (e.key === 'Escape' || e.key === 'Enter') return s.avsluttTegning();
+        if (e.key === 'Backspace' && !iSkjema) {
+          e.preventDefault();
+          const rute = s.skilt?.ruter.find((r) => r.id === ruteId);
+          if (rute) s.settRutepunkter(ruteId, rute.punkter.slice(0, -1));
+          return;
+        }
+      }
+      if (e.key === 'Escape') s.settModus({ type: 'normal' });
     };
     window.addEventListener('keydown', tast);
     return () => window.removeEventListener('keydown', tast);

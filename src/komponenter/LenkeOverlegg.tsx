@@ -2,7 +2,8 @@ import { lenkesti } from '../geometri/card';
 import { bildepunktTilRamme, plasser } from '../geometri/utsnitt';
 import type { Skilt } from '../modell/typer';
 import { useSkilt } from '../store';
-import { kartEnhet, markorRadius } from './KartRamme';
+import { kartEnhet } from './KartLag';
+import { markorRadius } from './KartRamme';
 import { useForhandsvisning } from './useForhandsvisning';
 
 /** Linjer fra cards til kartpunktene deres, tegnet over hele skiltet. */
@@ -13,7 +14,7 @@ export function LenkeOverlegg({ skilt }: { skilt: Skilt }) {
   if (!kart.bilde || !f) return null;
 
   const p = plasser(kart.bilde, kart.ramme, { b: f.bredde, h: f.hoyde });
-  const tykkelse = 1.8 * kartEnhet(kart);
+  const tykkelse = 1.2 * kartEnhet(kart);
   const { bredde_mm: B, hoyde_mm: H } = skilt.format;
 
   return (

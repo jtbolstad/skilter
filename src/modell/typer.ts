@@ -33,6 +33,38 @@ export interface Kalibrering {
   meter: number;
 }
 
+export type Strektype = 'hel' | 'stiplet' | 'prikket' | 'vekslende' | 'dobbel';
+
+export interface Rutestil {
+  farge: string;
+  /** Bunnfarge ved «vekslende», midtlinje ved «dobbel» */
+  farge2?: string;
+  /** Linjebredde på skiltet i mm */
+  bredde: number;
+  strek: Strektype;
+}
+
+export interface Rute {
+  id: string;
+  navn: string;
+  punkter: Bildepunkt[];
+  glattet: boolean;
+  stil: Rutestil;
+  visITegnforklaring: boolean;
+}
+
+export interface Stedsnavn {
+  id: string;
+  tekst: string;
+  posisjon: Bildepunkt;
+  storrelse: 's' | 'm' | 'l';
+  kursiv: boolean;
+  farge: string;
+  rotasjon: number;
+}
+
+export type Hjorne = 'nv' | 'no' | 'sv' | 'so';
+
 export interface Kart {
   ramme: Rektangel;
   bilde?: Bildeutsnitt;
@@ -40,6 +72,7 @@ export interface Kart {
   visMalestokk: boolean;
   visNordpil: boolean;
   nordRotasjon: number;
+  tegnforklaring: { vis: boolean; hjorne: Hjorne };
 }
 
 export type Bildeaspekt = '3:2' | '16:9' | '4:3' | '1:1' | '3:4' | 'fri';
@@ -83,5 +116,7 @@ export interface Skilt {
   forfatter?: string;
   kart: Kart;
   punkter: Kartpunkt[];
+  ruter: Rute[];
+  stedsnavn: Stedsnavn[];
   cards: Card[];
 }

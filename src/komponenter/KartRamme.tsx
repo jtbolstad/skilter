@@ -5,19 +5,32 @@ import type { Card, Kart, Kartpunkt } from '../modell/typer';
 import { useSkilt } from '../store';
 import { Bildevisning } from './Bildevisning';
 import { Flyttbar } from './Flyttbar';
+import { kartEnhet, Ruter, Stedsnavnlag, Tegneflate, Tegnforklaring } from './KartLag';
 
-/** Kartets egen enhet: størrelser skalerer med kartrammen */
-export const kartEnhet = (kart: Kart) => Math.min(kart.ramme.b, kart.ramme.h) / 450;
-export const markorRadius = (kart: Kart) => 7 * kartEnhet(kart);
+export const markorRadius = (kart: Kart) => 4.5 * kartEnhet(kart);
 
 export function KartRamme({ kart }: { kart: Kart }) {
   const valgt = useSkilt((t) => t.valg.type === 'kart');
   const modus = useSkilt((t) => t.modus);
   const { velg, endreKart, settModus, plasserPunkt } = useSkilt.getState();
   const kalibrerer = modus.type === 'kalibrer';
-  const plasserer = modus.type === 'plasser-punkt';
+  const plasserer = modus.type === 'plasser-punkt' || modus.type === 'plasser-stedsnavn';
+  const tegner = modus.type === 'tegn-rute';
+  const sisteKlikk = useRef(0);
 
   const klikk = (p: Kartpunkt['posisjon']) => {
+    const naa = performance.now();
+    const dobbelklikk = naa - sisteKlikk.current < 350;
+    sisteKlikk.current = naa;
+    if (modus.type === 'tegn-rute') {
+      // Dobbelklikk avslutter; andre klikket i dobbelklikket blir ikke eget punkt
+      if (dobbelklikk) return useSkilt.getState().avsluttTegning();
+      return useSkilt.getState().leggTilRutepunkter(modus.ruteId, [p]);
+    }
+    if (modus.type === 'plasser-stedsnavn') {
+      useSkilt.getState().nyttStedsnavn(p);
+      return;
+    }
     if (modus.type === 'kalibrer' && modus.punkter.length < 2) {
       settModus({ ...modus, punkter: [...modus.punkter, p] });
     } else if (modus.type === 'plasser-punkt') {
@@ -44,9 +57,9 @@ export function KartRamme({ kart }: { kart: Kart }) {
           <Bildevisning
             utsnitt={kart.bilde}
             ramme={kart.ramme}
-            interaktiv={valgt || kalibrerer || plasserer}
+            interaktiv={valgt || kalibrerer || plasserer || tegner}
             onEndre={(bilde) => endreKart({ bilde })}
-            onKlikk={kalibrerer || plasserer ? klikk : undefined}
+            onKlikk={kalibrerer || plasserer || tegner ? klikk : undefined}
             overlegg={(p, bilde) => <KartOverlegg kart={kart} p={p} bilde={bilde} />}
           />
         ) : (
@@ -60,16 +73,23 @@ export function KartRamme({ kart }: { kart: Kart }) {
 function KartOverlegg({ kart, p, bilde }: { kart: Kart; p: Plassering; bilde: Storrelse }) {
   const skala = useSkilt((t) => t.visningsskala);
   const modus = useSkilt((t) => t.modus);
-  const u = kartEnhet(kart);
+  const u = kartEnhet(kart) * 0.7; // nordpil og målestokk
   const mm = (v: number) => v * u * skala;
 
   const kalibreringspunkter = modus.type === 'kalibrer' ? modus.punkter : [];
   const mpp = kart.kalibrering ? meterPerPiksel(kart.kalibrering, bilde) : 0;
   const stokk = lagMalestokk(mpp / p.skala, kart.ramme.b * 0.3);
 
+  const ruter = useSkilt((t) => t.skilt?.ruter);
+  const tegnerRute = modus.type === 'tegn-rute' ? ruter?.find((r) => r.id === modus.ruteId) : undefined;
+
   return (
     <>
+      <Ruter kart={kart} p={p} />
       <Markorer kart={kart} p={p} />
+      <Stedsnavnlag kart={kart} p={p} />
+      {tegnerRute && <Tegneflate kart={kart} p={p} rute={tegnerRute} />}
+      <Tegnforklaring kart={kart} />
       {kalibreringspunkter.map((pt, i) => {
         const { x, y } = bildepunktTilRamme(pt, p);
         return (
