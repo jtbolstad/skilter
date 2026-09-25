@@ -7,6 +7,8 @@ import { fileURLToPath } from 'node:url';
 import { devProsjekt } from './vite-prosjekt';
 
 export default defineConfig({
+  // GitHub Pages serverer appen under /skilter/; Tauri og dev bruker roten
+  base: process.env.VITE_BASE ?? '/',
   plugins: [react(), tailwindcss(), devProsjekt(fileURLToPath(new URL('..', import.meta.url)))],
   // Cache utenfor Dropbox: synkronisering låser mappa når Vite bytter den ut (EBUSY)
   cacheDir: path.join(tmpdir(), 'skilter-vite'),

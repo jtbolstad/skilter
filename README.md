@@ -6,10 +6,15 @@ Hauketo · Prinsdal».
 
 ![Ferdig skilt](docs/bilder/19-ferdig-skilt.jpg)
 
-## Last ned
+## Bruk eller last ned
+
+**[🌐 Åpne Skilter i nettleseren](https://jtbolstad.github.io/skilter/)** – virker i Chrome og Edge på
+Windows og Mac, uten installasjon.
 
 **[⬇ Last ned Skilter for Windows](https://github.com/jtbolstad/skilter/releases/latest/download/Skilter-x64-setup.exe)**
 (ca. 6 MB) · [Alle versjoner](https://github.com/jtbolstad/skilter/releases)
+
+På Mac: bruk nettversjonen i Chrome eller Edge. Safari kan ikke åpne mapper.
 
 Installeren er ikke signert, så Windows SmartScreen kan vise «Ukjent utgiver». Trykk **Mer info** og
 **Kjør likevel**. Trykk **🧪 Prøv demoprosjektet** på startsiden for å prøve appen uten egen mappe.
