@@ -29,13 +29,18 @@ pnpm dev
 Åpne http://localhost:5330 og velg prosjektmappa. I utvikling åpner `http://localhost:5330/?demo`
 mappa over `app/` uten mappevelger.
 
-| Kommando        | Hva                                        |
-| --------------- | ------------------------------------------ |
-| `pnpm dev`      | Utviklingsserver på port 5330              |
-| `pnpm test`     | Enhetstester (Vitest)                      |
-| `pnpm test:e2e` | E2E-tester (Playwright, installert Chrome) |
-| `pnpm lint`     | ESLint og Prettier                         |
-| `pnpm build`    | Typesjekk og produksjonsbygg til `dist/`   |
+| Kommando         | Hva                                        |
+| ---------------- | ------------------------------------------ |
+| `pnpm dev`       | Utviklingsserver på port 5330              |
+| `pnpm test`      | Enhetstester (Vitest)                      |
+| `pnpm test:e2e`  | E2E-tester (Playwright, installert Chrome) |
+| `pnpm lint`      | ESLint og Prettier                         |
+| `pnpm build`     | Typesjekk og produksjonsbygg til `dist/`   |
+| `pnpm app:dev`   | Skrivebordsapp (Tauri) mot dev-serveren    |
+| `pnpm app:build` | Windows-installer (Tauri/NSIS)             |
+
+Skrivebordsappen krever i tillegg [Rust](https://rustup.rs/) og MSVC Build Tools. Installeren
+havner i `src-tauri/target/release/bundle/nsis/`.
 
 ## Prosjektmappa
 
