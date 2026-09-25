@@ -65,6 +65,27 @@ export interface Stedsnavn {
 
 export type Hjorne = 'nv' | 'no' | 'sv' | 'so';
 
+/** Utstrekning (lengde-/breddegrader) for et kartbilde i Web Mercator. */
+export interface Georeferanse {
+  vest: number;
+  ost: number;
+  nord: number;
+  sor: number;
+}
+
+/** Nettkartstil: OpenFreeMap (vektor, OpenStreetMap-data) eller Kartverket (raster). */
+export type Osmstil = 'liberty' | 'bright' | 'positron' | 'kv-topo' | 'kv-graatone' | 'kv-raster';
+
+/** Innstillingene et nettkart ble laget med, så utsnittet kan åpnes og endres igjen. */
+export interface Osmutsnitt {
+  stil: Osmstil;
+  senter: [lng: number, lat: number];
+  /** Zoom i kartvelgeren, ved velgerbredden */
+  zoom: number;
+  velgerbredde: number;
+  tekstskala: number;
+}
+
 export interface Kart {
   ramme: Rektangel;
   bilde?: Bildeutsnitt;
@@ -73,6 +94,11 @@ export interface Kart {
   visNordpil: boolean;
   nordRotasjon: number;
   tegnforklaring: { vis: boolean; hjorne: Hjorne };
+  /** Satt når kartbildet er georeferert (f.eks. laget fra OpenStreetMap) */
+  geo?: Georeferanse;
+  osm?: Osmutsnitt;
+  /** Kildehenvisning som vises på kartet, f.eks. «© OpenStreetMap-bidragsytere» */
+  kildetekst?: string;
 }
 
 /** «bilde» = bildets egne proporsjoner, så ingenting beskjæres */

@@ -91,6 +91,15 @@ function KartOverlegg({ kart, p, bilde }: { kart: Kart; p: Plassering; bilde: St
       <Stedsnavnlag kart={kart} p={p} />
       {tegnerRute && <Tegneflate kart={kart} p={p} rute={tegnerRute} />}
       <Tegnforklaring kart={kart} />
+      {kart.kildetekst && (
+        <p
+          data-testid="kildetekst"
+          className="pointer-events-none absolute right-0 bottom-0 bg-white/75 text-stone-700"
+          style={{ fontSize: mm(4.2), padding: `0 ${mm(2)}px` }}
+        >
+          {kart.kildetekst}
+        </p>
+      )}
       {kalibreringspunkter.map((pt, i) => {
         const { x, y } = bildepunktTilRamme(pt, p);
         return (

@@ -193,3 +193,45 @@ describe('utseende', () => {
     expect(s().skilt!.dekor[0]!.ramme.b).toBeCloseTo(d * (420 / 841));
   });
 });
+
+describe('byttKartbilde', () => {
+  beforeEach(lagProsjekt);
+  const geoA = { vest: 10.79, ost: 10.83, nord: 59.85, sor: 59.82 };
+  const geoB = { vest: 10.77, ost: 10.85, nord: 59.86, sor: 59.81 };
+
+  it('georeferert kart får målestokk og nordpil rett nord', () => {
+    s().endreKart({ nordRotasjon: 12 });
+    const flyttet = s().byttKartbilde({ fil: 'kart/osm.png', geo: geoA, kildetekst: '© OpenStreetMap' });
+    const { kart } = s().skilt!;
+    expect(flyttet).toBe(false);
+    expect(kart.bilde?.fil).toBe('kart/osm.png');
+    expect(kart.kalibrering!.meter).toBeGreaterThan(2000);
+    expect(kart.nordRotasjon).toBe(0);
+    expect(kart.kildetekst).toBe('© OpenStreetMap');
+  });
+
+  it('nytt georeferert utsnitt flytter punkter, veier og stedsnavn til samme sted i terrenget', () => {
+    s().byttKartbilde({ fil: 'kart/a.png', geo: geoA });
+    s().plasserPunkt('card-1', punkt(0.2, 0.3));
+    const rute = s().nyRute(0);
+    s().leggTilRutepunkter(rute, [punkt(0.1, 0.1), punkt(0.9, 0.9)]);
+    s().nyttStedsnavn(punkt(0.5, 0.5));
+
+    expect(s().byttKartbilde({ fil: 'kart/b.png', geo: geoB })).toBe(true);
+    const sk = s().skilt!;
+    // Større utsnitt: alt rykker mot midten
+    expect(sk.punkter[0]!.posisjon.x).toBeGreaterThan(0.2);
+    expect(sk.ruter[0]!.punkter[0]!.x).toBeGreaterThan(0.1);
+    expect(sk.ruter[0]!.punkter[1]!.x).toBeLessThan(0.9);
+    expect(sk.stedsnavn[0]!.posisjon.x).toBeCloseTo(0.5, 1);
+  });
+
+  it('bytte til bilde uten georeferanse beholder posisjoner og fjerner målestokken', () => {
+    s().byttKartbilde({ fil: 'kart/a.png', geo: geoA });
+    s().plasserPunkt('card-1', punkt(0.2, 0.3));
+    expect(s().byttKartbilde({ fil: 'Kart.png' })).toBe(false);
+    expect(s().skilt!.punkter[0]!.posisjon).toEqual(punkt(0.2, 0.3));
+    expect(s().skilt!.kart.kalibrering).toBeUndefined();
+    expect(s().skilt!.kart.geo).toBeUndefined();
+  });
+});

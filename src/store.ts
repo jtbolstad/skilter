@@ -3,6 +3,7 @@ import { leggTilFil, ledigSti, type Filmappe } from './fil/mappetilgang';
 import { nyttUtsnitt } from './modell/importerMappe';
 import { angre, gjeldendeGest, gjorOm, registrer, tomHistorikk, type Historikk } from './modell/historikk';
 import { DEKORTYPER } from './geometri/dekor';
+import { flyttMellomKart, kalibreringFraGeo } from './geometri/geo';
 import { lagOppsett, type Oppsettmal } from './modell/oppsett';
 import { RUTEMALER } from './modell/rutestiler';
 import type { ParsetTekst } from './modell/tekstParser';
@@ -17,6 +18,8 @@ import type {
   Banner,
   Dekor,
   Dekortype,
+  Georeferanse,
+  Osmutsnitt,
   Skilt,
   Stedsnavn,
   Tema,
@@ -71,6 +74,11 @@ interface Tilstand {
   slettDekor(id: string): void;
   /** Trær øverst til venstre, bro øverst til høyre og gress langs bunnen, som i utkastet */
   leggTilUtkastDekor(): void;
+  /**
+   * Bytter kartbilde. Er både gammelt og nytt kart georeferert, flyttes punkter, veier og
+   * stedsnavn så de står på samme sted i terrenget. Returnerer om de ble flyttet.
+   */
+  byttKartbilde(nytt: { fil: string; geo?: Georeferanse; osm?: Osmutsnitt; kildetekst?: string }): boolean;
   velg(valg: Valg): void;
   settModus(modus: Modus): void;
   settVisningsskala(skala: number): void;
@@ -86,6 +94,8 @@ interface Tilstand {
   fjernLenke(cardId: string): void;
   /** Kopierer fila inn i cardets mappe og bruker den som bilde */
   leggTilBilde(cardId: string, fil: File): Promise<void>;
+  /** Lagrer en fil i prosjektmappa (f.eks. et nytt kartbilde) */
+  lagreFil(sti: string, fil: File): Promise<void>;
 
   /** Ny rute fra mal (indeks i RUTEMALER), starter tegning */
   nyRute(mal: number): string;
@@ -238,6 +248,10 @@ export const useSkilt = create<Tilstand>()((set, get) => {
         return { cards: nyeCards, punkter: s.punkter.filter((p) => p.id !== punktId || iBruk.has(p.id)) };
       }),
 
+    lagreFil: async (sti, fil) => {
+      const { mappe } = get();
+      if (mappe) set({ mappe: await leggTilFil(mappe, sti, fil) });
+    },
     leggTilBilde: async (cardId, fil) => {
       const { mappe, skilt } = get();
       const card = skilt?.cards.find((c) => c.id === cardId);
@@ -411,6 +425,33 @@ export const useSkilt = create<Tilstand>()((set, get) => {
           ],
         };
       }),
+
+    byttKartbilde: ({ fil, geo, osm, kildetekst }) => {
+      const sk = get().skilt;
+      if (!sk) return false;
+      const gammel = sk.kart.geo;
+      const flytt = gammel && geo ? (p: Bildepunkt) => flyttMellomKart(gammel, geo, p) : undefined;
+      const sammeFil = sk.kart.bilde?.fil === fil;
+      get().endreSkilt((s2) => ({
+        ...s2,
+        kart: {
+          ...s2.kart,
+          bilde: nyttUtsnitt(fil),
+          geo,
+          osm,
+          kildetekst,
+          // Nytt bilde uten georeferanse har ukjent målestokk
+          kalibrering: geo ? kalibreringFraGeo(geo) : sammeFil ? s2.kart.kalibrering : undefined,
+          nordRotasjon: geo ? 0 : s2.kart.nordRotasjon,
+        },
+        ...(flytt && {
+          punkter: s2.punkter.map((p) => ({ ...p, posisjon: flytt(p.posisjon) })),
+          ruter: s2.ruter.map((r) => ({ ...r, punkter: r.punkter.map(flytt) })),
+          stedsnavn: s2.stedsnavn.map((st) => ({ ...st, posisjon: flytt(st.posisjon) })),
+        }),
+      }));
+      return flytt !== undefined;
+    },
   };
 });
 

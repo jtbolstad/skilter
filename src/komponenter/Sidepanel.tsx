@@ -5,6 +5,7 @@ import { formaterAvstand, meterPerPiksel } from '../geometri/malestokk';
 import { FORMATER, type Formatnavn } from '../modell/oppsett';
 import type { Kart, Skilt } from '../modell/typer';
 import { useSkilt } from '../store';
+import { KartgrunnlagSeksjon } from '../kart/KartgrunnlagPanel';
 import { CardEgenskaper } from './CardPanel';
 import { BannerEgenskaper, DekorEgenskaper, TemaOgOppsett } from './UtseendePanel';
 import { KartlagSeksjoner, RuteEgenskaper, StedsnavnEgenskaper, Stilprove } from './RutePanel';
@@ -185,6 +186,8 @@ function KartEgenskaper({ kart }: { kart: Kart }) {
 
   return (
     <>
+      <KartgrunnlagSeksjon kart={kart} />
+
       <Seksjon tittel="Kartbilde">
         <p className="text-stone-600">
           {kart.bilde?.fil ?? 'Ingen'}
