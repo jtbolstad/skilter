@@ -30,6 +30,12 @@
 - [x] Delete sletter valgt card (kan angres)
 - [x] Knapp for nytt card (+ Nytt card i laglista)
 
+## Tastatur
+
+- [x] Piltaster flytter valgt ramme
+- [x] Shift + piltast gjør den større i pilens retning (Ctrl + Shift + piltast mindre)
+- [x] ? viser hurtigtastene
+
 ## Senere
 
 - [ ] Lage og veksle mellom flere skilt

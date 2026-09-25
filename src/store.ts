@@ -3,7 +3,8 @@ import { leggTilFil, ledigSti, type Filmappe } from './fil/mappetilgang';
 import { nyttUtsnitt } from './modell/importerMappe';
 import { angre, gjeldendeGest, gjorOm, registrer, tomHistorikk, type Historikk } from './modell/historikk';
 import { DEKORTYPER } from './geometri/dekor';
-import { festHeleRammen } from './geometri/rutenett';
+import { festHeleRammen, RUTENETT_MM } from './geometri/rutenett';
+import { type Pilhandling, pilRamme, type Retning } from './geometri/tastatur';
 import { flyttMellomKart, kalibreringFraGeo } from './geometri/geo';
 import { CARD_FARGER, lagOppsett, type Oppsettmal } from './modell/oppsett';
 import { RUTEMALER } from './modell/rutestiler';
@@ -63,6 +64,7 @@ interface Tilstand {
   tekstOverflyt: Record<string, boolean>;
   /** Rammer festes til rutenettet når de flyttes eller endrer størrelse */
   festTilRutenett: boolean;
+  visHurtigtaster: boolean;
 
   apneProsjekt(mappe: Filmappe, skilt: Skilt): void;
   angre(): void;
@@ -100,6 +102,12 @@ interface Tilstand {
   /** Sletter cardet og kartpunktet det lenker til */
   slettCard(id: string): void;
   settFestTilRutenett(fest: boolean): void;
+  settVisHurtigtaster(vis: boolean): void;
+  /**
+   * Flytter eller endrer størrelse på valgt card, banner, kart eller dekor med piltastene.
+   * Returnerer om noe var valgt som kan flyttes.
+   */
+  pilValgt(retning: Retning, handling: Pilhandling): boolean;
   /** Fester alle cards til rutenettet, så de står på linje */
   festCardsTilRutenett(): void;
   endreBilde(cardId: string, bilde: Bildeutsnitt): void;
@@ -159,6 +167,7 @@ export const useSkilt = create<Tilstand>()((set, get) => {
     visningsskala: 1,
     tekstOverflyt: {},
     festTilRutenett: false,
+    visHurtigtaster: false,
     prosjektId: 0,
     historikk: tomHistorikk(),
 
@@ -269,6 +278,25 @@ export const useSkilt = create<Tilstand>()((set, get) => {
       });
     },
     settFestTilRutenett: (festTilRutenett) => set({ festTilRutenett }),
+    settVisHurtigtaster: (visHurtigtaster) => set({ visHurtigtaster }),
+    pilValgt: (retning, handling) => {
+      const { skilt: sk, valg, modus, festTilRutenett } = get();
+      if (!sk || modus.type !== 'normal') return false;
+      const ny = (r: Rektangel) =>
+        pilRamme(r, retning, handling, { rute: festTilRutenett ? RUTENETT_MM : undefined, min: MIN_CARD_MM });
+      if (valg.type === 'card') {
+        const card = sk.cards.find((c) => c.id === valg.id);
+        if (!card) return false;
+        get().endreCard(card.id, { ramme: ny(card.ramme) });
+      } else if (valg.type === 'dekor') {
+        const dekor = sk.dekor.find((d) => d.id === valg.id);
+        if (!dekor) return false;
+        get().endreDekor(dekor.id, { ramme: ny(dekor.ramme) });
+      } else if (valg.type === 'banner') get().endreBanner({ ramme: ny(sk.banner.ramme) });
+      else if (valg.type === 'kart') get().endreKart({ ramme: ny(sk.kart.ramme) });
+      else return false;
+      return true;
+    },
     festCardsTilRutenett: () =>
       get().endreAlleCards((c) => ({ ramme: festHeleRammen(c.ramme, MIN_CARD_MM) })),
     endreBilde: (cardId, bilde) => get().endreCard(cardId, { bilde }),

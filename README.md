@@ -35,6 +35,8 @@ Installeren er ikke signert, så Windows SmartScreen kan vise «Ukjent utgiver»
   veier og stier (også fulgt langs stien med BRouter), tegnforklaring, stedsnavn, målestokk og nordpil.
 - **Utseende:** banner-stiler, tema, oppsettmaler og dekor (skog, steinbro, gress, kompass), samlet i
   en egen gruppe i laglista.
+- **Tastatur:** piltaster flytter valgt ramme, Shift + pil gjør den større, Delete sletter, og `?` viser
+  alle hurtigtastene.
 - **Lagres automatisk** til `skilt.json` i mappa, med angre og gjør om.
 - **Eksport:** PDF med vektortekst og innebygde fonter, eller PNG i 150/300 DPI.
 - **Demoprosjekt** med tekst, bilder og kart – prøv appen uten egen mappe.

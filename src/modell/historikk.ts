@@ -50,6 +50,8 @@ export function gjorOm<T>(
 
 let aktivGest = 0;
 let sisteTastemal: EventTarget | null = null;
+let sistePil = '';
+const MODIFIKATORER = new Set(['Shift', 'Control', 'Alt', 'Meta', 'AltGraph']);
 
 export const gjeldendeGest = () => aktivGest;
 export function nyGest(): void {
@@ -60,11 +62,17 @@ export function nyGest(): void {
 export function startGestsporing(): () => void {
   const trykk = () => {
     sisteTastemal = null;
+    sistePil = '';
     nyGest();
   };
   const tast = (e: KeyboardEvent) => {
-    if (e.target !== sisteTastemal) nyGest();
+    // Shift, Ctrl osv. alene er ikke en endring
+    if (MODIFIKATORER.has(e.key)) return;
+    // Piltaster: samme pil med samme modifikatorer holdt inne er én gest, ny kombinasjon er en ny
+    const pil = e.key.startsWith('Arrow') ? `${e.shiftKey}${e.ctrlKey}${e.altKey}${e.metaKey}${e.key}` : '';
+    if (e.target !== sisteTastemal || pil !== sistePil) nyGest();
     sisteTastemal = e.target;
+    sistePil = pil;
   };
   window.addEventListener('pointerdown', trykk, true);
   window.addEventListener('keydown', tast, true);

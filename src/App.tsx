@@ -11,6 +11,8 @@ import { EksportPanel } from './eksport/EksportPanel';
 import { apneProsjekt, glemDemo } from './fil/prosjekt';
 import { Lerret } from './komponenter/Lerret';
 import { Sidepanel } from './komponenter/Sidepanel';
+import { Hurtigtaster } from './komponenter/Hurtigtaster';
+import { PILTASTER } from './geometri/tastatur';
 import { useSkilt } from './store';
 
 export function App() {
@@ -102,6 +104,14 @@ function Verktoylinje({
           </button>
           <Rutenettknapp />
           <button
+            className={knapp}
+            onClick={() => useSkilt.getState().settVisHurtigtaster(true)}
+            title="Hurtigtaster (?)"
+            aria-label="Hurtigtaster"
+          >
+            ⌨
+          </button>
+          <button
             className="ml-3 rounded bg-emerald-700 px-3 py-1 text-white hover:bg-emerald-800"
             onClick={() => settVisEksport(!visEksport)}
           >
@@ -110,6 +120,7 @@ function Verktoylinje({
         </div>
       )}
       {harSkilt && visEksport && <EksportPanel onLukk={() => settVisEksport(false)} />}
+      <Hurtigtaster />
     </header>
   );
 }
@@ -163,12 +174,26 @@ function Arbeidsflate() {
         }
       }
       if (e.key === 'Escape') s.settModus({ type: 'normal' });
-      if ((e.key === 'Delete' || e.key === 'Backspace') && !iSkjema && s.slettValgt()) {
+      if (iSkjema) return;
+      if (e.key === '?') {
+        e.preventDefault();
+        return s.settVisHurtigtaster(!s.visHurtigtaster);
+      }
+      // Ingen endringer på skiltet bak mens hurtigtastvinduet er åpent
+      if (s.visHurtigtaster) return;
+      if ((e.key === 'Delete' || e.key === 'Backspace') && s.slettValgt()) {
         e.preventDefault();
         return;
       }
-      // Angre i tekstfelt håndteres av nettleseren
-      if (iSkjema || !(e.ctrlKey || e.metaKey)) return;
+      const retning = PILTASTER[e.key];
+      if (retning && !e.altKey && !e.metaKey) {
+        const handling = !e.shiftKey ? 'flytt' : e.ctrlKey ? 'mindre' : 'storre';
+        // Uten valgt ramme scroller pilene arbeidsflaten som vanlig
+        if (s.pilValgt(retning, handling)) e.preventDefault();
+        return;
+      }
+      // Angre i tekstfelt håndteres av nettleseren (skjemafelt er allerede sortert ut over)
+      if (!(e.ctrlKey || e.metaKey)) return;
       const bokstav = e.key.toLowerCase();
       if (bokstav === 'z' && !e.shiftKey) {
         e.preventDefault();

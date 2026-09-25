@@ -325,6 +325,14 @@ Håndtak, markeringer og varsler som «Tekst kuttet» kommer ikke med i eksporte
 | Enter                           | Avslutt tegning av vei                       |
 | Backspace (under tegning)       | Fjern siste punkt                            |
 | Shift + dra (under tegning)     | Tegn frihånd                                 |
+| Piltast                         | Flytt valgt kort, banner, kart eller dekor 1 mm (til neste rutelinje når rutenettet er på) |
+| Shift + piltast                 | Gjør valgt ramme større i pilens retning     |
+| Ctrl + Shift + piltast          | Gjør valgt ramme mindre fra den siden        |
+| Delete                          | Slett valgt kort, vei, stedsnavn eller dekor |
+| Alt + dra                       | Flytt fritt når rutenettet er på             |
+| ?                               | Vis alle hurtigtastene (også ⌨ i verktøylinja) |
+
+Holder du inne en piltast, blir hele flyttingen ett angresteg.
 
 ## 15. Vanlige spørsmål
 
