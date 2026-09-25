@@ -12,26 +12,43 @@ interface Props {
   /** Dra i innholdet flytter rammen. Ellers flyttes den bare med håndtaket øverst. */
   flyttMedInnhold: boolean;
   etikett?: string;
+  zIndeks?: number;
   children: ReactNode;
 }
 
 const MIN_MM = 20;
 
-export function Flyttbar({ ramme, valgt, onVelg, onEndre, flyttMedInnhold, etikett, children }: Props) {
+export function Flyttbar({
+  ramme,
+  valgt,
+  onVelg,
+  onEndre,
+  flyttMedInnhold,
+  etikett,
+  zIndeks,
+  children,
+}: Props) {
   const skala = useSkilt((t) => t.visningsskala);
-  const start = useRef<{ handtak: Handtak; x: number; y: number; ramme: Rektangel }>(undefined);
+  const start = useRef<{ handtak: Handtak; x: number; y: number; ramme: Rektangel; fanget: boolean }>(
+    undefined,
+  );
 
   const ned = (e: PointerEvent, handtak: Handtak) => {
     if (e.button !== 0) return;
     e.stopPropagation();
     onVelg();
-    (e.currentTarget as Element).setPointerCapture(e.pointerId);
-    start.current = { handtak, x: e.clientX, y: e.clientY, ramme };
+    start.current = { handtak, x: e.clientX, y: e.clientY, ramme, fanget: false };
   };
 
   const flytt = (e: PointerEvent) => {
     const s = start.current;
     if (!s) return;
+    // Fang pekeren først når den faktisk flyttes, ellers når ikke klikk/dobbelklikk fram til innholdet
+    if (!s.fanget) {
+      if (Math.hypot(e.clientX - s.x, e.clientY - s.y) < 3) return;
+      (e.currentTarget as Element).setPointerCapture(e.pointerId);
+      s.fanget = true;
+    }
     const dx = (e.clientX - s.x) / skala;
     const dy = (e.clientY - s.y) / skala;
     const r = { ...s.ramme };
@@ -59,7 +76,13 @@ export function Flyttbar({ ramme, valgt, onVelg, onEndre, flyttMedInnhold, etike
   return (
     <div
       className="absolute"
-      style={{ left: ramme.x * skala, top: ramme.y * skala, width: ramme.b * skala, height: ramme.h * skala }}
+      style={{
+        zIndex: zIndeks,
+        left: ramme.x * skala,
+        top: ramme.y * skala,
+        width: ramme.b * skala,
+        height: ramme.h * skala,
+      }}
       onPointerDown={(e) => (flyttMedInnhold ? ned(e, 'flytt') : (e.stopPropagation(), onVelg()))}
       {...(flyttMedInnhold ? hendelser : {})}
     >

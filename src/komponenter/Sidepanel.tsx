@@ -1,10 +1,9 @@
-import type { ReactNode } from 'react';
-import { effektivDpi, plasser } from '../geometri/utsnitt';
 import { formaterAvstand, meterPerPiksel } from '../geometri/malestokk';
 import { FORMATER, type Formatnavn } from '../modell/oppsett';
-import type { Bildeutsnitt, Card, Kart, Rektangel, Skilt } from '../modell/typer';
+import type { Kart, Skilt } from '../modell/typer';
 import { useSkilt } from '../store';
-import { bildeRammeForCard } from './CardVisning';
+import { CardEgenskaper } from './CardPanel';
+import { DpiVarsel, Felt, input, knapp, Seksjon } from './Skjema';
 import { useForhandsvisning } from './useForhandsvisning';
 
 export function Sidepanel({ skilt }: { skilt: Skilt }) {
@@ -21,30 +20,10 @@ export function Sidepanel({ skilt }: { skilt: Skilt }) {
   );
 }
 
-function Seksjon({ tittel, children }: { tittel: string; children: ReactNode }) {
-  return (
-    <section className="flex flex-col gap-2">
-      <h3 className="text-xs font-semibold tracking-wide text-stone-500 uppercase">{tittel}</h3>
-      {children}
-    </section>
-  );
-}
-
-function Felt({ etikett, children }: { etikett: string; children: ReactNode }) {
-  return (
-    <label className="flex flex-col gap-1">
-      <span className="text-stone-600">{etikett}</span>
-      {children}
-    </label>
-  );
-}
-
-const input = 'rounded border border-stone-300 px-2 py-1 focus:border-sky-500 focus:outline-none';
-const knapp = 'rounded border border-stone-300 px-2 py-1 hover:bg-stone-100 disabled:opacity-40';
-
 function Lagliste({ skilt }: { skilt: Skilt }) {
   const valg = useSkilt((t) => t.valg);
   const velg = useSkilt((t) => t.velg);
+  const overflyt = useSkilt((t) => t.tekstOverflyt);
   const rad = (aktiv: boolean) =>
     `flex w-full items-center gap-2 rounded px-2 py-1 text-left ${aktiv ? 'bg-sky-100 text-sky-900' : 'hover:bg-stone-100'}`;
 
@@ -67,7 +46,11 @@ function Lagliste({ skilt }: { skilt: Skilt }) {
             <span className="truncate">
               {c.nummer}. {c.tittel}
             </span>
-            {!c.bilde && <span title="Mangler bilde">⚠️</span>}
+            <span className="ml-auto flex gap-1 text-xs">
+              {!c.bilde && <span title="Mangler bilde">🖼️</span>}
+              {!c.lenke && <span title="Ikke koblet til kartet">📍</span>}
+              {overflyt[c.id] && <span title="Teksten får ikke plass">✂️</span>}
+            </span>
           </button>
         ))}
       </div>
@@ -322,50 +305,5 @@ function Kalibrering() {
         </button>
       </div>
     </form>
-  );
-}
-
-function CardEgenskaper({ card }: { card: Card }) {
-  const f = useForhandsvisning(card.bilde?.fil);
-  const bildeRamme = bildeRammeForCard(card);
-
-  return (
-    <Seksjon tittel={`Card ${card.nummer}`}>
-      <p className="font-semibold">{card.tittel}</p>
-      <p className="text-stone-600">
-        Mappe: {card.kildemappe ?? <span className="text-amber-700">ingen bildemappe</span>}
-      </p>
-      <p className="text-stone-600">Bilde: {card.bilde?.fil.split('/').at(-1) ?? '–'}</p>
-      {card.bilde && f && (
-        <DpiVarsel utsnitt={card.bilde} ramme={bildeRamme} bilde={{ b: f.bredde, h: f.hoyde }} />
-      )}
-      <p className="text-stone-500">
-        Dra for å flytte, dra i hjørnene for å endre størrelse. Redigering av tekst og bilde kommer i fase 2.
-      </p>
-    </Seksjon>
-  );
-}
-
-function DpiVarsel({
-  utsnitt,
-  ramme,
-  bilde,
-}: {
-  utsnitt: Bildeutsnitt;
-  ramme: Pick<Rektangel, 'b' | 'h'>;
-  bilde: { b: number; h: number };
-}) {
-  const dpi = Math.round(effektivDpi(plasser(utsnitt, ramme, bilde)));
-  const farge =
-    dpi < 120
-      ? 'bg-rose-100 text-rose-800'
-      : dpi < 200
-        ? 'bg-amber-100 text-amber-800'
-        : 'bg-emerald-100 text-emerald-800';
-  const tekst = dpi < 120 ? 'for lav for trykk' : dpi < 200 ? 'kan bli uskarpt' : 'bra';
-  return (
-    <p className={`rounded px-2 py-1 ${farge}`}>
-      Effektiv oppløsning: <b>{dpi} DPI</b> – {tekst}
-    </p>
   );
 }

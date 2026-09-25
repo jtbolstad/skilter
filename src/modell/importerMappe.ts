@@ -53,7 +53,10 @@ export async function importerMappe(mappe: Prosjektmappe): Promise<Skilt> {
       tittel: s.tittel,
       tekst: s.tekst,
       bilde: forsteBilde ? nyttUtsnitt(forsteBilde) : undefined,
+      layout: 'bilde-over',
       bildeAndel: 0.45,
+      bildeAspekt: 'fri',
+      tekststorrelse: 1,
       kildemappe,
       farge: CARD_FARGER[i % CARD_FARGER.length]!,
     };
@@ -72,6 +75,7 @@ export async function importerMappe(mappe: Prosjektmappe): Promise<Skilt> {
       visNordpil: true,
       nordRotasjon: 0,
     },
+    punkter: [],
     cards,
   };
 }

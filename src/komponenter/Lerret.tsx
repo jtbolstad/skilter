@@ -2,6 +2,7 @@ import type { Skilt } from '../modell/typer';
 import { useSkilt } from '../store';
 import { CardVisning } from './CardVisning';
 import { KartRamme } from './KartRamme';
+import { LenkeOverlegg } from './LenkeOverlegg';
 
 export function Lerret({ skilt }: { skilt: Skilt }) {
   const skala = useSkilt((t) => t.visningsskala);
@@ -45,6 +46,7 @@ export function Lerret({ skilt }: { skilt: Skilt }) {
       {skilt.cards.map((c) => (
         <CardVisning key={c.id} card={c} />
       ))}
+      <LenkeOverlegg skilt={skilt} />
 
       {skilt.forfatter && (
         <p

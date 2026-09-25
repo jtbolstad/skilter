@@ -21,12 +21,23 @@ interface Props {
   onKlikk?(punkt: Bildepunkt): void;
   /** Overlegg tegnet i rammens mm-koordinater */
   overlegg?(p: Plassering, bilde: Storrelse): ReactNode;
+  /** Vis delen av bildet som er utenfor ramma, halvgjennomsiktig (beskjæringsmodus) */
+  visUtenfor?: boolean;
   className?: string;
 }
 
 const KLIKK_TOLERANSE_PX = 4;
 
-export function Bildevisning({ utsnitt, ramme, interaktiv, onEndre, onKlikk, overlegg, className }: Props) {
+export function Bildevisning({
+  utsnitt,
+  ramme,
+  interaktiv,
+  onEndre,
+  onKlikk,
+  overlegg,
+  visUtenfor,
+  className,
+}: Props) {
   const skala = useSkilt((t) => t.visningsskala);
   const f = useForhandsvisning(utsnitt.fil);
   const flate = useRef<HTMLDivElement>(null);
@@ -68,11 +79,33 @@ export function Bildevisning({ utsnitt, ramme, interaktiv, onEndre, onKlikk, ove
   }
 
   const p = plasser(utsnitt, ramme, bilde);
+  const lag = (ekstra: string) => (
+    <div
+      className={`absolute ${ekstra}`}
+      style={{
+        left: p.venstre * skala,
+        top: p.topp * skala,
+        width: p.bredde * skala,
+        height: p.hoyde * skala,
+        // Roter rundt rammens sentrum
+        transformOrigin: `${(ramme.b / 2 - p.venstre) * skala}px ${(ramme.h / 2 - p.topp) * skala}px`,
+        rotate: `${p.rotasjon}deg`,
+      }}
+    >
+      <img
+        src={f.url}
+        alt=""
+        draggable={false}
+        className="size-full max-w-none select-none"
+        style={{ scale: p.speilvendt ? '-1 1' : undefined }}
+      />
+    </div>
+  );
 
   return (
     <div
       ref={flate}
-      className={`relative size-full overflow-hidden ${interaktiv ? 'cursor-grab active:cursor-grabbing' : ''} ${className ?? ''}`}
+      className={`relative size-full ${interaktiv ? 'cursor-grab active:cursor-grabbing' : ''} ${className ?? ''}`}
       onPointerDown={(e) => {
         if (!interaktiv || e.button !== 0) return;
         e.stopPropagation();
@@ -98,19 +131,14 @@ export function Bildevisning({ utsnitt, ramme, interaktiv, onEndre, onKlikk, ove
         onKlikk(rammeTilBildepunkt((e.clientX - r.left) / skala, (e.clientY - r.top) / skala, p));
       }}
     >
-      <img
-        src={f.url}
-        alt=""
-        draggable={false}
-        className="absolute max-w-none select-none"
-        style={{
-          left: p.venstre * skala,
-          top: p.topp * skala,
-          width: p.bredde * skala,
-          height: p.hoyde * skala,
-        }}
-      />
-      {overlegg?.(p, bilde)}
+      {visUtenfor && lag('pointer-events-none opacity-35')}
+      <div className="absolute inset-0 overflow-hidden">
+        {lag('')}
+        {overlegg?.(p, bilde)}
+      </div>
+      {visUtenfor && (
+        <div className="pointer-events-none absolute inset-0 outline-2 outline-white outline-dashed" />
+      )}
     </div>
   );
 }

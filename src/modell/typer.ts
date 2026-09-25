@@ -42,17 +42,32 @@ export interface Kart {
   nordRotasjon: number;
 }
 
+export type Bildeaspekt = '3:2' | '16:9' | '4:3' | '1:1' | '3:4' | 'fri';
+export type Cardlayout = 'bilde-over' | 'bilde-venstre';
+export type Lenkestil = 'rett' | 'knekt' | 'kurve';
+
+export interface Kartpunkt {
+  id: string;
+  posisjon: Bildepunkt;
+}
+
 export interface Card {
   id: string;
   nummer: number;
   ramme: Rektangel;
   tittel: string;
   bilde?: Bildeutsnitt;
-  /** Bildehøyde som andel av card-høyden */
+  layout: Cardlayout;
+  /** Bildets andel av cardet: høyde ved «bilde-over», bredde ved «bilde-venstre». Brukes når aspekt er «fri». */
   bildeAndel: number;
+  bildeAspekt: Bildeaspekt;
   kildemappe?: string;
+  /** Enkel markering: *kursiv* og **fet**. Tom linje skiller avsnitt. */
   tekst: string;
+  /** Skalering av tittel og brødtekst */
+  tekststorrelse: number;
   farge: string;
+  lenke?: { punktId: string; stil: Lenkestil };
 }
 
 export interface Format {
@@ -67,5 +82,6 @@ export interface Skilt {
   banner: { tittel: string; undertittel: string[]; farge: string };
   forfatter?: string;
   kart: Kart;
+  punkter: Kartpunkt[];
   cards: Card[];
 }

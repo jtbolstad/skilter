@@ -1,15 +1,31 @@
 import { formaterAvstand, lagMalestokk, meterPerPiksel } from '../geometri/malestokk';
-import { bildepunktTilRamme, type Plassering, type Storrelse } from '../geometri/utsnitt';
-import type { Kart } from '../modell/typer';
+import { useRef } from 'react';
+import { bildepunktTilRamme, rammeTilBildepunkt, type Plassering, type Storrelse } from '../geometri/utsnitt';
+import type { Card, Kart, Kartpunkt } from '../modell/typer';
 import { useSkilt } from '../store';
 import { Bildevisning } from './Bildevisning';
 import { Flyttbar } from './Flyttbar';
 
+/** Kartets egen enhet: størrelser skalerer med kartrammen */
+export const kartEnhet = (kart: Kart) => Math.min(kart.ramme.b, kart.ramme.h) / 450;
+export const markorRadius = (kart: Kart) => 7 * kartEnhet(kart);
+
 export function KartRamme({ kart }: { kart: Kart }) {
   const valgt = useSkilt((t) => t.valg.type === 'kart');
   const modus = useSkilt((t) => t.modus);
-  const { velg, endreKart, settModus } = useSkilt.getState();
+  const { velg, endreKart, settModus, plasserPunkt } = useSkilt.getState();
   const kalibrerer = modus.type === 'kalibrer';
+  const plasserer = modus.type === 'plasser-punkt';
+
+  const klikk = (p: Kartpunkt['posisjon']) => {
+    if (modus.type === 'kalibrer' && modus.punkter.length < 2) {
+      settModus({ ...modus, punkter: [...modus.punkter, p] });
+    } else if (modus.type === 'plasser-punkt') {
+      plasserPunkt(modus.cardId, p);
+      settModus({ type: 'normal' });
+      velg({ type: 'card', id: modus.cardId });
+    }
+  };
 
   return (
     <Flyttbar
@@ -20,18 +36,17 @@ export function KartRamme({ kart }: { kart: Kart }) {
       flyttMedInnhold={false}
       etikett="Kart"
     >
-      <div className={`size-full bg-stone-100 ${kalibrerer ? 'cursor-crosshair' : ''}`}>
+      <div
+        data-testid="kart"
+        className={`size-full bg-stone-100 ${kalibrerer || plasserer ? '[&_*]:cursor-crosshair' : ''}`}
+      >
         {kart.bilde ? (
           <Bildevisning
             utsnitt={kart.bilde}
             ramme={kart.ramme}
-            interaktiv={valgt}
+            interaktiv={valgt || kalibrerer || plasserer}
             onEndre={(bilde) => endreKart({ bilde })}
-            onKlikk={
-              kalibrerer && modus.punkter.length < 2
-                ? (p) => settModus({ ...modus, punkter: [...modus.punkter, p] })
-                : undefined
-            }
+            onKlikk={kalibrerer || plasserer ? klikk : undefined}
             overlegg={(p, bilde) => <KartOverlegg kart={kart} p={p} bilde={bilde} />}
           />
         ) : (
@@ -45,7 +60,7 @@ export function KartRamme({ kart }: { kart: Kart }) {
 function KartOverlegg({ kart, p, bilde }: { kart: Kart; p: Plassering; bilde: Storrelse }) {
   const skala = useSkilt((t) => t.visningsskala);
   const modus = useSkilt((t) => t.modus);
-  const u = Math.min(kart.ramme.b, kart.ramme.h) / 450; // størrelser relativt til kartrammen
+  const u = kartEnhet(kart);
   const mm = (v: number) => v * u * skala;
 
   const kalibreringspunkter = modus.type === 'kalibrer' ? modus.punkter : [];
@@ -54,6 +69,7 @@ function KartOverlegg({ kart, p, bilde }: { kart: Kart; p: Plassering; bilde: St
 
   return (
     <>
+      <Markorer kart={kart} p={p} />
       {kalibreringspunkter.map((pt, i) => {
         const { x, y } = bildepunktTilRamme(pt, p);
         return (
@@ -114,5 +130,82 @@ function Nordpil({ storrelse, rotasjon }: { storrelse: number; rotasjon: number 
       <path d="M15 16 L25 48 L15 40 Z" fill="currentColor" />
       <path d="M15 16 L5 48 L15 40 Z" fill="none" stroke="currentColor" strokeWidth="1.5" />
     </svg>
+  );
+}
+
+function Markorer({ kart, p }: { kart: Kart; p: Plassering }) {
+  const punkter = useSkilt((t) => t.skilt?.punkter ?? []);
+  const cards = useSkilt((t) => t.skilt?.cards ?? []);
+  const valgtCard = useSkilt((t) => (t.valg.type === 'card' ? t.valg.id : undefined));
+  return punkter.map((punkt) => {
+    const eiere = cards.filter((c) => c.lenke?.punktId === punkt.id);
+    return (
+      <Markor
+        key={punkt.id}
+        punkt={punkt}
+        kart={kart}
+        p={p}
+        eier={eiere[0]}
+        uthevet={eiere.some((c) => c.id === valgtCard)}
+      />
+    );
+  });
+}
+
+function Markor({
+  punkt,
+  kart,
+  p,
+  eier,
+  uthevet,
+}: {
+  punkt: Kartpunkt;
+  kart: Kart;
+  p: Plassering;
+  eier?: Card;
+  uthevet: boolean;
+}) {
+  const skala = useSkilt((t) => t.visningsskala);
+  const dra = useRef<{ rammeVenstre: number; rammeTopp: number }>(undefined);
+  const { x, y } = bildepunktTilRamme(punkt.posisjon, p);
+  const r = markorRadius(kart) * skala;
+  const farge = eier?.farge ?? '#444';
+
+  return (
+    <div
+      data-testid="markor"
+      title={eier ? `${eier.tittel} – dra for å flytte` : 'Dra for å flytte'}
+      className={`absolute -translate-1/2 cursor-grab rounded-full active:cursor-grabbing ${
+        uthevet ? 'ring-4 ring-sky-400' : ''
+      }`}
+      style={{
+        left: x * skala,
+        top: y * skala,
+        width: r * 2,
+        height: r * 2,
+        background: farge,
+        border: `${r * 0.3}px solid white`,
+        boxShadow: `0 0 0 ${Math.max(1, r * 0.12)}px #222, 0 1px 3px rgb(0 0 0 / .4)`,
+      }}
+      onPointerDown={(e) => {
+        if (e.button !== 0) return;
+        e.stopPropagation();
+        e.currentTarget.setPointerCapture(e.pointerId);
+        const flate = e.currentTarget.parentElement!.getBoundingClientRect();
+        dra.current = { rammeVenstre: flate.left, rammeTopp: flate.top };
+        if (eier) useSkilt.getState().velg({ type: 'card', id: eier.id });
+      }}
+      onPointerMove={(e) => {
+        const d = dra.current;
+        if (!d) return;
+        const pos = rammeTilBildepunkt(
+          (e.clientX - d.rammeVenstre) / skala,
+          (e.clientY - d.rammeTopp) / skala,
+          p,
+        );
+        useSkilt.getState().flyttPunkt(punkt.id, pos);
+      }}
+      onPointerUp={() => (dra.current = undefined)}
+    />
   );
 }

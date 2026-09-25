@@ -78,3 +78,34 @@ export async function lagDemomappe(): Promise<Filmappe> {
   };
   return { navn, filer, lesFil, lesTekst: async (sti) => (await lesFil(sti)).text() };
 }
+
+/**
+ * Legger en fil i prosjektmappa (undermappe opprettes ved behov) og returnerer oppdatert mappe.
+ * Demomappa har ingen skrivetilgang – der holdes fila bare i minnet.
+ */
+export async function leggTilFil(mappe: Filmappe, sti: string, fil: File): Promise<Filmappe> {
+  if (mappe.handle) {
+    const deler = sti.split('/');
+    let m = mappe.handle;
+    for (const del of deler.slice(0, -1)) m = await m.getDirectoryHandle(del, { create: true });
+    const skriver = await (await m.getFileHandle(deler.at(-1)!, { create: true })).createWritable();
+    await skriver.write(fil);
+    await skriver.close();
+  }
+  const forrigeLes = mappe.lesFil;
+  return {
+    ...mappe,
+    filer: [...new Set([...mappe.filer, sti])].sort((a, b) => a.localeCompare(b, 'nb')),
+    lesFil: mappe.handle ? mappe.lesFil : (s) => (s === sti ? Promise.resolve(fil) : forrigeLes(s)),
+  };
+}
+
+/** Ledig filnavn i mappa: «bilde.jpg», «bilde (2).jpg» … */
+export function ledigSti(filer: string[], mappe: string, navn: string): string {
+  const punkt = navn.lastIndexOf('.');
+  const stamme = punkt > 0 ? navn.slice(0, punkt) : navn;
+  const endelse = punkt > 0 ? navn.slice(punkt) : '';
+  let sti = `${mappe}/${navn}`;
+  for (let i = 2; filer.includes(sti); i++) sti = `${mappe}/${stamme} (${i})${endelse}`;
+  return sti;
+}
