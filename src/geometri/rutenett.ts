@@ -26,3 +26,15 @@ export function festRamme(r: Rektangel, handtak: Handtak, min = 0, rute = RUTENE
   } else h = Math.max(min, fest(y + h, rute) - y);
   return { x, y, b, h };
 }
+
+/** Fester alle fire kantene til rutenettet, så rammer som står nesten på linje kommer helt på linje. */
+export function festHeleRammen(r: Rektangel, min = 0, rute = RUTENETT_MM): Rektangel {
+  const x = fest(r.x, rute);
+  const y = fest(r.y, rute);
+  return {
+    x,
+    y,
+    b: Math.max(min, fest(r.x + r.b, rute) - x),
+    h: Math.max(min, fest(r.y + r.h, rute) - y),
+  };
+}

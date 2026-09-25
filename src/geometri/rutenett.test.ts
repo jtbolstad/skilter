@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { festRamme } from './rutenett';
+import { festHeleRammen, festRamme } from './rutenett';
 
 const r = { x: 12, y: 23, b: 101, h: 48 };
 
@@ -24,5 +24,19 @@ describe('festRamme', () => {
     const nv = festRamme({ x: 3, y: 3, b: 20, h: 20 }, 'nv', 20);
     expect(nv.b).toBe(20);
     expect(nv.x).toBe(3);
+  });
+});
+
+describe('festHeleRammen', () => {
+  it('fester alle kantene, så to rammer med nesten lik kant får samme kant', () => {
+    const a = festHeleRammen({ x: 12, y: 23, b: 101, h: 48 });
+    const b = festHeleRammen({ x: 11, y: 74, b: 103.5, h: 40 });
+    expect(a).toEqual({ x: 10, y: 25, b: 105, h: 45 });
+    expect(b.x).toBe(a.x);
+    expect(b.x + b.b).toBe(a.x + a.b);
+  });
+
+  it('holder minstestørrelsen', () => {
+    expect(festHeleRammen({ x: 1, y: 1, b: 2, h: 2 }, 20)).toEqual({ x: 0, y: 0, b: 20, h: 20 });
   });
 });

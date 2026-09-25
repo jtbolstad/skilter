@@ -10,7 +10,7 @@
 
 ## Autoplassering
 
-- [ ] Plasser Cards på grid
+- [x] Plasser Cards på grid (knapp under «Alle cards»)
 - [x] Tilpass bildene så teksten får plass (knapp under «Alle cards»)
 
 ## Annet
@@ -28,5 +28,5 @@
 
 ## Verktøy
 
-- [ ] TypeScript 7
-- [ ] Biome
+- [x] TypeScript 7
+- [x] Biome (erstatter ESLint og Prettier)

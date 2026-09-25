@@ -3,6 +3,7 @@ import { leggTilFil, ledigSti, type Filmappe } from './fil/mappetilgang';
 import { nyttUtsnitt } from './modell/importerMappe';
 import { angre, gjeldendeGest, gjorOm, registrer, tomHistorikk, type Historikk } from './modell/historikk';
 import { DEKORTYPER } from './geometri/dekor';
+import { festHeleRammen } from './geometri/rutenett';
 import { flyttMellomKart, kalibreringFraGeo } from './geometri/geo';
 import { lagOppsett, type Oppsettmal } from './modell/oppsett';
 import { RUTEMALER } from './modell/rutestiler';
@@ -95,6 +96,8 @@ interface Tilstand {
   /** Sletter valgt vei, stedsnavn eller dekor. Returnerer om noe ble slettet. */
   slettValgt(): boolean;
   settFestTilRutenett(fest: boolean): void;
+  /** Fester alle cards til rutenettet, så de står på linje */
+  festCardsTilRutenett(): void;
   endreBilde(cardId: string, bilde: Bildeutsnitt): void;
   endreFormat(bredde_mm: number, hoyde_mm: number): void;
   settOverflyt(cardId: string, overflyt: boolean): void;
@@ -119,6 +122,9 @@ interface Tilstand {
   endreStedsnavn(id: string, patch: Partial<Stedsnavn>): void;
   slettStedsnavn(id: string): void;
 }
+
+/** Minste card-størrelse, som når rammer dras (Flyttbar) */
+const MIN_CARD_MM = 20;
 
 /** Lys stein med mørke fuger, synlig mot papirbakgrunnen */
 const STEINFARGE = '#ddd3bf';
@@ -221,6 +227,8 @@ export const useSkilt = create<Tilstand>()((set, get) => {
       return true;
     },
     settFestTilRutenett: (festTilRutenett) => set({ festTilRutenett }),
+    festCardsTilRutenett: () =>
+      get().endreAlleCards((c) => ({ ramme: festHeleRammen(c.ramme, MIN_CARD_MM) })),
     endreBilde: (cardId, bilde) => get().endreCard(cardId, { bilde }),
     endreFormat: (bredde_mm, hoyde_mm) =>
       set((t) => {

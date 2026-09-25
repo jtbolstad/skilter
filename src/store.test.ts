@@ -217,6 +217,17 @@ describe('utseende', () => {
     expect(s().skilt!.cards).toHaveLength(2);
   });
 
+  it('festCardsTilRutenett fester alle kantene på alle cards', () => {
+    s().endreCard('card-1', { ramme: { x: 12, y: 23, b: 101, h: 48 } });
+    s().festCardsTilRutenett();
+    for (const c of s().skilt!.cards) {
+      for (const v of [c.ramme.x, c.ramme.y, c.ramme.x + c.ramme.b, c.ramme.y + c.ramme.h]) {
+        expect(v / 5).toBeCloseTo(Math.round(v / 5));
+      }
+    }
+    expect(s().skilt!.cards[0]!.ramme).toEqual({ x: 10, y: 25, b: 105, h: 45 });
+  });
+
   it('slettValgt gjør ingenting mens en vei tegnes', () => {
     s().nyRute(0);
     expect(s().slettValgt()).toBe(false);

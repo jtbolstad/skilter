@@ -165,6 +165,9 @@ function AlleCards({ skilt }: { skilt: Skilt }) {
         onEndre={tema1('lenkebredde')}
       />
       <Autojuster />
+      <button className={knapp} onClick={() => useSkilt.getState().festCardsTilRutenett()}>
+        # Plasser cards på rutenettet (5 mm)
+      </button>
       <Gruppe etikett="Linjestil til kartet">
         <div className="flex gap-2">
           {LENKESTILER.map((l) => (
