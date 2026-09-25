@@ -6,6 +6,14 @@ Hauketo · Prinsdal».
 
 ![Ferdig skilt](docs/bilder/19-ferdig-skilt.jpg)
 
+## Last ned
+
+**[⬇ Last ned Skilter for Windows](https://github.com/jtbolstad/skilter/releases/latest/download/Skilter-x64-setup.exe)**
+(ca. 6 MB) · [Alle versjoner](https://github.com/jtbolstad/skilter/releases)
+
+Installeren er ikke signert, så Windows SmartScreen kan vise «Ukjent utgiver». Trykk **Mer info** og
+**Kjør likevel**. Trykk **🧪 Prøv demoprosjektet** på startsiden for å prøve appen uten egen mappe.
+
 ## Funksjoner
 
 - **Leser prosjektmappa direkte:** kort lages fra `tekst.txt` og bildemappene (`1 Slora/`, …).
