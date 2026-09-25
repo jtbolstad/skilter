@@ -1,9 +1,13 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { strekLag } from '../geometri/rute';
 import { RUTEMALER } from '../modell/rutestiler';
-import type { Hjorne, Kart, Rute, Rutestil, Stedsnavn, Strektype } from '../modell/typer';
+import type { Hjorne, Kart, Rute, Ruteprofil, Rutestil, Stedsnavn, Strektype } from '../modell/typer';
+import { folgSti, RUTEPROFILER } from '../kart/ruting';
 import { useSkilt } from '../store';
 import { Felt, input, knapp, Seksjon } from './Skjema';
+
+// MapLibre og Terra Draw er store; lastes først når dialogen åpnes
+const RuteNettkart = lazy(() => import('../kart/RuteNettkart'));
 
 const valgKnapp = (aktiv: boolean) =>
   `flex-1 rounded border px-2 py-1 ${aktiv ? 'border-sky-500 bg-sky-50 text-sky-900' : 'border-stone-300 hover:bg-stone-100'}`;
@@ -202,6 +206,8 @@ export function RuteEgenskaper({ rute }: { rute: Rute }) {
         </label>
       </Seksjon>
 
+      <FolgStiSeksjon rute={rute} />
+
       <Seksjon tittel="Linjestil">
         <div className="flex items-center gap-2 rounded bg-stone-50 p-2">
           <Stilprove stil={rute.stil} bredde={120} />
@@ -340,6 +346,108 @@ export function StedsnavnEgenskaper({ sted }: { sted: Stedsnavn }) {
           Slett
         </button>
       </div>
+    </Seksjon>
+  );
+}
+
+function FolgStiSeksjon({ rute }: { rute: Rute }) {
+  const geo = useSkilt((t) => t.skilt?.kart.geo);
+  const { endreRute } = useSkilt.getState();
+  const [profil, settProfil] = useState<Ruteprofil>(rute.folgerSti ?? 'fots');
+  const [status, settStatus] = useState<{ type: 'klar' | 'ruter' | 'ok' | 'feil'; melding?: string }>({
+    type: 'klar',
+  });
+  const [nettkart, settNettkart] = useState(false);
+
+  if (!geo) {
+    return (
+      <Seksjon tittel="Følg sti">
+        <p className="text-stone-500">
+          Hent et nettkart (OpenStreetMap eller Kartverket) under Kart for å tegne på nettkart og la veien
+          følge stier.
+        </p>
+      </Seksjon>
+    );
+  }
+
+  const via = rute.via ?? rute.punkter;
+  const folg = async () => {
+    settStatus({ type: 'ruter' });
+    try {
+      const { punkter, feilet } = await folgSti(geo, via, profil);
+      endreRute(rute.id, { punkter, via, folgerSti: profil, glattet: false });
+      settStatus(
+        feilet.length
+          ? { type: 'feil', melding: `${feilet.length} strekning(er) fant ingen sti og ble rette linjer.` }
+          : { type: 'ok', melding: `Veien følger nå sti (${punkter.length} punkter).` },
+      );
+    } catch (e) {
+      settStatus({ type: 'feil', melding: e instanceof Error ? e.message : String(e) });
+    }
+  };
+
+  return (
+    <Seksjon tittel="Følg sti">
+      <p className="text-stone-500">
+        {rute.folgerSti
+          ? `Følger sti med ${via.length} via-punkter. Flytt dem i nettkartet for å rute på nytt.`
+          : 'Punktene du har satt blir via-punkter, og veien legges langs stier og veier mellom dem.'}
+      </p>
+      <select
+        className={input}
+        aria-label="Ruteprofil"
+        value={profil}
+        onChange={(e) => settProfil(e.target.value as Ruteprofil)}
+      >
+        {(Object.keys(RUTEPROFILER) as Ruteprofil[]).map((p) => (
+          <option key={p} value={p}>
+            {RUTEPROFILER[p].navn}
+          </option>
+        ))}
+      </select>
+      <div className="flex flex-wrap gap-2">
+        <button
+          className={knapp}
+          disabled={status.type === 'ruter' || via.length < 2}
+          onClick={() => void folg()}
+        >
+          {status.type === 'ruter' ? 'Ruter …' : '🥾 Følg sti'}
+        </button>
+        <button className={knapp} onClick={() => settNettkart(true)}>
+          🌍 Tegn på nettkart
+        </button>
+        {rute.folgerSti && (
+          <button
+            className={knapp}
+            onClick={() => {
+              endreRute(rute.id, { via: undefined, folgerSti: undefined });
+              settStatus({ type: 'klar' });
+            }}
+          >
+            Slipp sti
+          </button>
+        )}
+      </div>
+      {status.melding && (
+        <p
+          className={`rounded px-2 py-1 ${status.type === 'feil' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-50 text-emerald-900'}`}
+        >
+          {status.melding}
+        </p>
+      )}
+      <p className="text-xs text-stone-500">Ruting: BRouter · data © OpenStreetMap-bidragsytere</p>
+      {nettkart && (
+        <Suspense fallback={<p className="text-stone-500">Laster nettkartet …</p>}>
+          <RuteNettkart
+            rute={rute}
+            startprofil={profil}
+            onLukk={(m) => {
+              settNettkart(false);
+              if (m) settStatus({ type: 'ok', melding: m });
+            }}
+          />
+        </Suspense>
+      )}
     </Seksjon>
   );
 }

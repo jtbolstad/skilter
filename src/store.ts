@@ -446,7 +446,7 @@ export const useSkilt = create<Tilstand>()((set, get) => {
         },
         ...(flytt && {
           punkter: s2.punkter.map((p) => ({ ...p, posisjon: flytt(p.posisjon) })),
-          ruter: s2.ruter.map((r) => ({ ...r, punkter: r.punkter.map(flytt) })),
+          ruter: s2.ruter.map((r) => ({ ...r, punkter: r.punkter.map(flytt), via: r.via?.map(flytt) })),
           stedsnavn: s2.stedsnavn.map((st) => ({ ...st, posisjon: flytt(st.posisjon) })),
         }),
       }));

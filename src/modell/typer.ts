@@ -44,10 +44,16 @@ export interface Rutestil {
   strek: Strektype;
 }
 
+/** Ruteprofil for «følg sti» (BRouter). */
+export type Ruteprofil = 'fots' | 'sykkel' | 'bil';
+
 export interface Rute {
   id: string;
   navn: string;
   punkter: Bildepunkt[];
+  /** Punktene brukeren satte når ruta følger sti; `punkter` er da den rutede linja */
+  via?: Bildepunkt[];
+  folgerSti?: Ruteprofil;
   glattet: boolean;
   stil: Rutestil;
   visITegnforklaring: boolean;

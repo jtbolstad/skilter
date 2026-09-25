@@ -206,7 +206,7 @@ App
 
 ## 5. Faser
 
-**Status 2026-09-25:** Fase 0–5 ferdig. Tester: `pnpm test` (121 unit), `pnpm test:e2e` (21 E2E, Playwright med installert Chrome).
+**Status 2026-09-25:** Fase 0–5 ferdig, nettkart-modus fra fase 6 (6a–6d) ferdig. Tester: `pnpm test` (151 unit), `pnpm test:e2e` (22 E2E + 6 som krever miljøvariabler, Playwright med installert Chrome).
 Eksport: PDF via nettleserens utskrift (`@page` = skiltets størrelse, vektortekst, innebygde fonter); PNG via modern-screenshot med pHYs-DPI. PNG sperres over 150 MP (A0 @ 300 DPI) – bruk PDF der.
 Avvik fra plan: tekstmarkering er `*kursiv*` / `**fet**` i tekstfelt i stedet for TipTap. Rotasjon støttes fullt (90°-steg + ±10° finjustering) med garantert fylt ramme.
 Dev: `pnpm dev` → http://localhost:5330 (`?demo` laster prosjektmappa – mappa over `app/` – uten mappevelger).
@@ -250,9 +250,43 @@ Dev: `pnpm dev` → http://localhost:5330 (`?demo` laster prosjektmappa – mapp
 
 ### Fase 6 – Utvidelser (senere)
 
-- Nettkart-modus (MapLibre + Kartverket) med Terra Draw og snap-til-sti-ruting.
+- Nettkart-modus (MapLibre + Kartverket) med Terra Draw og snap-til-sti-ruting – se 6a–6d. ✓
 - Bildejustering (lysstyrke/kontrast/metning).
 - Stedsnavn-søk (Kartverket stedsnavn-API) for å plassere punkter.
+
+#### Nettkart-modus – design
+
+Bygger på OSM-kartvelgeren (`src/kart/`): nettkartet tegnes til et **georeferert kartbilde** (`kart.geo` = lng/lat-utstrekning i Web Mercator) i trykkoppløsning. Skiltet viser fortsatt et bilde, så eksport, lenkelinjer og punkter virker som før (WYSIWYG, ingen fliser ved eksport). Punkter, ruter og stedsnavn lagres fortsatt som bildekoordinater; `lngLatTilBildepunkt` / `bildepunktTilLngLat` oversetter når nettkart trengs. Datamodellen i § 3 (`kilde: 'nett'`) erstattes av dette.
+
+**6a – Kartverket-grunnkart (Opus: ~45 min)**
+
+- Nye kilder i kartvelgeren ved siden av OpenFreeMap: Kartverket `topo`, `topograatone`, `toporaster` (WMTS-raster, `cache.kartverket.no/v1/wmts/1.0.0/{lag}/default/webmercator/{z}/{y}/{x}.png`, ingen nøkkel, CC BY 4.0).
+- `Osmstil` → `Kartkilde` (`{ type: 'vektor' | 'raster' }`); gamle `osm.stil` i `skilt.json` leses som før.
+- Raster i trykkoppløsning: `tileSize = 256 / pixelRatio` så MapLibre henter fliser på høyere zoom i stedet for å skalere opp. Tak på zoom 18 (topo) → varsel om effektiv DPI hvis utsnittet er for detaljert.
+- Kildetekst «© Kartverket» settes automatisk.
+
+**6b – Rutetegning på nettkart med Terra Draw (Opus: ~1,5–2 t)**
+
+- «Tegn på nettkart» i rutepanelet (kun når `kart.geo` finnes): dialog med MapLibre på samme kilde og utsnitt som kartbildet, rammet inn som kartrammen.
+- `terra-draw` + `terra-draw-maplibre-gl-adapter`: `linestring`-modus for ny rute, `select`-modus for å dra/sette inn/slette noder. Eksisterende ruter, punkter og stedsnavn vises som referanselag.
+- «Bruk» konverterer lng/lat → bildepunkter og skriver til ruta (ett angre-steg).
+
+**6c – Snap til sti (Opus: ~1,5–2 t)**
+
+- Ruting via BRouter (`brouter.de/brouter?lonlats=…&profile=…&format=geojson`), ingen nøkkel. Profiler: «Til fots» (`hiking-mountain`), «Sykkel» (`trekking`), «Bil» (`car-fast`).
+- Nodene brukeren setter blir **via-punkter**; hvert segment rutes for seg, resultatet slås sammen og forenkles (`forenkle`, Douglas-Peucker) til et rimelig antall noder.
+- Modell: `Rute.via?: Bildepunkt[]` og `Rute.folgerSti?: Ruteprofil`. Drar man et via-punkt, rutes bare nabosegmentene på nytt. «Slipp sti» gjør ruta til vanlige noder igjen.
+- Også knapp «Følg sti» på eksisterende rute (bruker dagens noder som via-punkter), uten å åpne dialogen.
+- Feil/tidsavbrudd per segment → segmentet blir rett linje + varsel. Enkel cache (segment-nøkkel → geometri) så angre/gjør om ikke spør på nytt.
+
+**6d – Tester (Opus: ~45 min)**
+
+- Unit: kilde-URL-er, raster-tileSize ved pixelRatio, via-punkt ↔ segment-sammenslåing, forenkling, BRouter-GeoJSON-parsing, bildepunkt ↔ lng/lat rundtur.
+- E2E: Kartverket-fliser og BRouter mockes med `page.route`; tegn rute med tre klikk → følg sti → ruta får geometri fra mock og står på samme sted etter bytte av kartutsnitt.
+
+**Gjennomført:** `src/kart/osm.ts` (Kartverket-stiler, `kartstil`), `src/kart/ruting.ts` (BRouter, via-punkter, cache), `src/kart/RuteNettkart.tsx` (Terra Draw-dialog), «Følg sti»-seksjon i rutepanelet. `src/kart/maplibre.ts` setter MapLibres worker-URL via Vite (`?worker&url`); uten den feiler workeren når Vite pakker avhengigheter. Avvik: `Kartkilde`-omdøping droppet, `Osmstil` er utvidet med `kv-*` i stedet (bakoverkompatibelt).
+
+Estimat nettkart-modus: **ca. 4,5–6 t** agent-tid. Risiko: BRouters offentlige server har ingen oppetidsgaranti (kan byttes mot GraphHopper med nøkkel); Terra Draw-hendelser i React-dialog må ryddes ved lukking.
 
 Estimat MVP (fase 0–4), Claude Opus agent-tid: **ca. 6–9 timer**, fordelt på 4–6 økter (én per fase + fiksrunder). I tillegg kommer din tid til testing og tilbakemelding, ca. 2–4 timer. Til sammenligning: ca. 2–2,5 uker for én utvikler for hånd.
 
