@@ -90,6 +90,9 @@ test('tema, oppsettmal og dekor', async ({ page }) => {
   await page.getByRole('button', { name: 'Dekor som i utkastet' }).click();
   await expect(page.getByTestId('dekor')).toHaveCount(4);
   await liste(page)
+    .getByRole('button', { name: /Dekor \(4\)/ })
+    .click();
+  await liste(page)
     .getByRole('button', { name: /Steinbro 1/ })
     .click();
   await page.getByRole('button', { name: 'Speilvend' }).click();

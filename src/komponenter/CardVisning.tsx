@@ -27,13 +27,14 @@ export function CardVisning({ card }: { card: Card }) {
   const beskjaerer = useSkilt((t) => t.modus.type === 'beskjaer' && t.modus.cardId === card.id) && !eksport;
   const overflyt = useSkilt((t) => t.tekstOverflyt[card.id] ?? false) && !eksport;
   const skala = useSkala();
+  const tema = useSkilt((t) => t.skilt!.tema);
   const { velg, endreCard, endreBilde, settModus } = useSkilt.getState();
   const [slippMal, settSlippMal] = useState(false);
 
-  const m = cardMal(card);
+  const m = cardMal(card, tema);
   const px = (mm: number) => mm * skala;
   const aspekt = useNaturligAspekt(card);
-  const bildeRamme = bildeRammeForCard(card, aspekt);
+  const bildeRamme = bildeRammeForCard(card, aspekt, tema);
   const side = bildeTilSiden(card);
   const hoyre = card.layout === 'bilde-hoyre';
 
@@ -233,7 +234,8 @@ function Skillelinje({
     if (!s) return;
     e.stopPropagation();
     const delta = ((vannrett ? e.clientY : e.clientX) - s.pos) / skala;
-    useSkilt.getState().endreCard(card.id, dragSkillelinje(s.card, delta, aspekt));
+    const { endreCard, skilt } = useSkilt.getState();
+    endreCard(card.id, dragSkillelinje(s.card, delta, aspekt, skilt?.tema));
   };
 
   return (

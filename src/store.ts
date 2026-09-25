@@ -57,6 +57,8 @@ interface Tilstand {
   visningsskala: number;
   /** Cards der teksten ikke får plass */
   tekstOverflyt: Record<string, boolean>;
+  /** Rammer festes til rutenettet når de flyttes eller endrer størrelse */
+  festTilRutenett: boolean;
 
   apneProsjekt(mappe: Filmappe, skilt: Skilt): void;
   angre(): void;
@@ -85,6 +87,11 @@ interface Tilstand {
   endreSkilt(endring: (s: Skilt) => Skilt): void;
   endreKart(patch: Partial<Kart>): void;
   endreCard(id: string, patch: Partial<Card>): void;
+  /** Endrer alle cards, f.eks. tekststørrelse eller linjestil for hele skiltet */
+  endreAlleCards(endring: (c: Card) => Partial<Card>): void;
+  /** Sletter valgt vei, stedsnavn eller dekor. Returnerer om noe ble slettet. */
+  slettValgt(): boolean;
+  settFestTilRutenett(fest: boolean): void;
   endreBilde(cardId: string, bilde: Bildeutsnitt): void;
   endreFormat(bredde_mm: number, hoyde_mm: number): void;
   settOverflyt(cardId: string, overflyt: boolean): void;
@@ -138,6 +145,7 @@ export const useSkilt = create<Tilstand>()((set, get) => {
     modus: { type: 'normal' },
     visningsskala: 1,
     tekstOverflyt: {},
+    festTilRutenett: false,
     prosjektId: 0,
     historikk: tomHistorikk(),
 
@@ -198,6 +206,18 @@ export const useSkilt = create<Tilstand>()((set, get) => {
       set((t) => (t.skilt ? { skilt: { ...t.skilt, kart: { ...t.skilt.kart, ...patch } } } : {})),
     endreCard: (id, patch) =>
       endreCards((cards) => ({ cards: cards.map((c) => (c.id === id ? { ...c, ...patch } : c)) })),
+    endreAlleCards: (endring) =>
+      endreCards((cards) => ({ cards: cards.map((c) => ({ ...c, ...endring(c) })) })),
+    slettValgt: () => {
+      const { valg, modus } = get();
+      if (modus.type !== 'normal') return false;
+      if (valg.type === 'rute') get().slettRute(valg.id);
+      else if (valg.type === 'stedsnavn') get().slettStedsnavn(valg.id);
+      else if (valg.type === 'dekor') get().slettDekor(valg.id);
+      else return false;
+      return true;
+    },
+    settFestTilRutenett: (festTilRutenett) => set({ festTilRutenett }),
     endreBilde: (cardId, bilde) => get().endreCard(cardId, { bilde }),
     endreFormat: (bredde_mm, hoyde_mm) =>
       set((t) => {

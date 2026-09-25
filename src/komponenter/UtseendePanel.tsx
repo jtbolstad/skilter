@@ -1,7 +1,8 @@
 import { DEKORTYPER } from '../geometri/dekor';
 import { OPPSETTMALER } from '../modell/oppsett';
-import type { Banner, Bannerstil, Dekor, Skilt } from '../modell/typer';
+import type { Banner, Bannerstil, Dekor, Skilt, Tema } from '../modell/typer';
 import { useSkilt } from '../store';
+import { LENKESTILER } from './CardPanel';
 import { Felt, Gruppe, input, knapp, Seksjon } from './Skjema';
 
 const valgKnapp = (aktiv: boolean) =>
@@ -60,6 +61,8 @@ export function TemaOgOppsett({ skilt }: { skilt: Skilt }) {
         </Gruppe>
       </Seksjon>
 
+      <AlleCards skilt={skilt} />
+
       <Seksjon tittel="Oppsett">
         <p className="text-stone-500">
           Plasserer banner, kart og cards på nytt. Innholdet beholdes, og det kan angres.
@@ -87,6 +90,93 @@ export function TemaOgOppsett({ skilt }: { skilt: Skilt }) {
         </div>
       </Seksjon>
     </>
+  );
+}
+
+/** Glidebryter for en skalering, vist i prosent */
+function Prosent({
+  etikett,
+  verdi,
+  min,
+  maks,
+  onEndre,
+}: {
+  etikett: string;
+  verdi: number;
+  min: number;
+  maks: number;
+  onEndre(v: number): void;
+}) {
+  return (
+    <Felt etikett={`${etikett}: ${Math.round(verdi * 100)} %`}>
+      <input
+        type="range"
+        min={min}
+        max={maks}
+        step={0.05}
+        value={verdi}
+        onChange={(e) => onEndre(Number(e.target.value))}
+      />
+    </Felt>
+  );
+}
+
+/** Justeringer som gjelder alle cards og linjene til kartet på en gang. */
+function AlleCards({ skilt }: { skilt: Skilt }) {
+  const { endreTema, endreAlleCards } = useSkilt.getState();
+  const { cards, tema } = skilt;
+  const tekststorrelse = cards[0]?.tekststorrelse ?? 1;
+  const ulikTekst = cards.some((c) => c.tekststorrelse !== tekststorrelse);
+  const stiler = new Set(cards.flatMap((c) => (c.lenke ? [c.lenke.stil] : [])));
+  const felles = stiler.size === 1 ? [...stiler][0] : undefined;
+  const tema1 = (felt: keyof Pick<Tema, 'kantbredde' | 'hjorneradius' | 'lenkebredde'>) => (v: number) =>
+    endreTema({ [felt]: v });
+
+  return (
+    <Seksjon tittel="Alle cards">
+      <Prosent
+        etikett={`Tekststørrelse${ulikTekst ? ' (ulik i cards)' : ''}`}
+        verdi={tekststorrelse}
+        min={0.6}
+        maks={1.6}
+        onEndre={(v) => endreAlleCards(() => ({ tekststorrelse: v }))}
+      />
+      <Prosent
+        etikett="Rammetykkelse"
+        verdi={tema.kantbredde}
+        min={0}
+        maks={3}
+        onEndre={tema1('kantbredde')}
+      />
+      <Prosent
+        etikett="Hjørneradius"
+        verdi={tema.hjorneradius}
+        min={0}
+        maks={4}
+        onEndre={tema1('hjorneradius')}
+      />
+      <Prosent
+        etikett="Linjetykkelse til kartet"
+        verdi={tema.lenkebredde}
+        min={0.3}
+        maks={3}
+        onEndre={tema1('lenkebredde')}
+      />
+      <Gruppe etikett="Linjestil til kartet">
+        <div className="flex gap-2">
+          {LENKESTILER.map((l) => (
+            <button
+              key={l.verdi}
+              className={valgKnapp(felles === l.verdi)}
+              disabled={stiler.size === 0}
+              onClick={() => endreAlleCards((c) => (c.lenke ? { lenke: { ...c.lenke, stil: l.verdi } } : {}))}
+            >
+              {l.navn}
+            </button>
+          ))}
+        </div>
+      </Gruppe>
+    </Seksjon>
   );
 }
 

@@ -1,3 +1,4 @@
+import { RUTENETT_MM } from '../geometri/rutenett';
 import type { Skilt } from '../modell/typer';
 import { useSkilt } from '../store';
 import { BannerVisning } from './BannerVisning';
@@ -13,6 +14,7 @@ export function Lerret({ skilt }: { skilt: Skilt }) {
   const skala = useSkala();
   const eksport = useEksport();
   const velg = useSkilt((t) => t.velg);
+  const rutenett = useSkilt((t) => t.festTilRutenett) && !eksport;
   const { bredde_mm: B, hoyde_mm: H } = skilt.format;
   const u = Math.min(B, H) / 594;
   const px = (mm: number) => mm * u * skala;
@@ -39,6 +41,7 @@ export function Lerret({ skilt }: { skilt: Skilt }) {
         <CardVisning key={c.id} card={c} />
       ))}
       <LenkeOverlegg skilt={skilt} />
+      {rutenett && <Rutenett rute={RUTENETT_MM * skala} />}
 
       {skilt.forfatter && (
         <p
@@ -49,5 +52,22 @@ export function Lerret({ skilt }: { skilt: Skilt }) {
         </p>
       )}
     </div>
+  );
+}
+
+/** Rutenett over skiltet mens «fest til rutenett» er på. Hver tiende linje er tydeligere. */
+function Rutenett({ rute }: { rute: number }) {
+  const linje = (farge: string, avstand: number) =>
+    `repeating-linear-gradient(to right, ${farge} 0 1px, transparent 1px ${avstand}px),
+     repeating-linear-gradient(to bottom, ${farge} 0 1px, transparent 1px ${avstand}px)`;
+  return (
+    <div
+      data-kun-editor
+      data-testid="rutenett"
+      className="pointer-events-none absolute inset-0 z-40"
+      style={{
+        backgroundImage: `${linje('rgb(14 165 233 / .35)', rute * 10)}, ${linje('rgb(14 165 233 / .12)', rute)}`,
+      }}
+    />
   );
 }

@@ -37,6 +37,13 @@ function Lagliste({ skilt }: { skilt: Skilt }) {
   const valg = useSkilt((t) => t.valg);
   const velg = useSkilt((t) => t.velg);
   const overflyt = useSkilt((t) => t.tekstOverflyt);
+  const [visDekor, settVisDekor] = useState(false);
+  // Gruppa åpnes når en dekor velges på lerretet
+  const [forrigeValg, settForrigeValg] = useState(valg);
+  if (valg !== forrigeValg) {
+    settForrigeValg(valg);
+    if (valg.type === 'dekor') settVisDekor(true);
+  }
   const rad = (aktiv: boolean) =>
     `flex w-full items-center gap-2 rounded px-2 py-1 text-left ${aktiv ? 'bg-sky-100 text-sky-900' : 'hover:bg-stone-100'}`;
 
@@ -62,22 +69,30 @@ function Lagliste({ skilt }: { skilt: Skilt }) {
             <span className="truncate">{r.navn}</span>
           </button>
         ))}
-        {skilt.dekor.map((d, i) => (
-          <button
-            key={d.id}
-            className={rad(valg.type === 'dekor' && valg.id === d.id)}
-            onClick={() => velg({ type: 'dekor', id: d.id })}
-          >
-            <span
-              className="size-3 shrink-0 rounded-sm border border-stone-300"
-              style={{ background: d.farge }}
-            />
-            <span className="truncate text-stone-600">
-              {DEKORTYPER.find((t) => t.type === d.type)?.navn ?? d.type}{' '}
-              {skilt.dekor.filter((x, j) => x.type === d.type && j < i).length + 1}
-            </span>
+        {skilt.dekor.length > 0 && (
+          <button className={rad(false)} aria-expanded={visDekor} onClick={() => settVisDekor(!visDekor)}>
+            🌲 Dekor
+            <span className="text-stone-500">({skilt.dekor.length})</span>
+            <span className="ml-auto text-xs text-stone-500">{visDekor ? '▾' : '▸'}</span>
           </button>
-        ))}
+        )}
+        {visDekor &&
+          skilt.dekor.map((d, i) => (
+            <button
+              key={d.id}
+              className={`${rad(valg.type === 'dekor' && valg.id === d.id)} pl-6`}
+              onClick={() => velg({ type: 'dekor', id: d.id })}
+            >
+              <span
+                className="size-3 shrink-0 rounded-sm border border-stone-300"
+                style={{ background: d.farge }}
+              />
+              <span className="truncate text-stone-600">
+                {DEKORTYPER.find((t) => t.type === d.type)?.navn ?? d.type}{' '}
+                {skilt.dekor.filter((x, j) => x.type === d.type && j < i).length + 1}
+              </span>
+            </button>
+          ))}
         {skilt.cards.map((c) => (
           <button
             key={c.id}

@@ -174,9 +174,10 @@ function Bildekontroller({ card }: { card: Card }) {
   const { endreBilde, endreCard, settModus } = useSkilt.getState();
   const f = useForhandsvisning(card.bilde?.fil);
   const aspekt = useNaturligAspekt(card);
+  const tema = useSkilt((t) => t.skilt!.tema);
   if (!card.bilde) return null;
 
-  const ramme = bildeRammeForCard(card, aspekt);
+  const ramme = bildeRammeForCard(card, aspekt, tema);
   const bilde: Storrelse | undefined = f && { b: f.bredde, h: f.hoyde };
   const u = card.bilde;
   const beskjaerer = modus.type === 'beskjaer' && modus.cardId === card.id;
@@ -360,7 +361,7 @@ function Miniatyr({ sti, valgt, onVelg }: { sti: string; valgt: boolean; onVelg(
   );
 }
 
-const LENKESTILER: { verdi: Lenkestil; navn: string }[] = [
+export const LENKESTILER: { verdi: Lenkestil; navn: string }[] = [
   { verdi: 'knekt', navn: 'Knekt' },
   { verdi: 'rett', navn: 'Rett' },
   { verdi: 'kurve', navn: 'Kurve' },

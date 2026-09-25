@@ -83,6 +83,20 @@ describe('stående bilder', () => {
   });
 });
 
+describe('cardstil', () => {
+  it('tykkere ramme gir mindre indre flate, radius påvirker ikke', () => {
+    const standard = indreStorrelse(card());
+    const tykk = indreStorrelse(card(), { kantbredde: 2 });
+    expect(tykk.b).toBeCloseTo(standard.b - 2 * 1.6);
+    expect(indreStorrelse(card(), { hjorneradius: 0 })).toEqual(standard);
+  });
+
+  it('uten ramme brukes hele bredden minus polstring', () => {
+    const r = bildeRammeForCard(card(), undefined, { kantbredde: 0 });
+    expect(r.b).toBeCloseTo(235 - 2 * 5);
+  });
+});
+
 describe('dragSkillelinje', () => {
   it('øker andel og slår av fast aspekt', () => {
     expect(dragSkillelinje(card(), 15)).toEqual({ bildeAndel: 0.5, bildeAspekt: 'fri' });

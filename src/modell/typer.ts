@@ -176,6 +176,12 @@ export interface Dekor {
 export interface Tema {
   bakgrunn: string;
   font: 'serif' | 'sans';
+  /** Skalering av rammetykkelsen på alle cards (1 = standard, 0 = ingen ramme) */
+  kantbredde: number;
+  /** Skalering av hjørneradiusen på alle cards (0 = skarpe hjørner) */
+  hjorneradius: number;
+  /** Skalering av linjene fra cards til kartpunktene */
+  lenkebredde: number;
 }
 
 export interface Skilt {

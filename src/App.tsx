@@ -89,6 +89,7 @@ function Verktoylinje({
           <button className={knapp} onClick={() => window.dispatchEvent(new Event('skilter:tilpass'))}>
             Tilpass
           </button>
+          <Rutenettknapp />
           <button
             className="ml-3 rounded bg-emerald-700 px-3 py-1 text-white hover:bg-emerald-800"
             onClick={() => settVisEksport(!visEksport)}
@@ -151,6 +152,10 @@ function Arbeidsflate() {
         }
       }
       if (e.key === 'Escape') s.settModus({ type: 'normal' });
+      if ((e.key === 'Delete' || e.key === 'Backspace') && !iSkjema && s.slettValgt()) {
+        e.preventDefault();
+        return;
+      }
       // Angre i tekstfelt håndteres av nettleseren
       if (iSkjema || !(e.ctrlKey || e.metaKey)) return;
       const bokstav = e.key.toLowerCase();
@@ -260,5 +265,20 @@ function Lagringsstatus() {
     >
       {tekst}
     </span>
+  );
+}
+
+function Rutenettknapp() {
+  const fest = useSkilt((t) => t.festTilRutenett);
+  const settFest = useSkilt((t) => t.settFestTilRutenett);
+  return (
+    <button
+      className={`ml-2 rounded px-2 py-1 ${fest ? 'bg-sky-100 text-sky-900' : 'hover:bg-stone-100'}`}
+      aria-pressed={fest}
+      onClick={() => settFest(!fest)}
+      title="Fest rammer til rutenettet når de flyttes. Hold Alt for å flytte fritt."
+    >
+      # Rutenett
+    </button>
   );
 }

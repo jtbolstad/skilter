@@ -2,11 +2,11 @@
 
 ## Globale justeringer
 
-- [ ] Tekststørrelse
-- [ ] Linjetykkelse
-- [ ] Linjestil (knekt, rett, kurve)
-- [ ] Rammetykkelse på Cards
-- [ ] Border radius på Cards
+- [x] Tekststørrelse
+- [x] Linjetykkelse
+- [x] Linjestil (knekt, rett, kurve)
+- [x] Rammetykkelse på Cards
+- [x] Border radius på Cards
 
 ## Autoplassering
 
@@ -16,10 +16,10 @@
 ## Annet
 
 - [ ] Velge tekstfil (md?)
-- [ ] Snap-to-grid
-- [ ] Delete-tast sletter valgt objekt
+- [x] Snap-to-grid (# Rutenett i verktøylinja, Alt = fritt)
+- [x] Delete-tast sletter valgt vei, stedsnavn eller dekor (ikke cards)
 - [ ] Legg inn tekst og noen demobilder i appen
-- [ ] Vis dekorlag i en gruppe i sidemenyen
+- [x] Vis dekorlag i en gruppe i sidemenyen
 - [x] Nedlastbar app (Tauri, `pnpm app:build`)
 
 ## Verktøy

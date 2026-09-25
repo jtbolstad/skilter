@@ -184,6 +184,44 @@ describe('utseende', () => {
     }
   });
 
+  it('endreAlleCards endrer tekststørrelse og linjestil for alle cards', () => {
+    s().plasserPunkt('card-1', punkt(0.2, 0.3));
+    s().endreAlleCards((c) => ({
+      tekststorrelse: 1.3,
+      ...(c.lenke && { lenke: { ...c.lenke, stil: 'kurve' as const } }),
+    }));
+    const [a, b] = s().skilt!.cards;
+    expect([a!.tekststorrelse, b!.tekststorrelse]).toEqual([1.3, 1.3]);
+    expect(a!.lenke?.stil).toBe('kurve');
+    expect(b!.lenke).toBeUndefined();
+  });
+
+  it('slettValgt sletter valgt dekor, vei og stedsnavn, men ikke cards', () => {
+    const dekor = s().leggTilDekor('gress');
+    expect(s().slettValgt()).toBe(true);
+    expect(s().skilt!.dekor.find((d) => d.id === dekor)).toBeUndefined();
+
+    const sted = s().nyttStedsnavn(punkt(0.5, 0.5));
+    expect(s().slettValgt()).toBe(true);
+    expect(s().skilt!.stedsnavn.find((x) => x.id === sted)).toBeUndefined();
+
+    const rute = s().nyRute(0);
+    s().leggTilRutepunkter(rute, [punkt(0, 0), punkt(1, 1)]);
+    s().avsluttTegning();
+    s().velg({ type: 'rute', id: rute });
+    expect(s().slettValgt()).toBe(true);
+    expect(s().skilt!.ruter).toEqual([]);
+
+    s().velg({ type: 'card', id: 'card-1' });
+    expect(s().slettValgt()).toBe(false);
+    expect(s().skilt!.cards).toHaveLength(2);
+  });
+
+  it('slettValgt gjør ingenting mens en vei tegnes', () => {
+    s().nyRute(0);
+    expect(s().slettValgt()).toBe(false);
+  });
+
   it('formatbytte skalerer banner og dekor', () => {
     s().leggTilDekor('kompass');
     const b = s().skilt!.banner.ramme.b;

@@ -108,7 +108,13 @@ export function lagOppsett(
   };
 }
 
-export const STANDARD_TEMA: Tema = { bakgrunn: '#f4efe3', font: 'serif' };
+export const STANDARD_TEMA: Tema = {
+  bakgrunn: '#f4efe3',
+  font: 'serif',
+  kantbredde: 1,
+  hjorneradius: 1,
+  lenkebredde: 1,
+};
 
 /** Banner som i utkastet: mørkegrønt penselstrøk med lys tekst. */
 export function standardBanner(ramme: Rektangel, tittel: string): Banner {

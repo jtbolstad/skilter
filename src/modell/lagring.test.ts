@@ -31,7 +31,13 @@ describe('lagring', () => {
     expect(s.cards[0]).toMatchObject({ layout: 'bilde-over', tekststorrelse: 1, bildeAspekt: 'fri' });
     expect(s.format.dpi).toBe(150);
     expect(s.dekor).toEqual([]);
-    expect(s.tema).toEqual({ bakgrunn: '#f4efe3', font: 'serif' });
+    expect(s.tema).toEqual({
+      bakgrunn: '#f4efe3',
+      font: 'serif',
+      kantbredde: 1,
+      hjorneradius: 1,
+      lenkebredde: 1,
+    });
     expect(s.cards[0]!.tittelHelBredde).toBe(false);
   });
 

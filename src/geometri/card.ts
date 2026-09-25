@@ -1,4 +1,4 @@
-import type { Bildeaspekt, Card, Rektangel } from '../modell/typer';
+import type { Bildeaspekt, Card, Rektangel, Tema } from '../modell/typer';
 import type { Storrelse } from './utsnitt';
 
 export const ASPEKTER: Record<Exclude<Bildeaspekt, 'fri' | 'bilde'>, number> = {
@@ -14,16 +14,25 @@ const MIN_ANDEL = 0.1;
 const MAKS_ANDEL = 0.85;
 
 type Cardmal = Pick<Card, 'ramme' | 'tekststorrelse'>;
+/** Globale card-innstillinger fra temaet. Mangler de, brukes standardmålene. */
+export type Cardstil = Partial<Pick<Tema, 'kantbredde' | 'hjorneradius'>>;
 
 /** Card-mål i mm, relativt til cardets bredde slik at tekst skalerer med formatet. */
-export function cardMal(card: Cardmal) {
+export function cardMal(card: Cardmal, stil: Cardstil = {}) {
   const u = card.ramme.b / 235;
   const t = card.tekststorrelse;
-  return { kant: 1.6 * u, radius: 4 * u, pad: 5 * u, gap: 3 * u, tittel: 11 * u * t, tekst: 6 * u * t };
+  return {
+    kant: 1.6 * u * (stil.kantbredde ?? 1),
+    radius: 4 * u * (stil.hjorneradius ?? 1),
+    pad: 5 * u,
+    gap: 3 * u,
+    tittel: 11 * u * t,
+    tekst: 6 * u * t,
+  };
 }
 
-export function indreStorrelse(card: Cardmal): Storrelse {
-  const m = cardMal(card);
+export function indreStorrelse(card: Cardmal, stil: Cardstil = {}): Storrelse {
+  const m = cardMal(card, stil);
   return { b: card.ramme.b - 2 * (m.pad + m.kant), h: card.ramme.h - 2 * (m.pad + m.kant) };
 }
 
@@ -40,8 +49,8 @@ export function tittelHoyde(card: Cardmal): number {
  * Størrelsen på bilderamma i cardet (mm).
  * @param naturligAspekt bildets bredde/høyde – brukes når formatet er «som bildet»
  */
-export function bildeRammeForCard(card: Card, naturligAspekt?: number): Storrelse {
-  const indre = indreStorrelse(card);
+export function bildeRammeForCard(card: Card, naturligAspekt?: number, stil: Cardstil = {}): Storrelse {
+  const indre = indreStorrelse(card, stil);
   const aspekt =
     card.bildeAspekt === 'fri'
       ? undefined
@@ -69,13 +78,14 @@ export function dragSkillelinje(
   card: Card,
   delta: number,
   naturligAspekt?: number,
+  stil: Cardstil = {},
 ): Pick<Card, 'bildeAndel' | 'bildeAspekt'> {
-  const naa = bildeRammeForCard(card, naturligAspekt);
+  const naa = bildeRammeForCard(card, naturligAspekt, stil);
   const andel =
     card.layout === 'bilde-venstre'
-      ? (naa.b + delta) / indreStorrelse(card).b
+      ? (naa.b + delta) / indreStorrelse(card, stil).b
       : card.layout === 'bilde-hoyre'
-        ? (naa.b - delta) / indreStorrelse(card).b
+        ? (naa.b - delta) / indreStorrelse(card, stil).b
         : (naa.h + delta) / card.ramme.h;
   return { bildeAndel: Math.min(MAKS_ANDEL, Math.max(MIN_ANDEL, andel)), bildeAspekt: 'fri' };
 }

@@ -1,8 +1,8 @@
 import { useRef, type PointerEvent, type ReactNode } from 'react';
+import { festRamme, type Handtak } from '../geometri/rutenett';
 import type { Rektangel } from '../modell/typer';
+import { useSkilt } from '../store';
 import { useEksport, useSkala } from './visning';
-
-type Handtak = 'flytt' | 'nv' | 'no' | 'sv' | 'so';
 
 interface Props {
   ramme: Rektangel;
@@ -68,7 +68,9 @@ export function Flyttbar({
         r.h = h;
       } else r.h = Math.max(MIN_MM, s.ramme.h + dy);
     }
-    onEndre(r);
+    // Alt holdt nede slår av rutenettet midlertidig
+    const fest = useSkilt.getState().festTilRutenett && !e.altKey;
+    onEndre(fest ? festRamme(r, s.handtak, MIN_MM) : r);
   };
 
   const opp = () => (start.current = undefined);

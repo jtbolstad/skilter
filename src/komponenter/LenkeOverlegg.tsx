@@ -14,7 +14,7 @@ export function LenkeOverlegg({ skilt }: { skilt: Skilt }) {
   if (!kart.bilde || !f) return null;
 
   const p = plasser(kart.bilde, kart.ramme, { b: f.bredde, h: f.hoyde });
-  const tykkelse = 1.2 * kartEnhet(kart);
+  const tykkelse = 1.2 * kartEnhet(kart) * skilt.tema.lenkebredde;
   const { bredde_mm: B, hoyde_mm: H } = skilt.format;
 
   return (
