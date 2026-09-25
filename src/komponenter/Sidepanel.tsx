@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { DEKORTYPER } from '../geometri/dekor';
-import { parseTekst } from '../modell/tekstParser';
+import { parseTekst, TEKSTFORMATER, tekstfiler, type Tekstformat } from '../modell/tekstParser';
 import { formaterAvstand, meterPerPiksel } from '../geometri/malestokk';
 import { FORMATER, type Formatnavn } from '../modell/oppsett';
 import type { Kart, Skilt } from '../modell/typer';
@@ -344,22 +344,68 @@ function Kalibrering() {
 function LesTekstPaNytt() {
   const mappe = useSkilt((t) => t.mappe);
   const [melding, settMelding] = useState<string>();
-  if (!mappe?.filer.includes('tekst.txt')) return null;
+  const filer = tekstfiler(mappe?.filer ?? []);
+  const [valgtFil, settFil] = useState<string>();
+  const [format, settFormat] = useState<Tekstformat | 'auto'>('auto');
+  const fil = valgtFil && filer.includes(valgtFil) ? valgtFil : filer[0];
+  if (!mappe || !fil) {
+    return <p className="text-stone-500">Ingen tekstfil (.txt eller .md) i prosjektmappa.</p>;
+  }
+
+  const lesInn = async () => {
+    const tekst = parseTekst(await mappe.lesTekst(fil), format);
+    const antall = useSkilt.getState().oppdaterTekster(tekst);
+    const numre = new Set(useSkilt.getState().skilt?.cards.map((c) => c.nummer));
+    const utenCard = tekst.seksjoner.filter((s) => !numre.has(s.nummer)).length;
+    settMelding(
+      [
+        !tekst.seksjoner.length
+          ? 'Fant ingen seksjoner. Prøv et annet format.'
+          : antall
+            ? `Oppdaterte ${antall} card${antall === 1 ? '' : 's'}.`
+            : `Ingen endringer i ${fil}.`,
+        utenCard
+          ? `${utenCard} seksjon${utenCard === 1 ? '' : 'er'} har ikke noe card med samme nummer.`
+          : '',
+      ]
+        .filter(Boolean)
+        .join(' '),
+    );
+  };
+
   return (
     <>
-      <button
-        className={knapp}
-        onClick={async () => {
-          const antall = useSkilt.getState().oppdaterTekster(parseTekst(await mappe.lesTekst('tekst.txt')));
-          settMelding(
-            antall ? `Oppdaterte ${antall} card${antall === 1 ? '' : 's'}.` : 'Ingen endringer i tekst.txt.',
-          );
-        }}
-      >
-        ↻ Les inn tekst.txt på nytt
+      <div className="flex gap-2">
+        <select
+          aria-label="Tekstfil"
+          className={`${input} min-w-0 flex-1`}
+          value={fil}
+          onChange={(e) => settFil(e.target.value)}
+        >
+          {filer.map((f) => (
+            <option key={f}>{f}</option>
+          ))}
+        </select>
+        <select
+          aria-label="Tekstformat"
+          className={input}
+          value={format}
+          onChange={(e) => settFormat(e.target.value as Tekstformat | 'auto')}
+        >
+          <option value="auto">Automatisk</option>
+          {TEKSTFORMATER.map((f) => (
+            <option key={f.verdi} value={f.verdi} title={f.beskrivelse}>
+              {f.navn}
+            </option>
+          ))}
+        </select>
+      </div>
+      <button className={knapp} onClick={lesInn}>
+        ↻ Les inn tekst på nytt
       </button>
       <p className="text-stone-500">
-        {melding ?? 'Henter titler og tekster fra tekst.txt. Oppsett og bilder beholdes. Kan angres.'}
+        {melding ??
+          'Henter titler og tekster til cards med samme nummer. Oppsett og bilder beholdes. Kan angres.'}
       </p>
     </>
   );

@@ -19,7 +19,7 @@ import '@fontsource/noto-sans/400.css';
 import '@fontsource/noto-sans/700.css';
 import './index.css';
 import { App } from './App';
-import { lagDemomappe } from './fil/mappetilgang';
+import { lagDemomappe, lagInnebygdDemo } from './fil/mappetilgang';
 import { apneProsjekt, glemDemo, startAutolagring } from './fil/prosjekt';
 import { startGestsporing } from './modell/historikk';
 
@@ -27,10 +27,13 @@ startAutolagring();
 startGestsporing();
 
 const parametre = new URLSearchParams(location.search);
-if (import.meta.env.DEV && parametre.has('demo')) {
-  // ?demo&ny starter fra tekst.txt i stedet for sist lagrede demo
-  if (parametre.has('ny')) await glemDemo();
-  await apneProsjekt(await lagDemomappe());
+// ?demo åpner prosjektmappa over app/ (bare i dev), ?demo=innebygd demoprosjektet som følger med appen
+const demo = parametre.get('demo');
+if (demo === 'innebygd' || (import.meta.env.DEV && demo !== null)) {
+  const mappe = demo === 'innebygd' ? await lagInnebygdDemo() : await lagDemomappe();
+  // &ny starter fra tekstfila i stedet for sist lagrede demo
+  if (parametre.has('ny')) await glemDemo(mappe);
+  await apneProsjekt(mappe);
 }
 
 createRoot(document.getElementById('root')!).render(

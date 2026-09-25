@@ -34,7 +34,7 @@ lagres automatisk.
 
 | Hva                    | Eksempel                       | Merknad                                    |
 | ---------------------- | ------------------------------ | ------------------------------------------ |
-| Tekstene               | `tekst.txt`                    | Se oppsettet under                         |
+| Tekstene               | `tekst.txt` eller `tekst.md`   | Se oppsettet under                         |
 | Kartet                 | `Kart.png`                     | Filnavnet må begynne med «kart»            |
 | Én bildemappe per kort | `1 Slora/`, `2 Ljabru gård/` … | Starter med kortets nummer og et mellomrom |
 
@@ -58,6 +58,20 @@ Skrevet av Marius Park Pedersen, lokalhistoriker
 - `1. Navn` starter kort nummer 1. Teksten under hører til kortet. Tom linje gir nytt avsnitt.
 - `*ord*` blir kursiv og `**ord**` blir fet.
 - En linje som starter med «Skrevet av» blir forfatterlinja nederst på skiltet.
+
+Appen forstår også to andre oppsett og finner selv ut hvilket du har brukt:
+
+| Format       | Tittel                        | Nytt kort                                    |
+| ------------ | ----------------------------- | -------------------------------------------- |
+| Nummerert    | Første linje                  | `1. Navn` på egen linje                      |
+| Markdown     | `# Tittel`                    | `## Navn` eller `## 1. Navn`                 |
+| Skillelinjer | Det som står før første `---` | `---`, og første linje etter er kortets navn |
+
+Kort uten nummer får neste ledige nummer. Tekstfila kan hete noe annet enn `tekst.txt`, for eksempel
+`tekst.md`; appen bruker den første `.txt`- eller `.md`-fila den finner.
+
+**Vil du bare prøve?** Trykk **🧪 Prøv demoprosjektet** på startsiden. Demoen har tekst, bilder og kart
+og lagres i nettleseren, ikke på disk.
 
 ## 2. Åpne prosjektet
 
@@ -100,8 +114,14 @@ Velg et kort for å endre:
 > **«Tekst kuttet»** i hjørnet betyr at teksten ikke får plass. Gjør kortet større, bildet mindre,
 > teksten mindre, eller kort ned teksten. Merket kommer ikke med på trykk.
 
-Har du endret `tekst.txt` etter at du startet? Velg **🪧 Skilt** og trykk **↻ Les inn tekst.txt på
-nytt**. Titler og tekster oppdateres, mens oppsett og bilder beholdes.
+Trykk **⤢ Tilpass bildene så teksten får plass** under **Alle cards** (velg **🪧 Skilt**), så gjør appen
+bildet i hvert kuttet kort akkurat så mye mindre som trengs. Det kan angres med ett trykk. Under
+**Alle cards** stiller du også tekststørrelse, rammetykkelse, hjørneradius og linjene til kartet for alle
+kortene på en gang.
+
+Har du endret tekstfila etter at du startet? Velg **🪧 Skilt**, velg fil og format (vanligvis
+**Automatisk**) og trykk **↻ Les inn tekst på nytt**. Titler og tekster oppdateres, mens oppsett og
+bilder beholdes.
 
 ## 5. Bilder: bytte, beskjære og justere
 
@@ -313,7 +333,7 @@ Dra et bilde fra Utforsker rett på kortet. Appen lager mappa for kortet hvis de
 
 **Jeg ser ikke endringene jeg gjorde i `tekst.txt`.**
 Skiltet lagres i `skilt.json` og leser ikke `tekst.txt` automatisk på nytt. Velg **🪧 Skilt** og trykk
-**↻ Les inn tekst.txt på nytt**.
+**↻ Les inn tekst på nytt**.
 
 **Jeg vil begynne helt på nytt.**
 Lukk appen, slett eller gi nytt navn til `skilt.json` i prosjektmappa, og åpne mappa igjen. Skiltet

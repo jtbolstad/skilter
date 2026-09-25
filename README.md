@@ -46,13 +46,16 @@ havner i `src-tauri/target/release/bundle/nsis/`.
 
 ```
 skilter/
-├── tekst.txt        Tittel, «1. Navn»-seksjoner og «Skrevet av …»
+├── tekst.txt        Tekstene: nummerert, Markdown (tekst.md) eller med «---» mellom seksjonene
 ├── Kart.png         Kartbildet
 ├── 1 Slora/ …       Bilder til hvert kort
 ├── skilt.json       Skiltet (lagres av appen)
 ├── eksport/         PNG-eksport
 └── app/             Denne appen
 ```
+
+Vil du bare prøve appen, trykk **🧪 Prøv demoprosjektet** på startsiden (eller åpne
+`?demo=innebygd`). Demoen ligger i `public/demo/` og følger med i den installerte appen.
 
 ## Dokumentasjon
 

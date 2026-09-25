@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { DEKORTYPER } from '../geometri/dekor';
 import { OPPSETTMALER } from '../modell/oppsett';
 import type { Banner, Bannerstil, Dekor, Skilt, Tema } from '../modell/typer';
 import { useSkilt } from '../store';
+import { tilpassBilderTilTekst } from './autojuster';
 import { LENKESTILER } from './CardPanel';
 import { Felt, Gruppe, input, knapp, Seksjon } from './Skjema';
 
@@ -162,6 +164,7 @@ function AlleCards({ skilt }: { skilt: Skilt }) {
         maks={3}
         onEndre={tema1('lenkebredde')}
       />
+      <Autojuster />
       <Gruppe etikett="Linjestil til kartet">
         <div className="flex gap-2">
           {LENKESTILER.map((l) => (
@@ -177,6 +180,40 @@ function AlleCards({ skilt }: { skilt: Skilt }) {
         </div>
       </Gruppe>
     </Seksjon>
+  );
+}
+
+function Autojuster() {
+  const kuttet = useSkilt((t) => Object.values(t.tekstOverflyt).filter(Boolean).length);
+  const [jobber, settJobber] = useState(false);
+  const [melding, settMelding] = useState<string>();
+
+  const kjor = async () => {
+    settJobber(true);
+    const r = await tilpassBilderTilTekst();
+    settJobber(false);
+    const deler = [
+      r.justert ? `Gjorde bildet mindre i ${r.justert} card${r.justert === 1 ? '' : 's'}.` : '',
+      r.forMyeTekst ? `${r.forMyeTekst} har fortsatt for mye tekst – gjør cardet større.` : '',
+      r.utenBilde ? `${r.utenBilde} uten bilde må gjøres større eller få kortere tekst.` : '',
+    ];
+    settMelding(deler.filter(Boolean).join(' ') || 'All tekst får plass.');
+  };
+
+  return (
+    <div className="flex flex-col gap-1">
+      <button className={knapp} disabled={jobber || !kuttet} onClick={kjor}>
+        ⤢ Tilpass bildene så teksten får plass
+      </button>
+      <p className="text-stone-500">
+        {jobber
+          ? 'Tilpasser …'
+          : (melding ??
+            (kuttet
+              ? `Teksten er kuttet i ${kuttet} card${kuttet === 1 ? '' : 's'}.`
+              : 'All tekst får plass.'))}
+      </p>
+    </div>
   );
 }
 

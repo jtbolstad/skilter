@@ -6,8 +6,10 @@ const HANDLE_NOKKEL = 'sist-apnet-mappe';
 const HOPP_OVER = new Set(['app', 'node_modules', '.git', 'dist', 'eksport']);
 
 export interface Filmappe extends Prosjektmappe {
-  /** Mangler for demomappa i dev */
+  /** Mangler for demomappene */
   handle?: FileSystemDirectoryHandle;
+  /** Demomapper uten skrivetilgang lagrer skiltet i nettleseren under denne nøkkelen */
+  demoId?: string;
   lesFil(sti: string): Promise<File>;
 }
 
@@ -64,19 +66,31 @@ export async function forrigeMappenavn(): Promise<string | undefined> {
   return (await get<FileSystemDirectoryHandle>(HANDLE_NOKKEL))?.name;
 }
 
+/** Mappe der filene hentes over HTTP fra `rot`. */
+function mappeOverHttp(navn: string, filer: string[], rot: string, demoId: string): Filmappe {
+  const lesFil = async (sti: string) => {
+    const svar = await fetch(rot + sti.split('/').map(encodeURIComponent).join('/'));
+    if (!svar.ok) throw new Error(`Fant ikke ${sti}`);
+    const endret = Date.parse(svar.headers.get('Last-Modified') ?? '') || 0;
+    return new File([await svar.blob()], sti.split('/').at(-1)!, { lastModified: endret });
+  };
+  return { navn, filer, demoId, lesFil, lesTekst: async (sti) => (await lesFil(sti)).text() };
+}
+
 /** Kun dev: prosjektmappa servert av Vite-pluginen i vite-prosjekt.ts. */
 export async function lagDemomappe(): Promise<Filmappe> {
   const { navn, filer } = (await (await fetch('/__prosjekt/filer')).json()) as {
     navn: string;
     filer: string[];
   };
-  const lesFil = async (sti: string) => {
-    const svar = await fetch('/__prosjekt/fil/' + sti.split('/').map(encodeURIComponent).join('/'));
-    if (!svar.ok) throw new Error(`Fant ikke ${sti}`);
-    const endret = Date.parse(svar.headers.get('Last-Modified') ?? '') || 0;
-    return new File([await svar.blob()], sti.split('/').at(-1)!, { lastModified: endret });
-  };
-  return { navn, filer, lesFil, lesTekst: async (sti) => (await lesFil(sti)).text() };
+  return mappeOverHttp(navn, filer, '/__prosjekt/fil/', 'dev');
+}
+
+/** Demoprosjektet som følger med appen (public/demo). Virker også i den installerte appen. */
+export async function lagInnebygdDemo(): Promise<Filmappe> {
+  const rot = `${import.meta.env.BASE_URL}demo/`;
+  const filer = (await (await fetch(rot + 'filer.json')).json()) as string[];
+  return mappeOverHttp('Demodalen', filer, rot, 'innebygd');
 }
 
 /**

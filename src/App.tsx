@@ -2,12 +2,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   apneForrigeMappe,
   forrigeMappenavn,
+  lagInnebygdDemo,
   stottesAvNettleser,
   velgMappe,
   type Filmappe,
 } from './fil/mappetilgang';
 import { EksportPanel } from './eksport/EksportPanel';
-import { apneProsjekt } from './fil/prosjekt';
+import { apneProsjekt, glemDemo } from './fil/prosjekt';
 import { Lerret } from './komponenter/Lerret';
 import { Sidepanel } from './komponenter/Sidepanel';
 import { useSkilt } from './store';
@@ -42,7 +43,17 @@ export function App() {
           <Sidepanel skilt={skilt} />
         </div>
       ) : (
-        <Velkommen onApne={() => apne(velgMappe)} onGjenapne={() => apne(apneForrigeMappe)} />
+        <Velkommen
+          onApne={() => apne(velgMappe)}
+          onGjenapne={() => apne(apneForrigeMappe)}
+          onDemo={(nullstill) =>
+            apne(async () => {
+              const m = await lagInnebygdDemo();
+              if (nullstill) await glemDemo(m);
+              return m;
+            })
+          }
+        />
       )}
     </div>
   );
@@ -184,17 +195,41 @@ function Arbeidsflate() {
   );
 }
 
-function Velkommen({ onApne, onGjenapne }: { onApne(): void; onGjenapne(): void }) {
+function Velkommen({
+  onApne,
+  onGjenapne,
+  onDemo,
+}: {
+  onApne(): void;
+  onGjenapne(): void;
+  onDemo(nullstill: boolean): void;
+}) {
   const [forrige, settForrige] = useState<string>();
   useEffect(() => {
     forrigeMappenavn().then(settForrige, () => {});
   }, []);
 
+  const demo = (
+    <div className="flex flex-col items-center gap-1 border-t border-stone-200 pt-4">
+      <button
+        className="rounded border border-stone-300 bg-white px-4 py-2 hover:bg-stone-50"
+        onClick={() => onDemo(false)}
+      >
+        🧪 Prøv demoprosjektet
+      </button>
+      <button className="text-xs text-stone-500 underline" onClick={() => onDemo(true)}>
+        Start demoen på nytt
+      </button>
+      <p className="text-xs text-stone-500">Demoen lagres i nettleseren, ikke på disk.</p>
+    </div>
+  );
+
   if (!stottesAvNettleser()) {
     return (
-      <p className="m-auto max-w-md text-center">
-        Nettleseren støtter ikke mappetilgang. Bruk Chrome eller Edge på PC.
-      </p>
+      <div className="m-auto flex max-w-md flex-col items-center gap-4 text-center">
+        <p>Nettleseren støtter ikke mappetilgang. Bruk Chrome eller Edge på PC.</p>
+        {demo}
+      </div>
     );
   }
 
@@ -202,8 +237,8 @@ function Velkommen({ onApne, onGjenapne }: { onApne(): void; onGjenapne(): void 
     <div className="m-auto flex max-w-md flex-col items-center gap-4 text-center">
       <h1 className="font-serif text-3xl font-bold">Lag et informasjonsskilt</h1>
       <p className="text-stone-600">
-        Velg prosjektmappa. Appen leser <code>tekst.txt</code>, bildemappene (<code>1 Slora/</code>,{' '}
-        <code>2 Ljabru gård/</code> …) og <code>Kart.png</code>.
+        Velg prosjektmappa. Appen leser tekstfila (<code>tekst.txt</code> eller <code>.md</code>),
+        bildemappene (<code>1 Slora/</code>, <code>2 Ljabru gård/</code> …) og <code>Kart.png</code>.
       </p>
       <button className="rounded bg-emerald-700 px-4 py-2 text-white hover:bg-emerald-800" onClick={onApne}>
         📂 Åpne prosjektmappe
@@ -213,6 +248,7 @@ function Velkommen({ onApne, onGjenapne }: { onApne(): void; onGjenapne(): void 
           Åpne «{forrige}» igjen
         </button>
       )}
+      {demo}
     </div>
   );
 }

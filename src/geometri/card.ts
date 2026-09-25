@@ -10,7 +10,7 @@ export const ASPEKTER: Record<Exclude<Bildeaspekt, 'fri' | 'bilde'>, number> = {
   '2:3': 2 / 3,
 };
 
-const MIN_ANDEL = 0.1;
+export const MIN_ANDEL = 0.1;
 const MAKS_ANDEL = 0.85;
 
 type Cardmal = Pick<Card, 'ramme' | 'tekststorrelse'>;

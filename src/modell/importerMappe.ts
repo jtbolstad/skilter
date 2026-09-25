@@ -1,5 +1,5 @@
 import { CARD_FARGER, FORMATER, STANDARD_TEMA, standardBanner, standardOppsett } from './oppsett';
-import { parseTekst } from './tekstParser';
+import { parseTekst, tekstfiler } from './tekstParser';
 import type { Bildeutsnitt, Card, Skilt } from './typer';
 
 /** Tilgang til prosjektmappa, uavhengig av File System Access API (lett å teste). */
@@ -38,7 +38,8 @@ function finnKart(filer: string[]): string | undefined {
 }
 
 export async function importerMappe(mappe: Prosjektmappe): Promise<Skilt> {
-  const tekst = mappe.filer.includes('tekst.txt') ? parseTekst(await mappe.lesTekst('tekst.txt')) : undefined;
+  const tekstfil = tekstfiler(mappe.filer)[0];
+  const tekst = tekstfil ? parseTekst(await mappe.lesTekst(tekstfil)) : undefined;
   const seksjoner = tekst?.seksjoner ?? [];
   const format = { ...FORMATER.A1, dpi: 150 as const };
   const oppsett = standardOppsett(format, seksjoner.length);

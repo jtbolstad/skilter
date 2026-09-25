@@ -86,9 +86,10 @@ test('redigerer tekst og layout', async ({ page }) => {
 });
 
 test('legger til bilde for card uten bildemappe', async ({ page }) => {
-  await apneDemo(page);
-  await velgCard(page, '6. Pilgrimsleden');
-  await expect(page.getByTestId('card-6').getByText('Dra et bilde hit')).toBeVisible();
+  // Den innebygde demoen har et card uten bildemappe (5. Bålplassen)
+  await page.goto('/?demo=innebygd&ny');
+  await velgCard(page, '5. Bålplassen');
+  await expect(page.getByTestId('card-5').getByText('Dra et bilde hit')).toBeVisible();
 
   const dataUrl = await page.evaluate(() => {
     const c = document.createElement('canvas');
@@ -103,8 +104,8 @@ test('legger til bilde for card uten bildemappe', async ({ page }) => {
   await page
     .locator('input[type=file]')
     .setInputFiles({ name: 'sti.png', mimeType: 'image/png', buffer: png });
-  await expect(page.getByTestId('card-6').getByTestId('cardbilde').locator('img').first()).toBeVisible();
-  await expect(page.getByTitle('6 Pilgrimsleden/sti.png')).toBeVisible();
+  await expect(page.getByTestId('card-5').getByTestId('cardbilde').locator('img').first()).toBeVisible();
+  await expect(page.getByTitle('5 Bålplassen/sti.png')).toBeVisible();
 });
 
 test('skjermbilde av hele skiltet', async ({ page }) => {
