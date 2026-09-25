@@ -21,3 +21,8 @@
 - [ ] Legg inn tekst og noen demobilder i appen
 - [ ] Vis dekorlag i en gruppe i sidemenyen
 - [x] Nedlastbar app (Tauri, `pnpm app:build`)
+
+## Verktøy
+
+- [ ] TypeScript 7
+- [ ] Biome
