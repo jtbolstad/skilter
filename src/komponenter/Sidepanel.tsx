@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { DEKORTYPER } from '../geometri/dekor';
 import { parseTekst } from '../modell/tekstParser';
 import { formaterAvstand, meterPerPiksel } from '../geometri/malestokk';
 import { FORMATER, type Formatnavn } from '../modell/oppsett';
 import type { Kart, Skilt } from '../modell/typer';
 import { useSkilt } from '../store';
 import { CardEgenskaper } from './CardPanel';
+import { BannerEgenskaper, DekorEgenskaper, TemaOgOppsett } from './UtseendePanel';
 import { KartlagSeksjoner, RuteEgenskaper, StedsnavnEgenskaper, Stilprove } from './RutePanel';
 import { DpiVarsel, Felt, input, knapp, Seksjon } from './Skjema';
 import { useForhandsvisning } from './useForhandsvisning';
@@ -14,6 +16,7 @@ export function Sidepanel({ skilt }: { skilt: Skilt }) {
   const card = valg.type === 'card' ? skilt.cards.find((c) => c.id === valg.id) : undefined;
   const rute = valg.type === 'rute' ? skilt.ruter.find((r) => r.id === valg.id) : undefined;
   const sted = valg.type === 'stedsnavn' ? skilt.stedsnavn.find((s) => s.id === valg.id) : undefined;
+  const dekor = valg.type === 'dekor' ? skilt.dekor.find((d) => d.id === valg.id) : undefined;
 
   return (
     <aside className="flex w-80 shrink-0 flex-col gap-5 overflow-y-auto border-l border-stone-200 bg-white p-4 text-sm">
@@ -23,6 +26,8 @@ export function Sidepanel({ skilt }: { skilt: Skilt }) {
       {card && <CardEgenskaper card={card} />}
       {rute && <RuteEgenskaper key={rute.id} rute={rute} />}
       {sted && <StedsnavnEgenskaper key={sted.id} sted={sted} />}
+      {valg.type === 'banner' && <BannerEgenskaper banner={skilt.banner} />}
+      {dekor && <DekorEgenskaper key={dekor.id} dekor={dekor} />}
     </aside>
   );
 }
@@ -38,7 +43,10 @@ function Lagliste({ skilt }: { skilt: Skilt }) {
     <Seksjon tittel="Lag">
       <div className="flex flex-col">
         <button className={rad(valg.type === 'skilt')} onClick={() => velg({ type: 'skilt' })}>
-          🪧 Skilt og banner
+          🪧 Skilt
+        </button>
+        <button className={rad(valg.type === 'banner')} onClick={() => velg({ type: 'banner' })}>
+          🏷️ Banner
         </button>
         <button className={rad(valg.type === 'kart')} onClick={() => velg({ type: 'kart' })}>
           🗺️ Kart
@@ -51,6 +59,22 @@ function Lagliste({ skilt }: { skilt: Skilt }) {
           >
             <Stilprove stil={r.stil} bredde={24} />
             <span className="truncate">{r.navn}</span>
+          </button>
+        ))}
+        {skilt.dekor.map((d, i) => (
+          <button
+            key={d.id}
+            className={rad(valg.type === 'dekor' && valg.id === d.id)}
+            onClick={() => velg({ type: 'dekor', id: d.id })}
+          >
+            <span
+              className="size-3 shrink-0 rounded-sm border border-stone-300"
+              style={{ background: d.farge }}
+            />
+            <span className="truncate text-stone-600">
+              {DEKORTYPER.find((t) => t.type === d.type)?.navn ?? d.type}{' '}
+              {skilt.dekor.filter((x, j) => x.type === d.type && j < i).length + 1}
+            </span>
           </button>
         ))}
         {skilt.cards.map((c) => (
@@ -128,41 +152,9 @@ function SkiltEgenskaper({ skilt }: { skilt: Skilt }) {
         <LesTekstPaNytt />
       </Seksjon>
 
-      <Seksjon tittel="Banner">
-        <Felt etikett="Tittel">
-          <input
-            className={input}
-            value={skilt.banner.tittel}
-            onChange={(e) => endreSkilt((s) => ({ ...s, banner: { ...s.banner, tittel: e.target.value } }))}
-          />
-        </Felt>
-        <Felt etikett="Undertittel (steder, skilt med komma)">
-          <input
-            className={input}
-            placeholder="Hauketo, Prinsdal"
-            defaultValue={skilt.banner.undertittel.join(', ')}
-            onChange={(e) =>
-              endreSkilt((s) => ({
-                ...s,
-                banner: {
-                  ...s.banner,
-                  undertittel: e.target.value
-                    .split(',')
-                    .map((d) => d.trim())
-                    .filter(Boolean),
-                },
-              }))
-            }
-          />
-        </Felt>
-        <Felt etikett="Bannerfarge">
-          <input
-            type="color"
-            className="h-8 w-16"
-            value={skilt.banner.farge}
-            onChange={(e) => endreSkilt((s) => ({ ...s, banner: { ...s.banner, farge: e.target.value } }))}
-          />
-        </Felt>
+      <TemaOgOppsett skilt={skilt} />
+
+      <Seksjon tittel="Kreditering">
         <Felt etikett="Forfatterlinje">
           <input
             className={input}

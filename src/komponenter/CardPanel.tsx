@@ -1,13 +1,13 @@
 import { useState } from 'react';
-import { bildeRammeForCard } from '../geometri/card';
+import { bildeRammeForCard, bildeTilSiden } from '../geometri/card';
 import { delRotasjon, klem, MAKS_ZOOM, roterKvart, type Storrelse } from '../geometri/utsnitt';
 import { bilderIMappe, erBilde, nyttUtsnitt } from '../modell/importerMappe';
 import { CARD_FARGER } from '../modell/oppsett';
-import type { Bildeaspekt, Bildeutsnitt, Card, Lenkestil } from '../modell/typer';
+import type { Bildeaspekt, Bildeutsnitt, Card, Cardlayout, Lenkestil } from '../modell/typer';
 import { useSkilt } from '../store';
-import { BILDE_DRA_TYPE } from './CardVisning';
+import { BILDE_DRA_TYPE, useNaturligAspekt } from './CardVisning';
 import { punktErSynlig } from './LenkeOverlegg';
-import { DpiVarsel, Felt, input, knapp, Seksjon } from './Skjema';
+import { DpiVarsel, Felt, Gruppe, input, knapp, Seksjon } from './Skjema';
 import { useForhandsvisning } from './useForhandsvisning';
 
 const valgKnapp = (aktiv: boolean) =>
@@ -71,8 +71,39 @@ const ASPEKTVALG: { verdi: Bildeaspekt; navn: string }[] = [
   { verdi: '3:2', navn: '3:2' },
   { verdi: '4:3', navn: '4:3' },
   { verdi: '1:1', navn: '1:1 kvadrat' },
-  { verdi: '3:4', navn: '3:4 høyt' },
+  { verdi: '3:4', navn: '3:4 stående' },
+  { verdi: '2:3', navn: '2:3 stående' },
+  { verdi: 'bilde', navn: 'Som bildet (ingen beskjæring)' },
 ];
+
+const LAYOUTER: { verdi: Cardlayout; navn: string; tittel: string }[] = [
+  { verdi: 'bilde-venstre', navn: '◧ Venstre', tittel: 'Bildet til venstre for teksten' },
+  { verdi: 'bilde-over', navn: '⬒ Over', tittel: 'Bildet over teksten' },
+  { verdi: 'bilde-hoyre', navn: '◨ Høyre', tittel: 'Bildet til høyre for teksten' },
+];
+
+/** Foreslår å legge stående bilder ved siden av teksten. */
+function StaendeBildeHint({ card }: { card: Card }) {
+  const aspekt = useNaturligAspekt(card);
+  const endreCard = useSkilt((t) => t.endreCard);
+  if (!aspekt || aspekt >= 0.9 || bildeTilSiden(card)) return null;
+  return (
+    <div className="flex flex-col gap-2 rounded border border-sky-200 bg-sky-50 p-2">
+      <p>Bildet er stående. Det passer ofte best ved siden av teksten.</p>
+      <div className="flex gap-2">
+        {(['bilde-venstre', 'bilde-hoyre'] as const).map((layout) => (
+          <button
+            key={layout}
+            className={knapp}
+            onClick={() => endreCard(card.id, { layout, bildeAspekt: 'bilde', tittelHelBredde: true })}
+          >
+            {layout === 'bilde-venstre' ? '◧ Til venstre' : '◨ Til høyre'}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function Utseende({ card }: { card: Card }) {
   const endreCard = useSkilt((t) => t.endreCard);
@@ -96,20 +127,31 @@ function Utseende({ card }: { card: Card }) {
           onChange={(e) => endreCard(card.id, { farge: e.target.value })}
         />
       </div>
-      <div className="flex gap-2">
-        <button
-          className={valgKnapp(card.layout === 'bilde-over')}
-          onClick={() => endreCard(card.id, { layout: 'bilde-over' })}
-        >
-          ▭ Bilde over
-        </button>
-        <button
-          className={valgKnapp(card.layout === 'bilde-venstre')}
-          onClick={() => endreCard(card.id, { layout: 'bilde-venstre' })}
-        >
-          ◧ Bilde til venstre
-        </button>
-      </div>
+      <Gruppe etikett="Plassering av bildet">
+        <div className="flex gap-1">
+          {LAYOUTER.map((l) => (
+            <button
+              key={l.verdi}
+              title={l.tittel}
+              className={valgKnapp(card.layout === l.verdi)}
+              onClick={() => endreCard(card.id, { layout: l.verdi })}
+            >
+              {l.navn}
+            </button>
+          ))}
+        </div>
+      </Gruppe>
+      {bildeTilSiden(card) && (
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={card.tittelHelBredde}
+            onChange={(e) => endreCard(card.id, { tittelHelBredde: e.target.checked })}
+          />
+          Tittel over hele bredden
+        </label>
+      )}
+      <StaendeBildeHint card={card} />
       <Felt etikett="Bildeformat">
         <select
           className={input}
@@ -131,9 +173,10 @@ function Bildekontroller({ card }: { card: Card }) {
   const modus = useSkilt((t) => t.modus);
   const { endreBilde, endreCard, settModus } = useSkilt.getState();
   const f = useForhandsvisning(card.bilde?.fil);
+  const aspekt = useNaturligAspekt(card);
   if (!card.bilde) return null;
 
-  const ramme = bildeRammeForCard(card);
+  const ramme = bildeRammeForCard(card, aspekt);
   const bilde: Storrelse | undefined = f && { b: f.bredde, h: f.hoyde };
   const u = card.bilde;
   const beskjaerer = modus.type === 'beskjaer' && modus.cardId === card.id;

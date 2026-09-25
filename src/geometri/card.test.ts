@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import type { Card } from '../modell/typer';
 import { delAvsnitt, parseAvsnitt } from '../modell/riktekst';
-import { bildeRammeForCard, dragSkillelinje, indreStorrelse, lenkeanker, lenkesti } from './card';
+import {
+  bildeRammeForCard,
+  dragSkillelinje,
+  indreStorrelse,
+  lenkeanker,
+  lenkesti,
+  tittelHoyde,
+} from './card';
 
 const card = (c: Partial<Card> = {}): Card => ({
   id: 'c',
@@ -10,6 +17,7 @@ const card = (c: Partial<Card> = {}): Card => ({
   tittel: 'T',
   layout: 'bilde-over',
   bildeAndel: 0.4,
+  tittelHelBredde: false,
   bildeAspekt: 'fri',
   tekst: '',
   tekststorrelse: 1,
@@ -40,6 +48,38 @@ describe('bildeRammeForCard', () => {
   it('bildet tar aldri hele cardet', () => {
     const r = bildeRammeForCard(card({ bildeAspekt: '3:4' }));
     expect(r.h).toBeLessThan(indreStorrelse(card()).h);
+  });
+});
+
+describe('stående bilder', () => {
+  it('bilde til høyre har samme størrelse som til venstre', () => {
+    const v = bildeRammeForCard(card({ layout: 'bilde-venstre', bildeAspekt: '2:3' }));
+    const h = bildeRammeForCard(card({ layout: 'bilde-hoyre', bildeAspekt: '2:3' }));
+    expect(h).toEqual(v);
+    expect(v.b / v.h).toBeCloseTo(2 / 3);
+  });
+
+  it('«som bildet» bruker bildets proporsjoner', () => {
+    const r = bildeRammeForCard(card({ layout: 'bilde-venstre', bildeAspekt: 'bilde' }), 0.75);
+    expect(r.b / r.h).toBeCloseTo(0.75);
+  });
+
+  it('tittel over hele bredden gjør bildet lavere', () => {
+    const uten = bildeRammeForCard(card({ layout: 'bilde-hoyre' }));
+    const med = bildeRammeForCard(card({ layout: 'bilde-hoyre', tittelHelBredde: true }));
+    expect(med.h).toBeCloseTo(uten.h - tittelHoyde(card()));
+  });
+
+  it('stående bilde over teksten krympes i bredden', () => {
+    const r = bildeRammeForCard(card({ bildeAspekt: 'bilde' }), 0.6);
+    expect(r.b).toBeLessThan(indreStorrelse(card()).b);
+    expect(r.b / r.h).toBeCloseTo(0.6);
+  });
+
+  it('skillelinja virker speilvendt når bildet står til høyre', () => {
+    const c = card({ layout: 'bilde-hoyre', bildeAndel: 0.4 });
+    const b = indreStorrelse(c).b;
+    expect(dragSkillelinje(c, -b * 0.1).bildeAndel).toBeCloseTo(0.5);
   });
 });
 

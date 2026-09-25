@@ -78,8 +78,11 @@ test('redigerer tekst og layout', async ({ page }) => {
   await expect(page.getByTestId('card-7').locator('em')).toHaveText('1687');
   await expect(page.getByTestId('card-7').locator('strong')).toHaveText('10 km');
 
-  await page.getByRole('button', { name: 'Bilde til venstre' }).click();
-  await expect(page.getByTestId('card-7')).toHaveClass(/flex-row/);
+  await page.getByRole('button', { name: '◧ Venstre' }).click();
+  const card = page.getByTestId('card-7');
+  const bilde = (await card.getByTestId('cardbilde').boundingBox())!;
+  const tittel = (await card.getByRole('heading').boundingBox())!;
+  expect(bilde.x + bilde.width).toBeLessThanOrEqual(tittel.x + 1);
 });
 
 test('legger til bilde for card uten bildemappe', async ({ page }) => {
@@ -114,7 +117,7 @@ test('skjermbilde av hele skiltet', async ({ page }) => {
   await velgCard(page, '8. Hauketo gård');
   await page.getByRole('button', { name: 'Plasser punkt på kartet' }).click();
   await page.mouse.click(boks.x + boks.width * 0.55, boks.y + boks.height * 0.25);
-  await page.getByRole('button', { name: 'Bilde til venstre' }).click();
+  await page.getByRole('button', { name: '◧ Venstre' }).click();
   await page.waitForTimeout(1500);
   await page.screenshot({ path: `${SKJERMBILDER}/skilt.png` });
 });

@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef, useState, type DragEvent, type PointerEvent } from 'react';
-import { bildeRammeForCard, cardMal, dragSkillelinje } from '../geometri/card';
+import { bildeRammeForCard, bildeTilSiden, cardMal, dragSkillelinje } from '../geometri/card';
+import { delRotasjon } from '../geometri/utsnitt';
 import { nyttUtsnitt } from '../modell/importerMappe';
 import { delAvsnitt, parseAvsnitt } from '../modell/riktekst';
 import type { Card } from '../modell/typer';
@@ -7,6 +8,15 @@ import { useSkilt } from '../store';
 import { useEksport, useSkala } from './visning';
 import { Bildevisning } from './Bildevisning';
 import { Flyttbar } from './Flyttbar';
+import { useForhandsvisning } from './useForhandsvisning';
+
+/** Bildets bredde/høyde slik det vises (kvarte rotasjoner bytter om sidene). */
+export function useNaturligAspekt(card: Card): number | undefined {
+  const f = useForhandsvisning(card.bilde?.fil);
+  if (!f || !card.bilde) return undefined;
+  const liggende = Math.abs(delRotasjon(card.bilde.rotasjon).kvart / 90) % 2 === 0;
+  return liggende ? f.bredde / f.hoyde : f.hoyde / f.bredde;
+}
 
 /** MIME-type når et bilde dras fra bildevelgeren */
 export const BILDE_DRA_TYPE = 'application/x-skilter-bilde';
@@ -22,8 +32,10 @@ export function CardVisning({ card }: { card: Card }) {
 
   const m = cardMal(card);
   const px = (mm: number) => mm * skala;
-  const bildeRamme = bildeRammeForCard(card);
-  const venstre = card.layout === 'bilde-venstre';
+  const aspekt = useNaturligAspekt(card);
+  const bildeRamme = bildeRammeForCard(card, aspekt);
+  const side = bildeTilSiden(card);
+  const hoyre = card.layout === 'bilde-hoyre';
 
   const slipp = (e: DragEvent) => {
     e.preventDefault();
@@ -41,7 +53,7 @@ export function CardVisning({ card }: { card: Card }) {
     !card.bilde && eksport ? null : (
       <div
         data-testid="cardbilde"
-        className={`relative shrink-0 ${beskjaerer ? 'z-10' : 'overflow-hidden'}`}
+        className={`relative shrink-0 self-center ${beskjaerer ? 'z-10' : 'overflow-hidden'}`}
         style={{ width: px(bildeRamme.b), height: px(bildeRamme.h) }}
         onDoubleClick={(e) => {
           e.stopPropagation();
@@ -91,14 +103,14 @@ export function CardVisning({ card }: { card: Card }) {
     >
       <article
         data-testid={`card-${card.nummer}`}
-        className={`relative flex size-full cursor-move bg-[#fbf8f1] font-serif text-stone-900 ${
+        className={`relative flex size-full cursor-move bg-[#fbf8f1] text-stone-900 ${
           beskjaerer ? '' : 'overflow-hidden'
-        } ${venstre ? 'flex-row' : 'flex-col'} ${slippMal ? 'ring-4 ring-sky-400' : ''}`}
+        } flex-col ${slippMal ? 'ring-4 ring-sky-400' : ''}`}
         style={{
           border: `${px(m.kant)}px solid ${card.farge}`,
           borderRadius: px(m.radius),
           padding: px(m.pad),
-          gap: px(m.pad * 0.6),
+          gap: px(m.gap),
         }}
         onDragOver={(e) => {
           e.preventDefault();
@@ -107,20 +119,26 @@ export function CardVisning({ card }: { card: Card }) {
         onDragLeave={() => settSlippMal(false)}
         onDrop={slipp}
       >
-        {venstre ? (
+        {side ? (
           <>
-            {bilde}
-            {valgt && <Skillelinje card={card} retning="loddrett" />}
-            <div className="flex min-w-0 flex-1 flex-col" style={{ gap: px(m.pad * 0.6) }}>
-              <Tittel card={card} />
-              <Brodtekst card={card} />
+            {card.tittelHelBredde && <Tittel card={card} />}
+            <div
+              className={`flex min-h-0 flex-1 ${hoyre ? 'flex-row-reverse' : 'flex-row'}`}
+              style={{ gap: px(m.gap) }}
+            >
+              {bilde}
+              {valgt && card.bilde && <Skillelinje card={card} aspekt={aspekt} retning="loddrett" />}
+              <div className="flex min-w-0 flex-1 flex-col" style={{ gap: px(m.gap) }}>
+                {!card.tittelHelBredde && <Tittel card={card} />}
+                <Brodtekst card={card} />
+              </div>
             </div>
           </>
         ) : (
           <>
             <Tittel card={card} />
             {bilde}
-            {valgt && <Skillelinje card={card} retning="vannrett" />}
+            {valgt && card.bilde && <Skillelinje card={card} aspekt={aspekt} retning="vannrett" />}
             <Brodtekst card={card} />
           </>
         )}
@@ -192,7 +210,15 @@ function Brodtekst({ card }: { card: Card }) {
 }
 
 /** Dra for å endre forholdet mellom bilde og tekst. */
-function Skillelinje({ card, retning }: { card: Card; retning: 'vannrett' | 'loddrett' }) {
+function Skillelinje({
+  card,
+  aspekt,
+  retning,
+}: {
+  card: Card;
+  aspekt: number | undefined;
+  retning: 'vannrett' | 'loddrett';
+}) {
   const skala = useSkala();
   const start = useRef<{ pos: number; card: Card }>(undefined);
   const vannrett = retning === 'vannrett';
@@ -207,7 +233,7 @@ function Skillelinje({ card, retning }: { card: Card; retning: 'vannrett' | 'lod
     if (!s) return;
     e.stopPropagation();
     const delta = ((vannrett ? e.clientY : e.clientX) - s.pos) / skala;
-    useSkilt.getState().endreCard(card.id, dragSkillelinje(s.card, delta));
+    useSkilt.getState().endreCard(card.id, dragSkillelinje(s.card, delta, aspekt));
   };
 
   return (

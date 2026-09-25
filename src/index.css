@@ -2,6 +2,7 @@
 
 @theme {
   --font-serif: 'Source Serif 4', 'Noto Serif', Georgia, serif;
+  --font-sans: 'Source Sans 3', 'Noto Sans', system-ui, sans-serif;
 }
 
 html,

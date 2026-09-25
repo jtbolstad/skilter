@@ -242,7 +242,7 @@ function Stedsnavnetikett({ sted, kart, p }: { sted: Stedsnavn; kart: Kart; p: P
   return (
     <div
       data-testid="stedsnavn"
-      className={`absolute cursor-move font-serif leading-none font-semibold whitespace-pre select-none ${
+      className={`absolute cursor-move leading-none font-semibold whitespace-pre select-none ${
         valgt ? 'outline-2 outline-offset-2 outline-sky-500 outline-dashed' : ''
       }`}
       style={{
@@ -306,7 +306,7 @@ export function Tegnforklaring({ kart }: { kart: Kart }) {
   return (
     <div
       data-testid="tegnforklaring"
-      className="pointer-events-none absolute flex flex-col rounded-sm bg-white/90 font-serif"
+      className="pointer-events-none absolute flex flex-col rounded-sm bg-white/90"
       style={{
         ...Object.fromEntries(Object.entries(hjorne).map(([k]) => [k, marg])),
         padding: mm(5),

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Filmappe } from './fil/mappetilgang';
 import { importerMappe } from './modell/importerMappe';
+import { nyGest } from './modell/historikk';
 import { useSkilt } from './store';
 
 const TEKST = 'T\n\n1. Slora\nTekst\n\n6. Pilgrimsleden\nTekst';
@@ -113,9 +114,9 @@ describe('angre og gjør om', () => {
   beforeEach(lagProsjekt);
 
   it('angrer og gjør om endringer', async () => {
+    nyGest();
     s().endreCard('card-1', { tittel: 'A' });
-    // Vent til neste endring blir eget steg
-    await new Promise((r) => setTimeout(r, 650));
+    nyGest();
     s().endreCard('card-1', { tittel: 'B' });
     s().angre();
     expect(s().skilt!.cards[0]!.tittel).toBe('A');
@@ -145,5 +146,50 @@ describe('oppdaterTekster', () => {
     });
     expect(antall).toBe(1);
     expect(s().skilt!.cards[0]!.tekst).toBe('Ny tekst');
+  });
+});
+
+describe('utseende', () => {
+  beforeEach(lagProsjekt);
+
+  it('brukOppsett flytter banner, kart og cards og kan angres', () => {
+    nyGest();
+    const foer = s().skilt!.kart.ramme;
+    s().brukOppsett('kart-venstre');
+    const etter = s().skilt!;
+    expect(etter.kart.ramme.x).toBeLessThan(foer.x);
+    expect(etter.cards.every((c) => c.ramme.x > etter.kart.ramme.x + etter.kart.ramme.b)).toBe(true);
+    s().angre();
+    expect(s().skilt!.kart.ramme).toEqual(foer);
+  });
+
+  it('dekor legges til, velges, endres og slettes', () => {
+    const id = s().leggTilDekor('granskog');
+    expect(s().valg).toEqual({ type: 'dekor', id });
+    s().endreDekor(id, { speilvendt: true });
+    expect(s().skilt!.dekor[0]!.speilvendt).toBe(true);
+    s().slettDekor(id);
+    expect(s().skilt!.dekor).toEqual([]);
+    expect(s().valg.type).toBe('skilt');
+  });
+
+  it('utkastdekor legger trær, bro og gress innenfor skiltet', () => {
+    s().leggTilUtkastDekor();
+    const { dekor, format } = s().skilt!;
+    expect(dekor.map((d) => d.type)).toEqual(['granskog', 'steinbro', 'gress', 'gress']);
+    for (const d of dekor) {
+      expect(d.ramme.x).toBeGreaterThanOrEqual(0);
+      expect(d.ramme.x + d.ramme.b).toBeLessThanOrEqual(format.bredde_mm + 0.01);
+      expect(d.ramme.y + d.ramme.h).toBeLessThanOrEqual(format.hoyde_mm + 0.01);
+    }
+  });
+
+  it('formatbytte skalerer banner og dekor', () => {
+    s().leggTilDekor('kompass');
+    const b = s().skilt!.banner.ramme.b;
+    const d = s().skilt!.dekor[0]!.ramme.b;
+    s().endreFormat(420, 297);
+    expect(s().skilt!.banner.ramme.b).toBeCloseTo(b * (420 / 841));
+    expect(s().skilt!.dekor[0]!.ramme.b).toBeCloseTo(d * (420 / 841));
   });
 });

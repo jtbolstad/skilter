@@ -20,6 +20,16 @@ export function Felt({ etikett, children }: { etikett: string; children: ReactNo
   );
 }
 
+/** Knappegruppe med overskrift. Bruk i stedet for Felt når innholdet er flere knapper. */
+export function Gruppe({ etikett, children }: { etikett: string; children: ReactNode }) {
+  return (
+    <div role="group" aria-label={etikett} className="flex flex-col gap-1">
+      <span className="text-stone-600">{etikett}</span>
+      {children}
+    </div>
+  );
+}
+
 export const input = 'rounded border border-stone-300 px-2 py-1 focus:border-sky-500 focus:outline-none';
 export const knapp = 'rounded border border-stone-300 px-2 py-1 hover:bg-stone-100 disabled:opacity-40';
 

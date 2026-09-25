@@ -141,7 +141,7 @@ function Kvalitetssjekk({ skilt, dpi, overflyt }: { skilt: Skilt; dpi: number; o
               navn={c.tittel}
               fil={c.bilde.fil}
               dpi={dpi}
-              beregn={(b) => effektivDpi(plasser(c.bilde!, bildeRammeForCard(c), b))}
+              beregn={(b) => effektivDpi(plasser(c.bilde!, bildeRammeForCard(c, b.b / b.h), b))}
             />
           ) : null,
         )}

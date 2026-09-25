@@ -1,48 +1,82 @@
 import type { Bildeaspekt, Card, Rektangel } from '../modell/typer';
 import type { Storrelse } from './utsnitt';
 
-export const ASPEKTER: Record<Exclude<Bildeaspekt, 'fri'>, number> = {
+export const ASPEKTER: Record<Exclude<Bildeaspekt, 'fri' | 'bilde'>, number> = {
   '16:9': 16 / 9,
   '3:2': 3 / 2,
   '4:3': 4 / 3,
   '1:1': 1,
   '3:4': 3 / 4,
+  '2:3': 2 / 3,
 };
 
 const MIN_ANDEL = 0.1;
 const MAKS_ANDEL = 0.85;
 
+type Cardmal = Pick<Card, 'ramme' | 'tekststorrelse'>;
+
 /** Card-mål i mm, relativt til cardets bredde slik at tekst skalerer med formatet. */
-export function cardMal(card: Pick<Card, 'ramme' | 'tekststorrelse'>) {
+export function cardMal(card: Cardmal) {
   const u = card.ramme.b / 235;
   const t = card.tekststorrelse;
-  return { kant: 1.6 * u, radius: 4 * u, pad: 5 * u, tittel: 11 * u * t, tekst: 6 * u * t };
+  return { kant: 1.6 * u, radius: 4 * u, pad: 5 * u, gap: 3 * u, tittel: 11 * u * t, tekst: 6 * u * t };
 }
 
-export function indreStorrelse(card: Pick<Card, 'ramme' | 'tekststorrelse'>): Storrelse {
+export function indreStorrelse(card: Cardmal): Storrelse {
   const m = cardMal(card);
   return { b: card.ramme.b - 2 * (m.pad + m.kant), h: card.ramme.h - 2 * (m.pad + m.kant) };
 }
 
-/** Størrelsen på bilderamma i cardet (mm). */
-export function bildeRammeForCard(card: Card): Storrelse {
-  const indre = indreStorrelse(card);
-  const aspekt = card.bildeAspekt === 'fri' ? undefined : ASPEKTER[card.bildeAspekt];
-  if (card.layout === 'bilde-venstre') {
-    const onsket = aspekt ? indre.h * aspekt : indre.b * card.bildeAndel;
-    return { b: Math.min(onsket, indre.b * MAKS_ANDEL), h: indre.h };
-  }
-  const onsket = aspekt ? indre.b / aspekt : card.ramme.h * card.bildeAndel;
-  return { b: indre.b, h: Math.min(onsket, indre.h * MAKS_ANDEL) };
+export const bildeTilSiden = (card: Pick<Card, 'layout'>) =>
+  card.layout === 'bilde-venstre' || card.layout === 'bilde-hoyre';
+
+/** Høyden tittelen tar (én linje) inkludert mellomrom under. */
+export function tittelHoyde(card: Cardmal): number {
+  const m = cardMal(card);
+  return m.tittel * 1.25 + m.gap;
 }
 
-/** Ny bildeandel når skillelinja mellom bilde og tekst dras `delta` mm. */
-export function dragSkillelinje(card: Card, delta: number): Pick<Card, 'bildeAndel' | 'bildeAspekt'> {
-  const naa = bildeRammeForCard(card);
+/**
+ * Størrelsen på bilderamma i cardet (mm).
+ * @param naturligAspekt bildets bredde/høyde – brukes når formatet er «som bildet»
+ */
+export function bildeRammeForCard(card: Card, naturligAspekt?: number): Storrelse {
+  const indre = indreStorrelse(card);
+  const aspekt =
+    card.bildeAspekt === 'fri'
+      ? undefined
+      : card.bildeAspekt === 'bilde'
+        ? (naturligAspekt ?? 1)
+        : ASPEKTER[card.bildeAspekt];
+
+  if (bildeTilSiden(card)) {
+    const h = card.tittelHelBredde ? indre.h - tittelHoyde(card) : indre.h;
+    const onsket = aspekt ? h * aspekt : indre.b * card.bildeAndel;
+    return { b: Math.min(onsket, indre.b * MAKS_ANDEL), h };
+  }
+  const tilgjengelig = indre.h - tittelHoyde(card);
+  const onsket = aspekt ? indre.b / aspekt : card.ramme.h * card.bildeAndel;
+  // Høye bilder over teksten krympes i bredden i stedet for å fylle hele cardet
+  if (onsket > tilgjengelig * MAKS_ANDEL && aspekt) {
+    const h = tilgjengelig * MAKS_ANDEL;
+    return { b: Math.min(indre.b, h * aspekt), h };
+  }
+  return { b: indre.b, h: Math.min(onsket, tilgjengelig * MAKS_ANDEL) };
+}
+
+/** Ny bildeandel når skillelinja mellom bilde og tekst dras `delta` mm (mot høyre/ned = positiv). */
+export function dragSkillelinje(
+  card: Card,
+  delta: number,
+  naturligAspekt?: number,
+): Pick<Card, 'bildeAndel' | 'bildeAspekt'> {
+  const naa = bildeRammeForCard(card, naturligAspekt);
   const andel =
     card.layout === 'bilde-venstre'
       ? (naa.b + delta) / indreStorrelse(card).b
-      : (naa.h + delta) / card.ramme.h;
+      : card.layout === 'bilde-hoyre'
+        ? (naa.b - delta) / indreStorrelse(card).b
+        : (naa.h + delta) / card.ramme.h;
   return { bildeAndel: Math.min(MAKS_ANDEL, Math.max(MIN_ANDEL, andel)), bildeAspekt: 'fri' };
 }
 

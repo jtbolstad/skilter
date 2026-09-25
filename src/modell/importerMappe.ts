@@ -1,4 +1,4 @@
-import { CARD_FARGER, FORMATER, standardOppsett } from './oppsett';
+import { CARD_FARGER, FORMATER, STANDARD_TEMA, standardBanner, standardOppsett } from './oppsett';
 import { parseTekst } from './tekstParser';
 import type { Bildeutsnitt, Card, Skilt } from './typer';
 
@@ -57,6 +57,7 @@ export async function importerMappe(mappe: Prosjektmappe): Promise<Skilt> {
       bildeAndel: 0.45,
       bildeAspekt: 'fri',
       tekststorrelse: 1,
+      tittelHelBredde: false,
       kildemappe,
       farge: CARD_FARGER[i % CARD_FARGER.length]!,
     };
@@ -66,7 +67,9 @@ export async function importerMappe(mappe: Prosjektmappe): Promise<Skilt> {
   return {
     navn: mappe.navn,
     format,
-    banner: { tittel: tekst?.tittel || mappe.navn, undertittel: [], farge: '#2f5a3c' },
+    tema: { ...STANDARD_TEMA },
+    banner: standardBanner(oppsett.banner, tekst?.tittel || mappe.navn),
+    dekor: [],
     forfatter: tekst?.forfatter,
     kart: {
       ramme: oppsett.kart,

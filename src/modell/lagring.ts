@@ -1,4 +1,5 @@
-import type { Card, Kart, Skilt } from './typer';
+import { lagOppsett, STANDARD_TEMA, standardBanner } from './oppsett';
+import type { Banner, Card, Dekor, Kart, Skilt, Tema } from './typer';
 
 export const PROSJEKTFIL = 'skilt.json';
 export const VERSJON = 1;
@@ -31,7 +32,14 @@ export function lesSkilt(tekst: string): Skilt {
   return {
     navn: s.navn ?? 'Skilt',
     format: { bredde_mm: s.format.bredde_mm, hoyde_mm: s.format.hoyde_mm, dpi: s.format.dpi ?? 150 },
-    banner: { tittel: '', undertittel: [], farge: '#2f5a3c', ...s.banner } as Skilt['banner'],
+    tema: { ...STANDARD_TEMA, ...s.tema } as Tema,
+    banner: {
+      ...standardBanner(lagOppsett('sider', s.format, 0).banner, ''),
+      // Eldre filer hadde enkel avrundet banner uten ramme
+      ...(s.banner && !s.banner.stil ? { stil: 'avrundet' as const } : {}),
+      ...s.banner,
+    } as Banner,
+    dekor: (s.dekor ?? []) as Dekor[],
     forfatter: s.forfatter,
     kart: {
       visMalestokk: true,
@@ -50,6 +58,7 @@ export function lesSkilt(tekst: string): Skilt {
           bildeAndel: 0.45,
           bildeAspekt: 'fri',
           tekststorrelse: 1,
+          tittelHelBredde: false,
           tekst: '',
           farge: '#1f4ea3',
           ...c,

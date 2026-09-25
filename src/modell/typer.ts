@@ -75,8 +75,9 @@ export interface Kart {
   tegnforklaring: { vis: boolean; hjorne: Hjorne };
 }
 
-export type Bildeaspekt = '3:2' | '16:9' | '4:3' | '1:1' | '3:4' | 'fri';
-export type Cardlayout = 'bilde-over' | 'bilde-venstre';
+/** «bilde» = bildets egne proporsjoner, så ingenting beskjæres */
+export type Bildeaspekt = '3:2' | '16:9' | '4:3' | '1:1' | '3:4' | '2:3' | 'bilde' | 'fri';
+export type Cardlayout = 'bilde-over' | 'bilde-venstre' | 'bilde-hoyre';
 export type Lenkestil = 'rett' | 'knekt' | 'kurve';
 
 export interface Kartpunkt {
@@ -91,8 +92,10 @@ export interface Card {
   tittel: string;
   bilde?: Bildeutsnitt;
   layout: Cardlayout;
-  /** Bildets andel av cardet: høyde ved «bilde-over», bredde ved «bilde-venstre». Brukes når aspekt er «fri». */
+  /** Bildets andel av cardet: høyde ved «bilde-over», bredde når bildet står ved siden av. Brukes når aspekt er «fri». */
   bildeAndel: number;
+  /** Ved bilde til siden: tittelen går over hele bredden, bildet står ved siden av teksten */
+  tittelHelBredde: boolean;
   bildeAspekt: Bildeaspekt;
   kildemappe?: string;
   /** Enkel markering: *kursiv* og **fet**. Tom linje skiller avsnitt. */
@@ -109,10 +112,46 @@ export interface Format {
   dpi: 150 | 300;
 }
 
+export type Bannerstil = 'avrundet' | 'pensel' | 'band' | 'enkel';
+
+export interface Banner {
+  ramme: Rektangel;
+  tittel: string;
+  undertittel: string[];
+  stil: Bannerstil;
+  farge: string;
+  tekstfarge: string;
+  /** Skalering av skriften */
+  storrelse: number;
+  /** Tynne linjer på hver side av undertittelen */
+  linjer: boolean;
+}
+
+export type Dekortype = 'granskog' | 'lovskog' | 'steinbro' | 'gress' | 'kompass';
+
+export interface Dekor {
+  id: string;
+  type: Dekortype;
+  ramme: Rektangel;
+  farge: string;
+  /** Linjefarge (steiner på broa, ring på kompasset) */
+  farge2?: string;
+  speilvendt: boolean;
+  /** Frø for tilfeldig variasjon (trehøyder o.l.) */
+  fro: number;
+}
+
+export interface Tema {
+  bakgrunn: string;
+  font: 'serif' | 'sans';
+}
+
 export interface Skilt {
   navn: string;
   format: Format;
-  banner: { tittel: string; undertittel: string[]; farge: string };
+  tema: Tema;
+  banner: Banner;
+  dekor: Dekor[];
   forfatter?: string;
   kart: Kart;
   punkter: Kartpunkt[];

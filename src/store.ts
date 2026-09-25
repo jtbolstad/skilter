@@ -1,7 +1,9 @@
 import { create } from 'zustand';
 import { leggTilFil, ledigSti, type Filmappe } from './fil/mappetilgang';
 import { nyttUtsnitt } from './modell/importerMappe';
-import { angre, gjorOm, registrer, tomHistorikk, type Historikk } from './modell/historikk';
+import { angre, gjeldendeGest, gjorOm, registrer, tomHistorikk, type Historikk } from './modell/historikk';
+import { DEKORTYPER } from './geometri/dekor';
+import { lagOppsett, type Oppsettmal } from './modell/oppsett';
 import { RUTEMALER } from './modell/rutestiler';
 import type { ParsetTekst } from './modell/tekstParser';
 import type {
@@ -12,8 +14,12 @@ import type {
   Kartpunkt,
   Rektangel,
   Rute,
+  Banner,
+  Dekor,
+  Dekortype,
   Skilt,
   Stedsnavn,
+  Tema,
 } from './modell/typer';
 
 export type Valg =
@@ -21,7 +27,9 @@ export type Valg =
   | { type: 'kart' }
   | { type: 'card'; id: string }
   | { type: 'rute'; id: string }
-  | { type: 'stedsnavn'; id: string };
+  | { type: 'stedsnavn'; id: string }
+  | { type: 'banner' }
+  | { type: 'dekor'; id: string };
 export type Modus =
   | { type: 'normal' }
   | { type: 'kalibrer'; punkter: Bildepunkt[] }
@@ -53,6 +61,16 @@ interface Tilstand {
   settLagring(status: Lagringsstatus): void;
   /** Oppdaterer tittel og tekst i cards med samme nummer som seksjonene */
   oppdaterTekster(tekst: ParsetTekst): number;
+
+  endreBanner(patch: Partial<Banner>): void;
+  endreTema(patch: Partial<Tema>): void;
+  /** Plasserer banner, kart og cards etter en mal */
+  brukOppsett(mal: Oppsettmal): void;
+  leggTilDekor(type: Dekortype): string;
+  endreDekor(id: string, patch: Partial<Dekor>): void;
+  slettDekor(id: string): void;
+  /** Trær øverst til venstre, bro øverst til høyre og gress langs bunnen, som i utkastet */
+  leggTilUtkastDekor(): void;
   velg(valg: Valg): void;
   settModus(modus: Modus): void;
   settVisningsskala(skala: number): void;
@@ -81,6 +99,9 @@ interface Tilstand {
   endreStedsnavn(id: string, patch: Partial<Stedsnavn>): void;
   slettStedsnavn(id: string): void;
 }
+
+/** Lys stein med mørke fuger, synlig mot papirbakgrunnen */
+const STEINFARGE = '#ddd3bf';
 
 let teller = 0;
 /** Satt mens angre/gjør om endrer skiltet, så endringen ikke registreres som nytt steg */
@@ -178,6 +199,8 @@ export const useSkilt = create<Tilstand>()((set, get) => {
             ...t.skilt,
             format: { ...t.skilt.format, bredde_mm, hoyde_mm },
             kart: { ...t.skilt.kart, ramme: skalerRamme(t.skilt.kart.ramme, sx, sy) },
+            banner: { ...t.skilt.banner, ramme: skalerRamme(t.skilt.banner.ramme, sx, sy) },
+            dekor: t.skilt.dekor.map((d) => ({ ...d, ramme: skalerRamme(d.ramme, sx, sy) })),
             cards: t.skilt.cards.map((c) => ({ ...c, ramme: skalerRamme(c.ramme, sx, sy) })),
           },
         };
@@ -313,6 +336,81 @@ export const useSkilt = create<Tilstand>()((set, get) => {
             }
           : {},
       ),
+
+    endreBanner: (patch) => get().endreSkilt((sk) => ({ ...sk, banner: { ...sk.banner, ...patch } })),
+    endreTema: (patch) => get().endreSkilt((sk) => ({ ...sk, tema: { ...sk.tema, ...patch } })),
+    brukOppsett: (mal) =>
+      get().endreSkilt((sk) => {
+        const o = lagOppsett(mal, sk.format, sk.cards.length);
+        const rekkefolge = [...sk.cards].sort((a, b) => a.nummer - b.nummer).map((c) => c.id);
+        return {
+          ...sk,
+          banner: { ...sk.banner, ramme: o.banner },
+          kart: { ...sk.kart, ramme: o.kart },
+          cards: sk.cards.map((c) => ({ ...c, ramme: o.cards[rekkefolge.indexOf(c.id)]! })),
+        };
+      }),
+    leggTilDekor: (type) => {
+      const id = nyId('dekor');
+      const sk = get().skilt;
+      if (!sk) return id;
+      const u = Math.min(sk.format.bredde_mm, sk.format.hoyde_mm) / 594;
+      const { standard } = DEKORTYPER.find((d) => d.type === type)!;
+      const b = standard.b * u;
+      const h = standard.h * u;
+      const dekor: Dekor = {
+        id,
+        type,
+        ramme: { x: (sk.format.bredde_mm - b) / 2, y: (sk.format.hoyde_mm - h) / 2, b, h },
+        farge: type === 'steinbro' ? STEINFARGE : '#2f5a3c',
+        farge2: type === 'steinbro' ? '#2f5a3c' : undefined,
+        speilvendt: false,
+        fro: Math.floor(Math.random() * 1e6),
+      };
+      get().endreSkilt((s2) => ({ ...s2, dekor: [...s2.dekor, dekor] }));
+      set({ valg: { type: 'dekor', id }, modus: { type: 'normal' } });
+      return id;
+    },
+    endreDekor: (id, patch) =>
+      get().endreSkilt((sk) => ({
+        ...sk,
+        dekor: sk.dekor.map((d) => (d.id === id ? { ...d, ...patch } : d)),
+      })),
+    slettDekor: (id) => {
+      get().endreSkilt((sk) => ({ ...sk, dekor: sk.dekor.filter((d) => d.id !== id) }));
+      const v = get().valg;
+      if (v.type === 'dekor' && v.id === id) set({ valg: { type: 'skilt' } });
+    },
+    leggTilUtkastDekor: () =>
+      get().endreSkilt((sk) => {
+        const { bredde_mm: B, hoyde_mm: H } = sk.format;
+        const u = Math.min(B, H) / 594;
+        const gronn = '#2f5a3c';
+        const lag = (type: Dekortype, ramme: Dekor['ramme'], farge = gronn, speilvendt = false): Dekor => ({
+          id: nyId('dekor'),
+          type,
+          ramme,
+          farge,
+          farge2: type === 'steinbro' ? gronn : undefined,
+          speilvendt,
+          fro: Math.floor(Math.random() * 1e6),
+        });
+        const venstreKant = sk.banner.ramme.x - 4 * u;
+        return {
+          ...sk,
+          dekor: [
+            ...sk.dekor,
+            lag('granskog', { x: 4 * u, y: 4 * u, b: venstreKant - 4 * u, h: 62 * u }),
+            lag(
+              'steinbro',
+              { x: B - venstreKant + 12 * u, y: 12 * u, b: venstreKant - 20 * u, h: 52 * u },
+              STEINFARGE,
+            ),
+            lag('gress', { x: 0, y: H - 20 * u, b: B * 0.4, h: 20 * u }),
+            lag('gress', { x: B * 0.6, y: H - 20 * u, b: B * 0.4, h: 20 * u }, gronn, true),
+          ],
+        };
+      }),
   };
 });
 
@@ -320,5 +418,5 @@ export const useSkilt = create<Tilstand>()((set, get) => {
 useSkilt.subscribe((t, forrige) => {
   if (gjenoppretter || t.skilt === forrige.skilt || !forrige.skilt || t.prosjektId !== forrige.prosjektId)
     return;
-  useSkilt.setState({ historikk: registrer(t.historikk, forrige.skilt, performance.now()) });
+  useSkilt.setState({ historikk: registrer(t.historikk, forrige.skilt, performance.now(), gjeldendeGest()) });
 });

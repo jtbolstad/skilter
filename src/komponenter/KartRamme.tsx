@@ -114,7 +114,7 @@ function KartOverlegg({ kart, p, bilde }: { kart: Kart; p: Plassering; bilde: St
             <svg
               width={stokk.lengde_mm * skala + mm(24)}
               height={mm(22)}
-              className="overflow-visible font-serif"
+              className="overflow-visible"
               style={{ fontSize: mm(6.5) }}
             >
               <g transform={`translate(${mm(4)},0)`}>
@@ -145,14 +145,7 @@ function KartOverlegg({ kart, p, bilde }: { kart: Kart; p: Plassering; bilde: St
 function Nordpil({ storrelse, rotasjon }: { storrelse: number; rotasjon: number }) {
   return (
     <svg width={storrelse * 0.6} height={storrelse} viewBox="0 0 30 50" style={{ rotate: `${rotasjon}deg` }}>
-      <text
-        x="15"
-        y="12"
-        textAnchor="middle"
-        fontSize="13"
-        fontWeight="700"
-        fontFamily="'Source Serif 4', 'Noto Serif', serif"
-      >
+      <text x="15" y="12" textAnchor="middle" fontSize="13" fontWeight="700" fontFamily="inherit">
         N
       </text>
       <path d="M15 16 L25 48 L15 40 Z" fill="currentColor" />
