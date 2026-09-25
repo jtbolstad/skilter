@@ -1,14 +1,14 @@
 import { lenkesti } from '../geometri/card';
 import { bildepunktTilRamme, plasser } from '../geometri/utsnitt';
 import type { Skilt } from '../modell/typer';
-import { useSkilt } from '../store';
+import { useSkala } from './visning';
 import { kartEnhet } from './KartLag';
 import { markorRadius } from './KartRamme';
 import { useForhandsvisning } from './useForhandsvisning';
 
 /** Linjer fra cards til kartpunktene deres, tegnet over hele skiltet. */
 export function LenkeOverlegg({ skilt }: { skilt: Skilt }) {
-  const skala = useSkilt((t) => t.visningsskala);
+  const skala = useSkala();
   const { kart } = skilt;
   const f = useForhandsvisning(kart.bilde?.fil);
   if (!kart.bilde || !f) return null;

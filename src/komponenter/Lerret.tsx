@@ -1,11 +1,13 @@
 import type { Skilt } from '../modell/typer';
 import { useSkilt } from '../store';
+import { useEksport, useSkala } from './visning';
 import { CardVisning } from './CardVisning';
 import { KartRamme } from './KartRamme';
 import { LenkeOverlegg } from './LenkeOverlegg';
 
 export function Lerret({ skilt }: { skilt: Skilt }) {
-  const skala = useSkilt((t) => t.visningsskala);
+  const skala = useSkala();
+  const eksport = useEksport();
   const velg = useSkilt((t) => t.velg);
   const { bredde_mm: B, hoyde_mm: H } = skilt.format;
   const u = Math.min(B, H) / 594;
@@ -14,8 +16,9 @@ export function Lerret({ skilt }: { skilt: Skilt }) {
 
   return (
     <div
-      className="relative shrink-0 bg-[#f4efe3] shadow-xl select-none"
-      style={{ width: B * skala, height: H * skala }}
+      data-lerret
+      className={`relative shrink-0 bg-[#f4efe3] font-serif select-none ${eksport ? 'overflow-hidden' : 'shadow-xl'}`}
+      style={{ width: Math.round(B * skala), height: Math.round(H * skala) }}
       onPointerDown={() => velg({ type: 'skilt' })}
     >
       <header

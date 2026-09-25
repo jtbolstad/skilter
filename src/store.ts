@@ -1,7 +1,9 @@
 import { create } from 'zustand';
 import { leggTilFil, ledigSti, type Filmappe } from './fil/mappetilgang';
 import { nyttUtsnitt } from './modell/importerMappe';
+import { angre, gjorOm, registrer, tomHistorikk, type Historikk } from './modell/historikk';
 import { RUTEMALER } from './modell/rutestiler';
+import type { ParsetTekst } from './modell/tekstParser';
 import type {
   Bildepunkt,
   Bildeutsnitt,
@@ -28,7 +30,14 @@ export type Modus =
   | { type: 'tegn-rute'; ruteId: string }
   | { type: 'plasser-stedsnavn' };
 
+export type Lagringsstatus =
+  { type: 'lagret'; tid: Date } | { type: 'endret' } | { type: 'lagrer' } | { type: 'feil'; melding: string };
+
 interface Tilstand {
+  /** Økes for hvert prosjekt som åpnes, så historikk og lagring vet når prosjektet byttes */
+  prosjektId: number;
+  historikk: Historikk<Skilt>;
+  lagring?: Lagringsstatus;
   mappe?: Filmappe;
   skilt?: Skilt;
   valg: Valg;
@@ -39,6 +48,11 @@ interface Tilstand {
   tekstOverflyt: Record<string, boolean>;
 
   apneProsjekt(mappe: Filmappe, skilt: Skilt): void;
+  angre(): void;
+  gjorOm(): void;
+  settLagring(status: Lagringsstatus): void;
+  /** Oppdaterer tittel og tekst i cards med samme nummer som seksjonene */
+  oppdaterTekster(tekst: ParsetTekst): number;
   velg(valg: Valg): void;
   settModus(modus: Modus): void;
   settVisningsskala(skala: number): void;
@@ -69,6 +83,8 @@ interface Tilstand {
 }
 
 let teller = 0;
+/** Satt mens angre/gjør om endrer skiltet, så endringen ikke registreres som nytt steg */
+let gjenoppretter = false;
 const nyId = (prefiks: string) => `${prefiks}-${Date.now().toString(36)}-${teller++}`;
 
 const skalerRamme = (r: Rektangel, sx: number, sy: number): Rektangel => ({
@@ -91,9 +107,49 @@ export const useSkilt = create<Tilstand>()((set, get) => {
     modus: { type: 'normal' },
     visningsskala: 1,
     tekstOverflyt: {},
+    prosjektId: 0,
+    historikk: tomHistorikk(),
 
     apneProsjekt: (mappe, skilt) =>
-      set({ mappe, skilt, valg: { type: 'skilt' }, modus: { type: 'normal' }, tekstOverflyt: {} }),
+      set((t) => ({
+        mappe,
+        skilt,
+        valg: { type: 'skilt' },
+        modus: { type: 'normal' },
+        tekstOverflyt: {},
+        prosjektId: t.prosjektId + 1,
+        historikk: tomHistorikk(),
+        lagring: undefined,
+      })),
+    angre: () => {
+      const { skilt, historikk } = get();
+      const r = skilt && angre(historikk, skilt);
+      if (!r) return;
+      gjenoppretter = true;
+      set({ skilt: r.verdi, historikk: r.historikk, modus: { type: 'normal' } });
+      gjenoppretter = false;
+    },
+    gjorOm: () => {
+      const { skilt, historikk } = get();
+      const r = skilt && gjorOm(historikk, skilt);
+      if (!r) return;
+      gjenoppretter = true;
+      set({ skilt: r.verdi, historikk: r.historikk, modus: { type: 'normal' } });
+      gjenoppretter = false;
+    },
+    settLagring: (lagring) => set({ lagring }),
+    oppdaterTekster: (tekst) => {
+      let antall = 0;
+      endreCards((cards) => ({
+        cards: cards.map((c) => {
+          const seksjon = tekst.seksjoner.find((s) => s.nummer === c.nummer);
+          if (!seksjon || (seksjon.tittel === c.tittel && seksjon.tekst === c.tekst)) return c;
+          antall++;
+          return { ...c, tittel: seksjon.tittel, tekst: seksjon.tekst };
+        }),
+      }));
+      return antall;
+    },
     velg: (valg) => {
       const m = get().modus;
       // Beskjæring og tegning avsluttes når noe annet velges
@@ -258,4 +314,11 @@ export const useSkilt = create<Tilstand>()((set, get) => {
           : {},
       ),
   };
+});
+
+// Historikk: hver endring av skiltet (unntatt angre/gjør om og prosjektbytte) blir et angresteg
+useSkilt.subscribe((t, forrige) => {
+  if (gjenoppretter || t.skilt === forrige.skilt || !forrige.skilt || t.prosjektId !== forrige.prosjektId)
+    return;
+  useSkilt.setState({ historikk: registrer(t.historikk, forrige.skilt, performance.now()) });
 });

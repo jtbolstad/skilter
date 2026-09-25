@@ -8,8 +8,9 @@ import {
   type Storrelse,
 } from '../geometri/utsnitt';
 import type { Bildepunkt, Bildeutsnitt } from '../modell/typer';
-import { useSkilt } from '../store';
-import { useForhandsvisning } from './useForhandsvisning';
+import { MAKS_SIDE } from '../fil/forhandsvisning';
+import { useOriginalUrl, useForhandsvisning } from './useForhandsvisning';
+import { useVisning } from './visning';
 
 interface Props {
   utsnitt: Bildeutsnitt;
@@ -38,7 +39,7 @@ export function Bildevisning({
   visUtenfor,
   className,
 }: Props) {
-  const skala = useSkilt((t) => t.visningsskala);
+  const { skala, eksport, dpi } = useVisning();
   const f = useForhandsvisning(utsnitt.fil);
   const flate = useRef<HTMLDivElement>(null);
   const dra = useRef<{ x: number; y: number; flyttet: boolean }>(undefined);
@@ -74,11 +75,18 @@ export function Bildevisning({
     return () => el.removeEventListener('wheel', hjul);
   }, [interaktiv, lastet]);
 
-  if (!f || !bilde) {
-    return <div className={`size-full animate-pulse bg-stone-200 ${className ?? ''}`} />;
+  const p = bilde && plasser(utsnitt, ramme, bilde);
+  // Ved eksport: bruk originalen når forhåndsvisningen er for liten for trykkoppløsningen
+  const trengerPiksler = p && dpi ? (Math.max(p.bredde, p.hoyde) / 25.4) * dpi : 0;
+  const brukOriginal =
+    eksport && bilde !== undefined && (Math.max(bilde.b, bilde.h) <= MAKS_SIDE || trengerPiksler > MAKS_SIDE);
+  const original = useOriginalUrl(brukOriginal ? utsnitt.fil : undefined);
+  const url = brukOriginal ? original : f?.url;
+
+  if (!f || !bilde || !p || !url) {
+    return <div data-laster className={`size-full animate-pulse bg-stone-200 ${className ?? ''}`} />;
   }
 
-  const p = plasser(utsnitt, ramme, bilde);
   const lag = (ekstra: string) => (
     <div
       className={`absolute ${ekstra}`}
@@ -93,7 +101,7 @@ export function Bildevisning({
       }}
     >
       <img
-        src={f.url}
+        src={url}
         alt=""
         draggable={false}
         className="size-full max-w-none select-none"

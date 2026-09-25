@@ -3,7 +3,7 @@ import type { Prosjektmappe } from '../modell/importerMappe';
 
 const HANDLE_NOKKEL = 'sist-apnet-mappe';
 /** Mapper som ikke er prosjektinnhold */
-const HOPP_OVER = new Set(['app', 'node_modules', '.git', 'dist']);
+const HOPP_OVER = new Set(['app', 'node_modules', '.git', 'dist', 'eksport']);
 
 export interface Filmappe extends Prosjektmappe {
   /** Mangler for demomappa i dev */
@@ -84,14 +84,7 @@ export async function lagDemomappe(): Promise<Filmappe> {
  * Demomappa har ingen skrivetilgang – der holdes fila bare i minnet.
  */
 export async function leggTilFil(mappe: Filmappe, sti: string, fil: File): Promise<Filmappe> {
-  if (mappe.handle) {
-    const deler = sti.split('/');
-    let m = mappe.handle;
-    for (const del of deler.slice(0, -1)) m = await m.getDirectoryHandle(del, { create: true });
-    const skriver = await (await m.getFileHandle(deler.at(-1)!, { create: true })).createWritable();
-    await skriver.write(fil);
-    await skriver.close();
-  }
+  if (mappe.handle) await skrivFil(mappe, sti, fil);
   const forrigeLes = mappe.lesFil;
   return {
     ...mappe,
@@ -108,4 +101,15 @@ export function ledigSti(filer: string[], mappe: string, navn: string): string {
   let sti = `${mappe}/${navn}`;
   for (let i = 2; filer.includes(sti); i++) sti = `${mappe}/${stamme} (${i})${endelse}`;
   return sti;
+}
+
+/** Skriver en fil (tekst eller binær) rett i prosjektmappa. Krever ekte mappe. */
+export async function skrivFil(mappe: Filmappe, sti: string, innhold: Blob | string): Promise<void> {
+  if (!mappe.handle) throw new Error('Mappa har ikke skrivetilgang');
+  const deler = sti.split('/');
+  let m = mappe.handle;
+  for (const del of deler.slice(0, -1)) m = await m.getDirectoryHandle(del, { create: true });
+  const skriver = await (await m.getFileHandle(deler.at(-1)!, { create: true })).createWritable();
+  await skriver.write(innhold);
+  await skriver.close();
 }

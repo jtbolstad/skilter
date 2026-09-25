@@ -1,6 +1,6 @@
 import { useRef, type PointerEvent, type ReactNode } from 'react';
 import type { Rektangel } from '../modell/typer';
-import { useSkilt } from '../store';
+import { useEksport, useSkala } from './visning';
 
 type Handtak = 'flytt' | 'nv' | 'no' | 'sv' | 'so';
 
@@ -28,7 +28,8 @@ export function Flyttbar({
   zIndeks,
   children,
 }: Props) {
-  const skala = useSkilt((t) => t.visningsskala);
+  const skala = useSkala();
+  const eksport = useEksport();
   const start = useRef<{ handtak: Handtak; x: number; y: number; ramme: Rektangel; fanget: boolean }>(
     undefined,
   );
@@ -87,7 +88,7 @@ export function Flyttbar({
       {...(flyttMedInnhold ? hendelser : {})}
     >
       {children}
-      {valgt && (
+      {valgt && !eksport && (
         <>
           <div className="pointer-events-none absolute -inset-[3px] rounded-sm border-2 border-sky-500" />
           {!flyttMedInnhold && (

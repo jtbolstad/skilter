@@ -14,7 +14,7 @@ interface Lagret {
   hoyde: number;
 }
 
-const MAKS_SIDE = 2000;
+export const MAKS_SIDE = 2000;
 const PARALLELLE = 2;
 const cache = createStore('skilter-forhandsvisning', 'bilder');
 
@@ -66,6 +66,19 @@ export function hentForhandsvisning(
     })();
     p.catch(() => iMinne.delete(sti));
     iMinne.set(sti, p);
+  }
+  return p;
+}
+
+const originaler = new Map<string, Promise<string>>();
+
+/** Objekt-URL til originalfila (brukes ved eksport når forhåndsvisningen ikke holder). */
+export function hentOriginalUrl(sti: string, lesFil: (sti: string) => Promise<File>): Promise<string> {
+  let p = originaler.get(sti);
+  if (!p) {
+    p = lesFil(sti).then((f) => URL.createObjectURL(f));
+    p.catch(() => originaler.delete(sti));
+    originaler.set(sti, p);
   }
   return p;
 }

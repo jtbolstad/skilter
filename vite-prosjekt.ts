@@ -7,7 +7,7 @@ import type { Plugin } from 'vite';
  * åpnes med ?demo uten mappevelger – brukes til manuell testing og E2E.
  */
 export function devProsjekt(rot: string): Plugin {
-  const HOPP_OVER = new Set(['app', 'node_modules', '.git']);
+  const HOPP_OVER = new Set(['app', 'node_modules', '.git', 'eksport']);
   return {
     name: 'skilter-dev-prosjekt',
     apply: 'serve',

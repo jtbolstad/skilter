@@ -6,7 +6,8 @@ import {
   velgMappe,
   type Filmappe,
 } from './fil/mappetilgang';
-import { importerMappe } from './modell/importerMappe';
+import { EksportPanel } from './eksport/EksportPanel';
+import { apneProsjekt } from './fil/prosjekt';
 import { Lerret } from './komponenter/Lerret';
 import { Sidepanel } from './komponenter/Sidepanel';
 import { useSkilt } from './store';
@@ -20,7 +21,7 @@ export function App() {
     settFeil(undefined);
     try {
       const m = await hent();
-      if (m) useSkilt.getState().apneProsjekt(m, await importerMappe(m));
+      if (m) await apneProsjekt(m);
     } catch (e) {
       if (e instanceof DOMException && e.name === 'AbortError') return;
       settFeil(String(e));
@@ -60,9 +61,10 @@ function Verktoylinje({
   const settSkala = useSkilt((t) => t.settVisningsskala);
   const harSkilt = useSkilt((t) => t.skilt !== undefined);
   const knapp = 'rounded px-2 py-1 hover:bg-stone-100';
+  const [visEksport, settVisEksport] = useState(false);
 
   return (
-    <header className="flex h-12 shrink-0 items-center gap-2 border-b border-stone-200 bg-white px-3 text-sm">
+    <header className="relative flex h-12 shrink-0 items-center gap-2 border-b border-stone-200 bg-white px-3 text-sm">
       <span className="mr-3 font-serif text-lg font-bold">🪧 Skilter</span>
       <button className={knapp} onClick={onApne}>
         📂 Åpne mappe
@@ -73,6 +75,8 @@ function Verktoylinje({
         </button>
       )}
       {mappenavn && <span className="text-stone-500">{mappenavn}</span>}
+      {harSkilt && <Angreknapper />}
+      <Lagringsstatus />
       {harSkilt && (
         <div className="ml-auto flex items-center gap-1">
           <button className={knapp} onClick={() => settSkala(skala / 1.25)} title="Zoom ut (Ctrl+scroll)">
@@ -85,8 +89,15 @@ function Verktoylinje({
           <button className={knapp} onClick={() => window.dispatchEvent(new Event('skilter:tilpass'))}>
             Tilpass
           </button>
+          <button
+            className="ml-3 rounded bg-emerald-700 px-3 py-1 text-white hover:bg-emerald-800"
+            onClick={() => settVisEksport(!visEksport)}
+          >
+            ⬇ Eksporter
+          </button>
         </div>
       )}
+      {harSkilt && visEksport && <EksportPanel onLukk={() => settVisEksport(false)} />}
     </header>
   );
 }
@@ -140,6 +151,16 @@ function Arbeidsflate() {
         }
       }
       if (e.key === 'Escape') s.settModus({ type: 'normal' });
+      // Angre i tekstfelt håndteres av nettleseren
+      if (iSkjema || !(e.ctrlKey || e.metaKey)) return;
+      const bokstav = e.key.toLowerCase();
+      if (bokstav === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        s.angre();
+      } else if (bokstav === 'y' || (bokstav === 'z' && e.shiftKey)) {
+        e.preventDefault();
+        s.gjorOm();
+      }
     };
     window.addEventListener('keydown', tast);
     return () => window.removeEventListener('keydown', tast);
@@ -188,5 +209,56 @@ function Velkommen({ onApne, onGjenapne }: { onApne(): void; onGjenapne(): void 
         </button>
       )}
     </div>
+  );
+}
+
+function Angreknapper() {
+  const kanAngre = useSkilt((t) => t.historikk.fortid.length > 0);
+  const kanGjoreOm = useSkilt((t) => t.historikk.fremtid.length > 0);
+  const { angre, gjorOm } = useSkilt.getState();
+  const knapp = 'rounded px-2 py-1 hover:bg-stone-100 disabled:opacity-30';
+  return (
+    <div className="ml-2 flex">
+      <button
+        className={knapp}
+        disabled={!kanAngre}
+        onClick={angre}
+        title="Angre (Ctrl+Z)"
+        aria-label="Angre"
+      >
+        ↶
+      </button>
+      <button
+        className={knapp}
+        disabled={!kanGjoreOm}
+        onClick={gjorOm}
+        title="Gjør om (Ctrl+Y)"
+        aria-label="Gjør om"
+      >
+        ↷
+      </button>
+    </div>
+  );
+}
+
+function Lagringsstatus() {
+  const status = useSkilt((t) => t.lagring);
+  const demo = useSkilt((t) => t.mappe !== undefined && !t.mappe.handle);
+  if (!status) return null;
+  const tekst =
+    status.type === 'lagret'
+      ? `✓ Lagret ${status.tid.toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' })}${demo ? ' (i nettleseren)' : ''}`
+      : status.type === 'feil'
+        ? `⚠ Ikke lagret: ${status.melding}`
+        : status.type === 'lagrer'
+          ? 'Lagrer …'
+          : 'Endret';
+  return (
+    <span
+      data-testid="lagringsstatus"
+      className={`ml-2 text-xs ${status.type === 'feil' ? 'text-rose-700' : 'text-stone-500'}`}
+    >
+      {tekst}
+    </span>
   );
 }

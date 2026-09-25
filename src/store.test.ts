@@ -108,3 +108,42 @@ describe('ruter og stedsnavn', () => {
     expect(s().valg.type).toBe('kart');
   });
 });
+
+describe('angre og gjør om', () => {
+  beforeEach(lagProsjekt);
+
+  it('angrer og gjør om endringer', async () => {
+    s().endreCard('card-1', { tittel: 'A' });
+    // Vent til neste endring blir eget steg
+    await new Promise((r) => setTimeout(r, 650));
+    s().endreCard('card-1', { tittel: 'B' });
+    s().angre();
+    expect(s().skilt!.cards[0]!.tittel).toBe('A');
+    s().angre();
+    expect(s().skilt!.cards[0]!.tittel).toBe('Slora');
+    s().gjorOm();
+    expect(s().skilt!.cards[0]!.tittel).toBe('A');
+  });
+
+  it('nytt prosjekt tømmer historikken', async () => {
+    s().endreCard('card-1', { tittel: 'A' });
+    await lagProsjekt();
+    expect(s().historikk.fortid).toEqual([]);
+  });
+});
+
+describe('oppdaterTekster', () => {
+  beforeEach(lagProsjekt);
+
+  it('oppdaterer cards med samme nummer', () => {
+    const antall = s().oppdaterTekster({
+      tittel: 'T',
+      seksjoner: [
+        { nummer: 1, tittel: 'Slora', tekst: 'Ny tekst' },
+        { nummer: 9, tittel: 'Finnes ikke', tekst: '' },
+      ],
+    });
+    expect(antall).toBe(1);
+    expect(s().skilt!.cards[0]!.tekst).toBe('Ny tekst');
+  });
+});

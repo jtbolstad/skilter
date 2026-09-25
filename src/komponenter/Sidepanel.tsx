@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { parseTekst } from '../modell/tekstParser';
 import { formaterAvstand, meterPerPiksel } from '../geometri/malestokk';
 import { FORMATER, type Formatnavn } from '../modell/oppsett';
 import type { Kart, Skilt } from '../modell/typer';
@@ -120,6 +122,10 @@ function SkiltEgenskaper({ skilt }: { skilt: Skilt }) {
             <option value={300}>300 DPI</option>
           </select>
         </Felt>
+      </Seksjon>
+
+      <Seksjon tittel="Prosjekt">
+        <LesTekstPaNytt />
       </Seksjon>
 
       <Seksjon tittel="Banner">
@@ -322,5 +328,29 @@ function Kalibrering() {
         </button>
       </div>
     </form>
+  );
+}
+
+function LesTekstPaNytt() {
+  const mappe = useSkilt((t) => t.mappe);
+  const [melding, settMelding] = useState<string>();
+  if (!mappe?.filer.includes('tekst.txt')) return null;
+  return (
+    <>
+      <button
+        className={knapp}
+        onClick={async () => {
+          const antall = useSkilt.getState().oppdaterTekster(parseTekst(await mappe.lesTekst('tekst.txt')));
+          settMelding(
+            antall ? `Oppdaterte ${antall} card${antall === 1 ? '' : 's'}.` : 'Ingen endringer i tekst.txt.',
+          );
+        }}
+      >
+        ↻ Les inn tekst.txt på nytt
+      </button>
+      <p className="text-stone-500">
+        {melding ?? 'Henter titler og tekster fra tekst.txt. Oppsett og bilder beholdes. Kan angres.'}
+      </p>
+    </>
   );
 }

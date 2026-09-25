@@ -3,6 +3,7 @@ import { useRef } from 'react';
 import { bildepunktTilRamme, rammeTilBildepunkt, type Plassering, type Storrelse } from '../geometri/utsnitt';
 import type { Card, Kart, Kartpunkt } from '../modell/typer';
 import { useSkilt } from '../store';
+import { useModus, useSkala, useValg } from './visning';
 import { Bildevisning } from './Bildevisning';
 import { Flyttbar } from './Flyttbar';
 import { kartEnhet, Ruter, Stedsnavnlag, Tegneflate, Tegnforklaring } from './KartLag';
@@ -10,8 +11,8 @@ import { kartEnhet, Ruter, Stedsnavnlag, Tegneflate, Tegnforklaring } from './Ka
 export const markorRadius = (kart: Kart) => 4.5 * kartEnhet(kart);
 
 export function KartRamme({ kart }: { kart: Kart }) {
-  const valgt = useSkilt((t) => t.valg.type === 'kart');
-  const modus = useSkilt((t) => t.modus);
+  const valgt = useValg().type === 'kart';
+  const modus = useModus();
   const { velg, endreKart, settModus, plasserPunkt } = useSkilt.getState();
   const kalibrerer = modus.type === 'kalibrer';
   const plasserer = modus.type === 'plasser-punkt' || modus.type === 'plasser-stedsnavn';
@@ -71,8 +72,8 @@ export function KartRamme({ kart }: { kart: Kart }) {
 }
 
 function KartOverlegg({ kart, p, bilde }: { kart: Kart; p: Plassering; bilde: Storrelse }) {
-  const skala = useSkilt((t) => t.visningsskala);
-  const modus = useSkilt((t) => t.modus);
+  const skala = useSkala();
+  const modus = useModus();
   const u = kartEnhet(kart) * 0.7; // nordpil og målestokk
   const mm = (v: number) => v * u * skala;
 
@@ -144,7 +145,14 @@ function KartOverlegg({ kart, p, bilde }: { kart: Kart; p: Plassering; bilde: St
 function Nordpil({ storrelse, rotasjon }: { storrelse: number; rotasjon: number }) {
   return (
     <svg width={storrelse * 0.6} height={storrelse} viewBox="0 0 30 50" style={{ rotate: `${rotasjon}deg` }}>
-      <text x="15" y="12" textAnchor="middle" fontSize="13" fontWeight="700" fontFamily="serif">
+      <text
+        x="15"
+        y="12"
+        textAnchor="middle"
+        fontSize="13"
+        fontWeight="700"
+        fontFamily="'Source Serif 4', 'Noto Serif', serif"
+      >
         N
       </text>
       <path d="M15 16 L25 48 L15 40 Z" fill="currentColor" />
@@ -156,7 +164,8 @@ function Nordpil({ storrelse, rotasjon }: { storrelse: number; rotasjon: number 
 function Markorer({ kart, p }: { kart: Kart; p: Plassering }) {
   const punkter = useSkilt((t) => t.skilt?.punkter ?? []);
   const cards = useSkilt((t) => t.skilt?.cards ?? []);
-  const valgtCard = useSkilt((t) => (t.valg.type === 'card' ? t.valg.id : undefined));
+  const valg = useValg();
+  const valgtCard = valg.type === 'card' ? valg.id : undefined;
   return punkter.map((punkt) => {
     const eiere = cards.filter((c) => c.lenke?.punktId === punkt.id);
     return (
@@ -185,7 +194,7 @@ function Markor({
   eier?: Card;
   uthevet: boolean;
 }) {
-  const skala = useSkilt((t) => t.visningsskala);
+  const skala = useSkala();
   const dra = useRef<{ rammeVenstre: number; rammeTopp: number }>(undefined);
   const { x, y } = bildepunktTilRamme(punkt.posisjon, p);
   const r = markorRadius(kart) * skala;

@@ -5,6 +5,7 @@ import { bildepunktTilRamme, rammeTilBildepunkt, type Plassering } from '../geom
 import { STEDSNAVN_STORRELSE } from '../modell/rutestiler';
 import type { Hjorne, Kart, Rute, Stedsnavn } from '../modell/typer';
 import { useSkilt } from '../store';
+import { useModus, useSkala, useValg } from './visning';
 
 /** Kartets egen enhet: 1 ved standard kartbredde på A1 (≈310 mm), skalerer med kartrammen */
 export const kartEnhet = (kart: Kart) => kart.ramme.b / 310;
@@ -37,9 +38,9 @@ export function ruteSti(rute: Rute, p: Plassering): { d: string; punkter: Punkt[
 
 export function Ruter({ kart, p }: { kart: Kart; p: Plassering }) {
   const ruter = useSkilt((t) => t.skilt?.ruter ?? []);
-  const valg = useSkilt((t) => t.valg);
-  const modus = useSkilt((t) => t.modus);
-  const skala = useSkilt((t) => t.visningsskala);
+  const valg = useValg();
+  const modus = useModus();
+  const skala = useSkala();
   const tegner = modus.type === 'tegn-rute' ? modus.ruteId : undefined;
   const aktiv = valg.type === 'rute' ? valg.id : tegner;
 
@@ -68,7 +69,7 @@ function RuteGrafikk({
   valgt: boolean;
   tegner: boolean;
 }) {
-  const skala = useSkilt((t) => t.visningsskala);
+  const skala = useSkala();
   const { d, punkter } = ruteSti(rute, p);
   const dra = useRef<{ indeks: number; flate: Element }>(undefined);
   const treffbredde = Math.max(3, rute.stil.bredde * 3);
@@ -159,7 +160,7 @@ function RuteGrafikk({
  * og Shift+dra tegner frihånd. Vanlige klikk og dra går videre til kartet (legg til punkt / panorer).
  */
 export function Tegneflate({ kart, p, rute }: { kart: Kart; p: Plassering; rute: Rute }) {
-  const skala = useSkilt((t) => t.visningsskala);
+  const skala = useSkala();
   const [peker, settPeker] = useState<Punkt>();
   const frihand = useRef<Punkt[]>(undefined);
   const [frihandSti, settFrihandSti] = useState<Punkt[]>();
@@ -230,8 +231,9 @@ export function Stedsnavnlag({ kart, p }: { kart: Kart; p: Plassering }) {
 }
 
 function Stedsnavnetikett({ sted, kart, p }: { sted: Stedsnavn; kart: Kart; p: Plassering }) {
-  const skala = useSkilt((t) => t.visningsskala);
-  const valgt = useSkilt((t) => t.valg.type === 'stedsnavn' && t.valg.id === sted.id);
+  const skala = useSkala();
+  const valg = useValg();
+  const valgt = valg.type === 'stedsnavn' && valg.id === sted.id;
   const dra = useRef<{ flate: Element; dx: number; dy: number }>(undefined);
   const { x, y } = bildepunktTilRamme(sted.posisjon, p);
   const storrelse = STEDSNAVN_STORRELSE[sted.storrelse] * kartEnhet(kart) * skala;
@@ -291,7 +293,7 @@ const HJORNE_STIL: Record<Hjorne, CSSProperties> = {
 
 export function Tegnforklaring({ kart }: { kart: Kart }) {
   const ruter = useSkilt((t) => t.skilt?.ruter ?? []);
-  const skala = useSkilt((t) => t.visningsskala);
+  const skala = useSkala();
   const vises = ruter.filter((r) => r.visITegnforklaring && r.punkter.length >= 2);
   if (!kart.tegnforklaring.vis || vises.length === 0) return null;
 

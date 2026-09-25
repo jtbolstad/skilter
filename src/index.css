@@ -1,7 +1,7 @@
 @import 'tailwindcss';
 
 @theme {
-  --font-serif: 'Source Serif 4 Variable', Georgia, serif;
+  --font-serif: 'Source Serif 4', 'Noto Serif', Georgia, serif;
 }
 
 html,

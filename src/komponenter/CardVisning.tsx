@@ -4,6 +4,7 @@ import { nyttUtsnitt } from '../modell/importerMappe';
 import { delAvsnitt, parseAvsnitt } from '../modell/riktekst';
 import type { Card } from '../modell/typer';
 import { useSkilt } from '../store';
+import { useEksport, useSkala } from './visning';
 import { Bildevisning } from './Bildevisning';
 import { Flyttbar } from './Flyttbar';
 
@@ -11,10 +12,11 @@ import { Flyttbar } from './Flyttbar';
 export const BILDE_DRA_TYPE = 'application/x-skilter-bilde';
 
 export function CardVisning({ card }: { card: Card }) {
-  const valgt = useSkilt((t) => t.valg.type === 'card' && t.valg.id === card.id);
-  const beskjaerer = useSkilt((t) => t.modus.type === 'beskjaer' && t.modus.cardId === card.id);
-  const overflyt = useSkilt((t) => t.tekstOverflyt[card.id] ?? false);
-  const skala = useSkilt((t) => t.visningsskala);
+  const eksport = useEksport();
+  const valgt = useSkilt((t) => t.valg.type === 'card' && t.valg.id === card.id) && !eksport;
+  const beskjaerer = useSkilt((t) => t.modus.type === 'beskjaer' && t.modus.cardId === card.id) && !eksport;
+  const overflyt = useSkilt((t) => t.tekstOverflyt[card.id] ?? false) && !eksport;
+  const skala = useSkala();
   const { velg, endreCard, endreBilde, settModus } = useSkilt.getState();
   const [slippMal, settSlippMal] = useState(false);
 
@@ -35,47 +37,48 @@ export function CardVisning({ card }: { card: Card }) {
     velg({ type: 'card', id: card.id });
   };
 
-  const bilde = (
-    <div
-      data-testid="cardbilde"
-      className={`relative shrink-0 ${beskjaerer ? 'z-10' : 'overflow-hidden'}`}
-      style={{ width: px(bildeRamme.b), height: px(bildeRamme.h) }}
-      onDoubleClick={(e) => {
-        e.stopPropagation();
-        if (card.bilde) settModus(beskjaerer ? { type: 'normal' } : { type: 'beskjaer', cardId: card.id });
-      }}
-    >
-      {card.bilde ? (
-        <Bildevisning
-          utsnitt={card.bilde}
-          ramme={bildeRamme}
-          interaktiv={beskjaerer}
-          visUtenfor={beskjaerer}
-          onEndre={(u) => endreBilde(card.id, u)}
-        />
-      ) : (
-        <div
-          data-kun-editor
-          className="grid size-full place-items-center border-2 border-dashed border-stone-300 text-center text-stone-400"
-          style={{ fontSize: px(m.tekst) }}
-        >
-          Dra et bilde hit
-        </div>
-      )}
-      {card.bilde?.kreditering && (
-        <span
-          className="pointer-events-none absolute right-0 bottom-0 text-white italic"
-          style={{
-            fontSize: px(m.tekst * 0.55),
-            padding: `0 ${px(m.pad * 0.3)}px`,
-            textShadow: '0 0 3px rgb(0 0 0 / .8)',
-          }}
-        >
-          {card.bilde.kreditering}
-        </span>
-      )}
-    </div>
-  );
+  const bilde =
+    !card.bilde && eksport ? null : (
+      <div
+        data-testid="cardbilde"
+        className={`relative shrink-0 ${beskjaerer ? 'z-10' : 'overflow-hidden'}`}
+        style={{ width: px(bildeRamme.b), height: px(bildeRamme.h) }}
+        onDoubleClick={(e) => {
+          e.stopPropagation();
+          if (card.bilde) settModus(beskjaerer ? { type: 'normal' } : { type: 'beskjaer', cardId: card.id });
+        }}
+      >
+        {card.bilde ? (
+          <Bildevisning
+            utsnitt={card.bilde}
+            ramme={bildeRamme}
+            interaktiv={beskjaerer}
+            visUtenfor={beskjaerer}
+            onEndre={(u) => endreBilde(card.id, u)}
+          />
+        ) : (
+          <div
+            data-kun-editor
+            className="grid size-full place-items-center border-2 border-dashed border-stone-300 text-center text-stone-400"
+            style={{ fontSize: px(m.tekst) }}
+          >
+            Dra et bilde hit
+          </div>
+        )}
+        {card.bilde?.kreditering && (
+          <span
+            className="pointer-events-none absolute right-0 bottom-0 text-white italic"
+            style={{
+              fontSize: px(m.tekst * 0.55),
+              padding: `0 ${px(m.pad * 0.3)}px`,
+              textShadow: '0 0 3px rgb(0 0 0 / .8)',
+            }}
+          >
+            {card.bilde.kreditering}
+          </span>
+        )}
+      </div>
+    );
 
   return (
     <Flyttbar
@@ -136,7 +139,7 @@ export function CardVisning({ card }: { card: Card }) {
 }
 
 function Tittel({ card }: { card: Card }) {
-  const skala = useSkilt((t) => t.visningsskala);
+  const skala = useSkala();
   return (
     <h2 className="shrink-0 leading-tight font-bold" style={{ fontSize: cardMal(card).tittel * skala }}>
       {card.tittel}
@@ -145,19 +148,28 @@ function Tittel({ card }: { card: Card }) {
 }
 
 function Brodtekst({ card }: { card: Card }) {
-  const skala = useSkilt((t) => t.visningsskala);
+  const skala = useSkala();
+  const eksport = useEksport();
   const settOverflyt = useSkilt((t) => t.settOverflyt);
   const ref = useRef<HTMLDivElement>(null);
   const storrelse = cardMal(card).tekst * skala;
 
   useLayoutEffect(() => {
     const el = ref.current;
-    if (!el) return;
+    if (!el || eksport) return;
     const sjekk = () => settOverflyt(card.id, el.scrollHeight > el.clientHeight + 1);
     sjekk();
-    const obs = new ResizeObserver(sjekk);
+    // Mål i neste frame, så ikke endringen utløser ny ResizeObserver-runde i samme frame
+    let ramme = 0;
+    const obs = new ResizeObserver(() => {
+      cancelAnimationFrame(ramme);
+      ramme = requestAnimationFrame(sjekk);
+    });
     obs.observe(el);
-    return () => obs.disconnect();
+    return () => {
+      obs.disconnect();
+      cancelAnimationFrame(ramme);
+    };
   });
 
   return (
@@ -181,7 +193,7 @@ function Brodtekst({ card }: { card: Card }) {
 
 /** Dra for å endre forholdet mellom bilde og tekst. */
 function Skillelinje({ card, retning }: { card: Card; retning: 'vannrett' | 'loddrett' }) {
-  const skala = useSkilt((t) => t.visningsskala);
+  const skala = useSkala();
   const start = useRef<{ pos: number; card: Card }>(undefined);
   const vannrett = retning === 'vannrett';
 
