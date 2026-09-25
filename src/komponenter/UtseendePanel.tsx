@@ -63,8 +63,6 @@ export function TemaOgOppsett({ skilt }: { skilt: Skilt }) {
         </Gruppe>
       </Seksjon>
 
-      <AlleCards skilt={skilt} />
-
       <Seksjon tittel="Oppsett">
         <p className="text-stone-500">
           Plasserer banner, kart og cards på nytt. Innholdet beholdes, og det kan angres.
@@ -123,8 +121,21 @@ function Prosent({
   );
 }
 
+/** Knapper som ordner cardene automatisk. Ligger øverst i skiltpanelet. */
+export function Tilpass() {
+  const { festCardsTilRutenett } = useSkilt.getState();
+  return (
+    <Seksjon tittel="Tilpass">
+      <Autojuster />
+      <button className={knapp} onClick={festCardsTilRutenett}>
+        # Plasser cards på rutenettet (5 mm)
+      </button>
+    </Seksjon>
+  );
+}
+
 /** Justeringer som gjelder alle cards og linjene til kartet på en gang. */
-function AlleCards({ skilt }: { skilt: Skilt }) {
+export function AlleCards({ skilt }: { skilt: Skilt }) {
   const { endreTema, endreAlleCards } = useSkilt.getState();
   const { cards, tema } = skilt;
   const tekststorrelse = cards[0]?.tekststorrelse ?? 1;
@@ -147,27 +158,23 @@ function AlleCards({ skilt }: { skilt: Skilt }) {
         etikett="Rammetykkelse"
         verdi={tema.kantbredde}
         min={0}
-        maks={3}
+        maks={8}
         onEndre={tema1('kantbredde')}
       />
       <Prosent
         etikett="Hjørneradius"
         verdi={tema.hjorneradius}
         min={0}
-        maks={4}
+        maks={8}
         onEndre={tema1('hjorneradius')}
       />
       <Prosent
         etikett="Linjetykkelse til kartet"
         verdi={tema.lenkebredde}
         min={0.3}
-        maks={3}
+        maks={8}
         onEndre={tema1('lenkebredde')}
       />
-      <Autojuster />
-      <button className={knapp} onClick={() => useSkilt.getState().festCardsTilRutenett()}>
-        # Plasser cards på rutenettet (5 mm)
-      </button>
       <Gruppe etikett="Linjestil til kartet">
         <div className="flex gap-2">
           {LENKESTILER.map((l) => (

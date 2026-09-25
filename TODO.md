@@ -22,6 +22,14 @@
 - [x] Vis dekorlag i en gruppe i sidemenyen
 - [x] Nedlastbar app (Tauri, `pnpm app:build`)
 
+## Cards
+
+- [x] Skriften endres ikke når cardet endrer størrelse (skalerer med skiltformatet)
+- [x] Ramme-, hjørne- og linjetykkelse opp til 800 %
+- [x] Tilpass-knappene øverst i skiltpanelet, format nederst
+- [x] Delete sletter valgt card (kan angres)
+- [x] Knapp for nytt card (+ Nytt card i laglista)
+
 ## Senere
 
 - [ ] Lage og veksle mellom flere skilt

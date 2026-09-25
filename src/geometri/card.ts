@@ -1,4 +1,4 @@
-import type { Bildeaspekt, Card, Rektangel, Tema } from '../modell/typer';
+import type { Bildeaspekt, Card, Rektangel, Skilt, Tema } from '../modell/typer';
 import type { Storrelse } from './utsnitt';
 
 export const ASPEKTER: Record<Exclude<Bildeaspekt, 'fri' | 'bilde'>, number> = {
@@ -14,12 +14,24 @@ export const MIN_ANDEL = 0.1;
 const MAKS_ANDEL = 0.85;
 
 type Cardmal = Pick<Card, 'ramme' | 'tekststorrelse'>;
-/** Globale card-innstillinger fra temaet. Mangler de, brukes standardmålene. */
-export type Cardstil = Partial<Pick<Tema, 'kantbredde' | 'hjorneradius'>>;
+/** Globale card-innstillinger. Mangler de, brukes standardmålene for A1. */
+export type Cardstil = Partial<Pick<Tema, 'kantbredde' | 'hjorneradius'>> & {
+  /** Skiltets enhet: 1 på A1, mindre på mindre formater (korteste side / 594 mm) */
+  enhet?: number;
+};
 
-/** Card-mål i mm, relativt til cardets bredde slik at tekst skalerer med formatet. */
+export const cardstil = (skilt: Pick<Skilt, 'tema' | 'format'>): Cardstil => ({
+  kantbredde: skilt.tema.kantbredde,
+  hjorneradius: skilt.tema.hjorneradius,
+  enhet: Math.min(skilt.format.bredde_mm, skilt.format.hoyde_mm) / 594,
+});
+
+/**
+ * Card-mål i mm. Skalerer med skiltformatet, ikke med cardet, så skrift og ramme er like store
+ * i alle cards uansett hvor store de er.
+ */
 export function cardMal(card: Cardmal, stil: Cardstil = {}) {
-  const u = card.ramme.b / 235;
+  const u = stil.enhet ?? 1;
   const t = card.tekststorrelse;
   return {
     kant: 1.6 * u * (stil.kantbredde ?? 1),
@@ -40,8 +52,8 @@ export const bildeTilSiden = (card: Pick<Card, 'layout'>) =>
   card.layout === 'bilde-venstre' || card.layout === 'bilde-hoyre';
 
 /** Høyden tittelen tar (én linje) inkludert mellomrom under. */
-export function tittelHoyde(card: Cardmal): number {
-  const m = cardMal(card);
+export function tittelHoyde(card: Cardmal, stil: Cardstil = {}): number {
+  const m = cardMal(card, stil);
   return m.tittel * 1.25 + m.gap;
 }
 
@@ -59,11 +71,11 @@ export function bildeRammeForCard(card: Card, naturligAspekt?: number, stil: Car
         : ASPEKTER[card.bildeAspekt];
 
   if (bildeTilSiden(card)) {
-    const h = card.tittelHelBredde ? indre.h - tittelHoyde(card) : indre.h;
+    const h = card.tittelHelBredde ? indre.h - tittelHoyde(card, stil) : indre.h;
     const onsket = aspekt ? h * aspekt : indre.b * card.bildeAndel;
     return { b: Math.min(onsket, indre.b * MAKS_ANDEL), h };
   }
-  const tilgjengelig = indre.h - tittelHoyde(card);
+  const tilgjengelig = indre.h - tittelHoyde(card, stil);
   const onsket = aspekt ? indre.b / aspekt : card.ramme.h * card.bildeAndel;
   // Høye bilder over teksten krympes i bredden i stedet for å fylle hele cardet
   if (onsket > tilgjengelig * MAKS_ANDEL && aspekt) {

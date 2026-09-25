@@ -114,10 +114,14 @@ Velg et kort for å endre:
 > **«Tekst kuttet»** i hjørnet betyr at teksten ikke får plass. Gjør kortet større, bildet mindre,
 > teksten mindre, eller kort ned teksten. Merket kommer ikke med på trykk.
 
-Trykk **⤢ Tilpass bildene så teksten får plass** under **Alle cards** (velg **🪧 Skilt**), så gjør appen
+Trykk **⤢ Tilpass bildene så teksten får plass** under **Tilpass** (velg **🪧 Skilt**), så gjør appen
 bildet i hvert kuttet kort akkurat så mye mindre som trengs. Det kan angres med ett trykk. Under
 **Alle cards** stiller du også tekststørrelse, rammetykkelse, hjørneradius og linjene til kartet for alle
 kortene på en gang.
+
+**+ Nytt card** nederst i laglista lager et tomt kort midt på skiltet. Velg et kort og trykk **Delete**
+(eller **Slett card**) for å fjerne det; det kan angres med Ctrl+Z. Skriften i kortene er like stor
+uansett hvor store kortene er – bruk **Tekststørrelse** under **Alle cards** for å endre den.
 
 Har du endret tekstfila etter at du startet? Velg **🪧 Skilt**, velg fil og format (vanligvis
 **Automatisk**) og trykk **↻ Les inn tekst på nytt**. Titler og tekster oppdateres, mens oppsett og

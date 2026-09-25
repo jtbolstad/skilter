@@ -196,7 +196,7 @@ describe('utseende', () => {
     expect(b!.lenke).toBeUndefined();
   });
 
-  it('slettValgt sletter valgt dekor, vei og stedsnavn, men ikke cards', () => {
+  it('slettValgt sletter valgt dekor, vei og stedsnavn', () => {
     const dekor = s().leggTilDekor('gress');
     expect(s().slettValgt()).toBe(true);
     expect(s().skilt!.dekor.find((d) => d.id === dekor)).toBeUndefined();
@@ -211,10 +211,28 @@ describe('utseende', () => {
     s().velg({ type: 'rute', id: rute });
     expect(s().slettValgt()).toBe(true);
     expect(s().skilt!.ruter).toEqual([]);
+  });
 
+  it('card slettes med punktet sitt, og kan angres', () => {
+    nyGest();
+    s().plasserPunkt('card-1', punkt(0.2, 0.3));
+    nyGest();
     s().velg({ type: 'card', id: 'card-1' });
-    expect(s().slettValgt()).toBe(false);
+    expect(s().slettValgt()).toBe(true);
+    expect(s().skilt!.cards.map((c) => c.id)).toEqual(['card-6']);
+    expect(s().skilt!.punkter).toEqual([]);
+    expect(s().valg.type).toBe('skilt');
+    s().angre();
     expect(s().skilt!.cards).toHaveLength(2);
+    expect(s().skilt!.punkter).toHaveLength(1);
+  });
+
+  it('nytt card får neste nummer, samme størrelse som de andre og blir valgt', () => {
+    const id = s().leggTilCard();
+    const nytt = s().skilt!.cards.at(-1)!;
+    expect(nytt).toMatchObject({ id, nummer: 7, tittel: 'Nytt card', tekst: '' });
+    expect(nytt.ramme.b).toBe(s().skilt!.cards[0]!.ramme.b);
+    expect(s().valg).toEqual({ type: 'card', id });
   });
 
   it('festCardsTilRutenett fester alle kantene på alle cards', () => {

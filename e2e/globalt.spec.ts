@@ -48,10 +48,33 @@ test('Delete sletter valgt dekor, og dekor vises som gruppe i laglista', async (
   await expect(page.getByTestId('dekor')).toHaveCount(1);
   await expect(liste(page).getByRole('button', { name: /Dekor \(1\)/ })).toBeVisible();
 
-  // Cards slettes ikke med Delete
+  // Valgt card slettes også, og kan angres
   await liste(page).getByRole('button', { name: '1. Slora' }).click();
   await page.keyboard.press('Delete');
+  await expect(page.getByTestId('card-1')).toBeHidden();
+  await page.keyboard.press('Control+z');
   await expect(page.getByTestId('card-1')).toBeVisible();
+});
+
+test('nytt card, og skriften endres ikke når cardet endrer størrelse', async ({ page }) => {
+  await apneDemo(page);
+  await liste(page).getByRole('button', { name: '+ Nytt card' }).click();
+  const nytt = page.getByTestId('card-9');
+  await expect(nytt.getByRole('heading')).toHaveText('Nytt card');
+  await expect(page.getByRole('textbox', { name: 'Tittel' })).toHaveValue('Nytt card');
+
+  const card = page.getByTestId('card-1');
+  await liste(page).getByRole('button', { name: '1. Slora' }).click();
+  const skrift = () => card.getByRole('heading').evaluate((h) => getComputedStyle(h).fontSize);
+  const foer = await skrift();
+  const b = (await card.boundingBox())!;
+  // Dra i sørøstre hjørne
+  await page.mouse.move(b.x + b.width + 2, b.y + b.height + 2);
+  await page.mouse.down();
+  await page.mouse.move(b.x + b.width + 80, b.y + b.height + 40, { steps: 5 });
+  await page.mouse.up();
+  expect((await card.boundingBox())!.width).toBeGreaterThan(b.width + 50);
+  expect(await skrift()).toBe(foer);
 });
 
 test('rammer festes til rutenettet når det er slått på', async ({ page }) => {

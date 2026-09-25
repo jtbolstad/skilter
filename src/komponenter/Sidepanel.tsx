@@ -7,7 +7,7 @@ import type { Kart, Skilt } from '../modell/typer';
 import { useSkilt } from '../store';
 import { KartgrunnlagSeksjon } from '../kart/KartgrunnlagPanel';
 import { CardEgenskaper } from './CardPanel';
-import { BannerEgenskaper, DekorEgenskaper, TemaOgOppsett } from './UtseendePanel';
+import { AlleCards, BannerEgenskaper, DekorEgenskaper, TemaOgOppsett, Tilpass } from './UtseendePanel';
 import { KartlagSeksjoner, RuteEgenskaper, StedsnavnEgenskaper, Stilprove } from './RutePanel';
 import { DpiVarsel, Felt, input, knapp, Seksjon } from './Skjema';
 import { useForhandsvisning } from './useForhandsvisning';
@@ -110,6 +110,9 @@ function Lagliste({ skilt }: { skilt: Skilt }) {
             </span>
           </button>
         ))}
+        <button className={`${rad(false)} text-stone-500`} onClick={() => useSkilt.getState().leggTilCard()}>
+          + Nytt card
+        </button>
       </div>
     </Seksjon>
   );
@@ -131,6 +134,23 @@ function SkiltEgenskaper({ skilt }: { skilt: Skilt }) {
 
   return (
     <>
+      <Tilpass />
+      <AlleCards skilt={skilt} />
+      <TemaOgOppsett skilt={skilt} />
+
+      <Seksjon tittel="Prosjekt">
+        <LesTekstPaNytt />
+      </Seksjon>
+
+      <Seksjon tittel="Kreditering">
+        <Felt etikett="Forfatterlinje">
+          <input
+            className={input}
+            value={skilt.forfatter ?? ''}
+            onChange={(e) => endreSkilt((s) => ({ ...s, forfatter: e.target.value || undefined }))}
+          />
+        </Felt>
+      </Seksjon>
       <Seksjon tittel="Format">
         <div className="flex gap-2">
           <select
@@ -161,22 +181,6 @@ function SkiltEgenskaper({ skilt }: { skilt: Skilt }) {
             <option value={150}>150 DPI</option>
             <option value={300}>300 DPI</option>
           </select>
-        </Felt>
-      </Seksjon>
-
-      <Seksjon tittel="Prosjekt">
-        <LesTekstPaNytt />
-      </Seksjon>
-
-      <TemaOgOppsett skilt={skilt} />
-
-      <Seksjon tittel="Kreditering">
-        <Felt etikett="Forfatterlinje">
-          <input
-            className={input}
-            value={skilt.forfatter ?? ''}
-            onChange={(e) => endreSkilt((s) => ({ ...s, forfatter: e.target.value || undefined }))}
-          />
         </Felt>
       </Seksjon>
     </>

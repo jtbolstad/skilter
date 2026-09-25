@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { bildeRammeForCard, bildeTilSiden } from '../geometri/card';
+import { bildeRammeForCard, bildeTilSiden, cardstil } from '../geometri/card';
 import { delRotasjon, klem, MAKS_ZOOM, roterKvart, type Storrelse } from '../geometri/utsnitt';
 import { bilderIMappe, erBilde, nyttUtsnitt } from '../modell/importerMappe';
 import { CARD_FARGER } from '../modell/oppsett';
@@ -21,6 +21,13 @@ export function CardEgenskaper({ card }: { card: Card }) {
       <Bildekontroller card={card} />
       <Bildevelger card={card} />
       <Kartkobling card={card} />
+      <button
+        className={`${knapp} text-rose-700`}
+        onClick={() => useSkilt.getState().slettCard(card.id)}
+        title="Kan angres (Ctrl+Z). Delete-tasten sletter også valgt card."
+      >
+        Slett card
+      </button>
     </>
   );
 }
@@ -175,9 +182,10 @@ function Bildekontroller({ card }: { card: Card }) {
   const f = useForhandsvisning(card.bilde?.fil);
   const aspekt = useNaturligAspekt(card);
   const tema = useSkilt((t) => t.skilt!.tema);
+  const format = useSkilt((t) => t.skilt!.format);
   if (!card.bilde) return null;
 
-  const ramme = bildeRammeForCard(card, aspekt, tema);
+  const ramme = bildeRammeForCard(card, aspekt, cardstil({ tema, format }));
   const bilde: Storrelse | undefined = f && { b: f.bredde, h: f.hoyde };
   const u = card.bilde;
   const beskjaerer = modus.type === 'beskjaer' && modus.cardId === card.id;

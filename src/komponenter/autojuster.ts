@@ -1,4 +1,4 @@
-import { bildeTilSiden, indreStorrelse, MIN_ANDEL } from '../geometri/card';
+import { bildeTilSiden, cardstil, indreStorrelse, MIN_ANDEL } from '../geometri/card';
 import { registrer } from '../modell/historikk';
 import type { Card } from '../modell/typer';
 import { useSkilt } from '../store';
@@ -25,7 +25,7 @@ function vistAndel(card: Card): number | undefined {
   if (!el || !skilt) return undefined;
   const { width, height } = el.getBoundingClientRect();
   return bildeTilSiden(card)
-    ? width / visningsskala / indreStorrelse(card, skilt.tema).b
+    ? width / visningsskala / indreStorrelse(card, cardstil(skilt)).b
     : height / visningsskala / card.ramme.h;
 }
 

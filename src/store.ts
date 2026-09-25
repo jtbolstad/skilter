@@ -5,7 +5,7 @@ import { angre, gjeldendeGest, gjorOm, registrer, tomHistorikk, type Historikk }
 import { DEKORTYPER } from './geometri/dekor';
 import { festHeleRammen } from './geometri/rutenett';
 import { flyttMellomKart, kalibreringFraGeo } from './geometri/geo';
-import { lagOppsett, type Oppsettmal } from './modell/oppsett';
+import { CARD_FARGER, lagOppsett, type Oppsettmal } from './modell/oppsett';
 import { RUTEMALER } from './modell/rutestiler';
 import type { ParsetTekst } from './modell/tekstParser';
 import type {
@@ -93,8 +93,12 @@ interface Tilstand {
   endreCard(id: string, patch: Partial<Card>): void;
   /** Endrer alle cards, f.eks. tekststørrelse eller linjestil for hele skiltet */
   endreAlleCards(endring: (c: Card) => Partial<Card>): void;
-  /** Sletter valgt vei, stedsnavn eller dekor. Returnerer om noe ble slettet. */
+  /** Sletter valgt card, vei, stedsnavn eller dekor. Returnerer om noe ble slettet. */
   slettValgt(): boolean;
+  /** Nytt, tomt card midt på skiltet, med neste ledige nummer. Returnerer id. */
+  leggTilCard(): string;
+  /** Sletter cardet og kartpunktet det lenker til */
+  slettCard(id: string): void;
   settFestTilRutenett(fest: boolean): void;
   /** Fester alle cards til rutenettet, så de står på linje */
   festCardsTilRutenett(): void;
@@ -220,11 +224,49 @@ export const useSkilt = create<Tilstand>()((set, get) => {
     slettValgt: () => {
       const { valg, modus } = get();
       if (modus.type !== 'normal') return false;
-      if (valg.type === 'rute') get().slettRute(valg.id);
+      if (valg.type === 'card') get().slettCard(valg.id);
+      else if (valg.type === 'rute') get().slettRute(valg.id);
       else if (valg.type === 'stedsnavn') get().slettStedsnavn(valg.id);
       else if (valg.type === 'dekor') get().slettDekor(valg.id);
       else return false;
       return true;
+    },
+    leggTilCard: () => {
+      const id = nyId('card');
+      const sk = get().skilt;
+      if (!sk) return id;
+      const u = Math.min(sk.format.bredde_mm, sk.format.hoyde_mm) / 594;
+      // Samme størrelse som et av de andre cardene, ellers standardstørrelsen på A1
+      const b = sk.cards[0]?.ramme.b ?? 235 * u;
+      const h = sk.cards[0]?.ramme.h ?? 150 * u;
+      const nummer = Math.max(0, ...sk.cards.map((c) => c.nummer)) + 1;
+      const card: Card = {
+        id,
+        nummer,
+        ramme: { x: (sk.format.bredde_mm - b) / 2, y: (sk.format.hoyde_mm - h) / 2, b, h },
+        tittel: 'Nytt card',
+        tekst: '',
+        layout: 'bilde-over',
+        bildeAndel: 0.45,
+        bildeAspekt: 'fri',
+        tekststorrelse: sk.cards[0]?.tekststorrelse ?? 1,
+        tittelHelBredde: false,
+        farge: CARD_FARGER[sk.cards.length % CARD_FARGER.length]!,
+      };
+      get().endreSkilt((s2) => ({ ...s2, cards: [...s2.cards, card] }));
+      set({ valg: { type: 'card', id }, modus: { type: 'normal' } });
+      return id;
+    },
+    slettCard: (id) => {
+      get().fjernLenke(id);
+      get().endreSkilt((sk) => ({ ...sk, cards: sk.cards.filter((c) => c.id !== id) }));
+      set((t) => {
+        const { [id]: _, ...tekstOverflyt } = t.tekstOverflyt;
+        return {
+          tekstOverflyt,
+          valg: t.valg.type === 'card' && t.valg.id === id ? { type: 'skilt' } : t.valg,
+        };
+      });
     },
     settFestTilRutenett: (festTilRutenett) => set({ festTilRutenett }),
     festCardsTilRutenett: () =>

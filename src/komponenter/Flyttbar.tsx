@@ -34,11 +34,16 @@ export function Flyttbar({
     undefined,
   );
 
-  const ned = (e: PointerEvent, handtak: Handtak) => {
+  /**
+   * @param fangNaa håndtakene er små, så de fanger pekeren med en gang – ellers kan første
+   * bevegelse havne utenfor håndtaket og dra-operasjonen går tapt
+   */
+  const ned = (e: PointerEvent, handtak: Handtak, fangNaa = false) => {
     if (e.button !== 0) return;
     e.stopPropagation();
     onVelg();
-    start.current = { handtak, x: e.clientX, y: e.clientY, ramme, fanget: false };
+    if (fangNaa) e.currentTarget.setPointerCapture(e.pointerId);
+    start.current = { handtak, x: e.clientX, y: e.clientY, ramme, fanget: fangNaa };
   };
 
   const flytt = (e: PointerEvent) => {
@@ -100,7 +105,7 @@ export function Flyttbar({
           {!flyttMedInnhold && (
             <div
               className="absolute -top-7 left-1/2 flex h-6 -translate-x-1/2 cursor-move items-center gap-1 rounded bg-sky-500 px-2 text-xs text-white shadow"
-              onPointerDown={(e) => ned(e, 'flytt')}
+              onPointerDown={(e) => ned(e, 'flytt', true)}
               {...hendelser}
             >
               ✥ {etikett ?? 'Flytt'}
@@ -115,7 +120,7 @@ export function Flyttbar({
                 [h.endsWith('v') ? 'left' : 'right']: -7,
                 cursor: h === 'nv' || h === 'so' ? 'nwse-resize' : 'nesw-resize',
               }}
-              onPointerDown={(e) => ned(e, h)}
+              onPointerDown={(e) => ned(e, h, true)}
               {...hendelser}
             />
           ))}

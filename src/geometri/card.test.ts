@@ -3,6 +3,7 @@ import type { Card } from '../modell/typer';
 import { delAvsnitt, parseAvsnitt } from '../modell/riktekst';
 import {
   bildeRammeForCard,
+  cardMal,
   dragSkillelinje,
   indreStorrelse,
   lenkeanker,
@@ -80,6 +81,18 @@ describe('stående bilder', () => {
     const c = card({ layout: 'bilde-hoyre', bildeAndel: 0.4 });
     const b = indreStorrelse(c).b;
     expect(dragSkillelinje(c, -b * 0.1).bildeAndel).toBeCloseTo(0.5);
+  });
+});
+
+describe('cardMal', () => {
+  it('skriften avhenger ikke av cardets størrelse', () => {
+    const smalt = cardMal(card({ ramme: { x: 0, y: 0, b: 120, h: 300 } }));
+    expect(smalt.tekst).toBe(cardMal(card()).tekst);
+    expect(smalt.kant).toBe(cardMal(card()).kant);
+  });
+
+  it('skalerer med skiltets enhet (mindre format gir mindre skrift)', () => {
+    expect(cardMal(card(), { enhet: 0.5 }).tittel).toBeCloseTo(cardMal(card()).tittel / 2);
   });
 });
 

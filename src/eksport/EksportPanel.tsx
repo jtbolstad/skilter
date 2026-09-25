@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { domToBlob } from 'modern-screenshot';
-import { bildeRammeForCard } from '../geometri/card';
+import { bildeRammeForCard, cardstil } from '../geometri/card';
 import { effektivDpi, plasser, type Storrelse } from '../geometri/utsnitt';
 import type { Skilt } from '../modell/typer';
 import { useSkilt } from '../store';
@@ -141,7 +141,9 @@ function Kvalitetssjekk({ skilt, dpi, overflyt }: { skilt: Skilt; dpi: number; o
               navn={c.tittel}
               fil={c.bilde.fil}
               dpi={dpi}
-              beregn={(b) => effektivDpi(plasser(c.bilde!, bildeRammeForCard(c, b.b / b.h, skilt.tema), b))}
+              beregn={(b) =>
+                effektivDpi(plasser(c.bilde!, bildeRammeForCard(c, b.b / b.h, cardstil(skilt)), b))
+              }
             />
           ) : null,
         )}

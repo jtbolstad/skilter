@@ -1,5 +1,12 @@
 import { useLayoutEffect, useRef, useState, type DragEvent, type PointerEvent } from 'react';
-import { bildeRammeForCard, bildeTilSiden, cardMal, dragSkillelinje } from '../geometri/card';
+import {
+  bildeRammeForCard,
+  bildeTilSiden,
+  type Cardstil,
+  cardMal,
+  cardstil,
+  dragSkillelinje,
+} from '../geometri/card';
 import { delRotasjon } from '../geometri/utsnitt';
 import { nyttUtsnitt } from '../modell/importerMappe';
 import { delAvsnitt, parseAvsnitt } from '../modell/riktekst';
@@ -18,6 +25,13 @@ export function useNaturligAspekt(card: Card): number | undefined {
   return liggende ? f.bredde / f.hoyde : f.hoyde / f.bredde;
 }
 
+/** Card-stilen til skiltet som vises */
+function useCardstil(): Cardstil {
+  const tema = useSkilt((t) => t.skilt!.tema);
+  const format = useSkilt((t) => t.skilt!.format);
+  return cardstil({ tema, format });
+}
+
 /** MIME-type når et bilde dras fra bildevelgeren */
 export const BILDE_DRA_TYPE = 'application/x-skilter-bilde';
 
@@ -27,14 +41,14 @@ export function CardVisning({ card }: { card: Card }) {
   const beskjaerer = useSkilt((t) => t.modus.type === 'beskjaer' && t.modus.cardId === card.id) && !eksport;
   const overflyt = useSkilt((t) => t.tekstOverflyt[card.id] ?? false) && !eksport;
   const skala = useSkala();
-  const tema = useSkilt((t) => t.skilt!.tema);
+  const stil = useCardstil();
   const { velg, endreCard, endreBilde, settModus } = useSkilt.getState();
   const [slippMal, settSlippMal] = useState(false);
 
-  const m = cardMal(card, tema);
+  const m = cardMal(card, stil);
   const px = (mm: number) => mm * skala;
   const aspekt = useNaturligAspekt(card);
-  const bildeRamme = bildeRammeForCard(card, aspekt, tema);
+  const bildeRamme = bildeRammeForCard(card, aspekt, stil);
   const side = bildeTilSiden(card);
   const hoyre = card.layout === 'bilde-hoyre';
 
@@ -159,8 +173,9 @@ export function CardVisning({ card }: { card: Card }) {
 
 function Tittel({ card }: { card: Card }) {
   const skala = useSkala();
+  const stil = useCardstil();
   return (
-    <h2 className="shrink-0 leading-tight font-bold" style={{ fontSize: cardMal(card).tittel * skala }}>
+    <h2 className="shrink-0 leading-tight font-bold" style={{ fontSize: cardMal(card, stil).tittel * skala }}>
       {card.tittel}
     </h2>
   );
@@ -171,7 +186,8 @@ function Brodtekst({ card }: { card: Card }) {
   const eksport = useEksport();
   const settOverflyt = useSkilt((t) => t.settOverflyt);
   const ref = useRef<HTMLDivElement>(null);
-  const storrelse = cardMal(card).tekst * skala;
+  const stil = useCardstil();
+  const storrelse = cardMal(card, stil).tekst * skala;
 
   useLayoutEffect(() => {
     const el = ref.current;
@@ -235,7 +251,7 @@ function Skillelinje({
     e.stopPropagation();
     const delta = ((vannrett ? e.clientY : e.clientX) - s.pos) / skala;
     const { endreCard, skilt } = useSkilt.getState();
-    endreCard(card.id, dragSkillelinje(s.card, delta, aspekt, skilt?.tema));
+    endreCard(card.id, dragSkillelinje(s.card, delta, aspekt, skilt && cardstil(skilt)));
   };
 
   return (
