@@ -29,7 +29,7 @@ export function devProsjekt(rot: string): Plugin {
             res.end(JSON.stringify({ navn: path.basename(rot), filer }));
             return;
           }
-          const fil = path.resolve(rot, '.' + url.replace(/^\/fil/, ''));
+          const fil = path.resolve(rot, `.${url.replace(/^\/fil/, '')}`);
           if (!fil.startsWith(path.resolve(rot) + path.sep)) throw new Error('Utenfor prosjektmappa');
           const info = await stat(fil);
           res.setHeader('Last-Modified', info.mtime.toUTCString());

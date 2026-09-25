@@ -79,7 +79,9 @@ async function marker(page: Page, merker: { l: Locator; nr: number }[]) {
 }
 
 const fjernMerker = (page: Page) =>
-  page.evaluate(() => document.querySelectorAll('[data-dokmerke]').forEach((e) => e.remove()));
+  page.evaluate(() => {
+    for (const e of document.querySelectorAll('[data-dokmerke]')) e.remove();
+  });
 
 const liste = (page: Page) => page.locator('aside').first();
 const seksjon = (page: Page, tittel: string | RegExp) =>

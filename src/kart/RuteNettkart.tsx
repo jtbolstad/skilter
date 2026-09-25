@@ -38,7 +38,7 @@ function tegnetLinje(tegning: TerraDraw): { id: string; via: LngLat[] } | undefi
   const f = tegning
     .getSnapshot()
     .find((f) => f.geometry.type === 'LineString' && !f.properties.currentlyDrawing);
-  if (!f || f.geometry.type !== 'LineString') return undefined;
+  if (f?.geometry.type !== 'LineString') return undefined;
   return { id: String(f.id), via: f.geometry.coordinates.map(([lng, lat]) => [lng!, lat!]) };
 }
 
@@ -53,11 +53,13 @@ function referanser(geo: Georeferanse, ruteId: string) {
         ...linje(r.punkter.map((p) => tilLngLat(geo, p))),
         properties: { farge: r.stil.farge },
       })),
-    punkter: skilt.punkter.map((p): GeoJSON.Feature<GeoJSON.Point> => ({
-      type: 'Feature',
-      properties: {},
-      geometry: { type: 'Point', coordinates: tilLngLat(geo, p.posisjon) },
-    })),
+    punkter: skilt.punkter.map(
+      (p): GeoJSON.Feature<GeoJSON.Point> => ({
+        type: 'Feature',
+        properties: {},
+        geometry: { type: 'Point', coordinates: tilLngLat(geo, p.posisjon) },
+      }),
+    ),
   };
 }
 
@@ -94,6 +96,7 @@ export default function RuteNettkart({
   const linjeVist = (skalRutes && aktuelt?.koordinater) || TOM;
   const storrelse = velgerstorrelse(skiltkart.ramme, 900, Math.min(680, window.innerHeight - 160));
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: kartet lages bare ved åpning; senere endringer går via refs
   useEffect(() => {
     const el = beholder.current;
     if (!el) return;
@@ -225,8 +228,6 @@ export default function RuteNettkart({
       tegningRef.current = undefined;
       kart.remove();
     };
-    // Bare ved åpning
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Rut på nytt når via-punktene, profilen eller «følg sti» endres

@@ -42,6 +42,7 @@ export default function OsmVelger({ onLukk }: { onLukk(melding?: string): void }
   const storrelse = velgerstorrelse(skiltkart.ramme, 900, Math.min(680, window.innerHeight - 160));
 
   // Kartvelgeren lages én gang; stilbytte gjøres med setStyle
+  // biome-ignore lint/correctness/useExhaustiveDependencies: kartet lages bare ved åpning; senere endringer går via setStyle og refs
   useEffect(() => {
     const el = beholder.current;
     if (!el) return;
@@ -72,8 +73,6 @@ export default function OsmVelger({ onLukk }: { onLukk(melding?: string): void }
     kart.on('zoom', () => settZoom(kart.getZoom()));
     kartRef.current = kart;
     return () => kart.remove();
-    // Bare ved åpning
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const byttStil = (ny: Osmstil) => {

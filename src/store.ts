@@ -42,7 +42,10 @@ export type Modus =
   | { type: 'plasser-stedsnavn' };
 
 export type Lagringsstatus =
-  { type: 'lagret'; tid: Date } | { type: 'endret' } | { type: 'lagrer' } | { type: 'feil'; melding: string };
+  | { type: 'lagret'; tid: Date }
+  | { type: 'endret' }
+  | { type: 'lagrer' }
+  | { type: 'feil'; melding: string };
 
 interface Tilstand {
   /** Økes for hvert prosjekt som åpnes, så historikk og lagring vet når prosjektet byttes */

@@ -34,7 +34,7 @@ mappa over `app/` uten mappevelger.
 | `pnpm dev`       | Utviklingsserver på port 5330              |
 | `pnpm test`      | Enhetstester (Vitest)                      |
 | `pnpm test:e2e`  | E2E-tester (Playwright, installert Chrome) |
-| `pnpm lint`      | ESLint og Prettier                         |
+| `pnpm lint`      | Biome: lint og formatering (`pnpm format` retter) |
 | `pnpm build`     | Typesjekk og produksjonsbygg til `dist/`   |
 | `pnpm app:dev`   | Skrivebordsapp (Tauri) mot dev-serveren    |
 | `pnpm app:build` | Windows-installer (Tauri/NSIS)             |

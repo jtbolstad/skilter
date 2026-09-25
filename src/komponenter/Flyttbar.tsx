@@ -86,7 +86,11 @@ export function Flyttbar({
         width: ramme.b * skala,
         height: ramme.h * skala,
       }}
-      onPointerDown={(e) => (flyttMedInnhold ? ned(e, 'flytt') : (e.stopPropagation(), onVelg()))}
+      onPointerDown={(e) => {
+        if (flyttMedInnhold) return ned(e, 'flytt');
+        e.stopPropagation();
+        onVelg();
+      }}
       {...(flyttMedInnhold ? hendelser : {})}
     >
       {children}

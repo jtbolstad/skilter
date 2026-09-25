@@ -89,7 +89,7 @@ export async function lagDemomappe(): Promise<Filmappe> {
 /** Demoprosjektet som følger med appen (public/demo). Virker også i den installerte appen. */
 export async function lagInnebygdDemo(): Promise<Filmappe> {
   const rot = `${import.meta.env.BASE_URL}demo/`;
-  const filer = (await (await fetch(rot + 'filer.json')).json()) as string[];
+  const filer = (await (await fetch(`${rot}filer.json`)).json()) as string[];
   return mappeOverHttp('Demodalen', filer, rot, 'innebygd');
 }
 

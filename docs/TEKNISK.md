@@ -59,7 +59,7 @@ pnpm install
 pnpm dev          # http://localhost:5330
 pnpm test         # enhetstester (Vitest)
 pnpm test:e2e     # E2E (Playwright, bruker installert Chrome – ingen nedlasting)
-pnpm lint         # ESLint + Prettier
+pnpm lint         # Biome (lint + formatering), pnpm format retter
 pnpm build        # typesjekk og produksjonsbygg til dist/
 ```
 

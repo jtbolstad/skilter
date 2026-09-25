@@ -123,7 +123,7 @@ export async function tegnKart(
   g: Kartgjengivelse,
   tidsfrist = 90_000,
 ): Promise<Tegnet> {
-  const { Map } = await lastMaplibre();
+  const { Map: Kart } = await lastMaplibre();
   const beholder = document.createElement('div');
   Object.assign(beholder.style, {
     position: 'fixed',
@@ -134,7 +134,7 @@ export async function tegnKart(
   });
   document.body.append(beholder);
 
-  const kart = new Map({
+  const kart = new Kart({
     container: beholder,
     style: kartstil(stil, g.pixelRatio),
     center: senter,

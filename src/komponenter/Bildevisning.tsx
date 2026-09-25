@@ -51,6 +51,7 @@ export function Bildevisning({
   useLayoutEffect(() => {
     siste.current = { utsnitt, ramme, bilde, skala, onEndre };
   });
+  // biome-ignore lint/correctness/useExhaustiveDependencies: flata finnes først når bildet er lastet, så effekten må kjøre på nytt da
   useEffect(() => {
     const el = flate.current;
     if (!el || !interaktiv) return;

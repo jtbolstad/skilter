@@ -29,7 +29,7 @@ export function mappeForSeksjon(filer: string[], nummer: number): string | undef
 
 export function bilderIMappe(filer: string[], mappe: string): string[] {
   return filer
-    .filter((f) => f.startsWith(mappe + '/') && erBilde(f))
+    .filter((f) => f.startsWith(`${mappe}/`) && erBilde(f))
     .sort((a, b) => a.localeCompare(b, 'nb'));
 }
 
