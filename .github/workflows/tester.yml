@@ -1,0 +1,45 @@
+name: Tester
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  tester:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Typesjekk
+        run: pnpm exec tsc -b
+
+      - name: Lint og formatering
+        run: pnpm lint
+
+      - name: Enhetstester
+        run: pnpm test
+
+      # Google Chrome er forhåndsinstallert på ubuntu-latest (Playwright bruker channel: 'chrome')
+      - name: E2E-tester
+        run: pnpm test:e2e
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-rapport
+          path: |
+            playwright-report
+            test-results
+          retention-days: 14

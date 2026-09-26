@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
 async function apneDemo(page: Page) {
-  await page.goto('/?demo&ny');
+  await page.goto('/?demo=innebygd&ny');
   await expect(page.getByTestId('kart').locator('img').first()).toBeVisible({ timeout: 30_000 });
 }
 
@@ -16,7 +16,7 @@ test('justeringer for alle cards: tekst, ramme, hjørner og linjestil', async ({
   const fontEtter = await card.getByRole('heading').evaluate((h) => parseFloat(getComputedStyle(h).fontSize));
   expect(fontEtter / fontFoer).toBeCloseTo(1.5, 1);
   // Gjelder alle cards
-  const annen = page.getByTestId('card-6').getByRole('heading');
+  const annen = page.getByTestId('card-5').getByRole('heading');
   expect(await annen.evaluate((h) => parseFloat(getComputedStyle(h).fontSize))).toBeCloseTo(fontEtter, 1);
 
   await page.getByRole('slider', { name: /Rammetykkelse/ }).fill('0');
@@ -49,7 +49,7 @@ test('Delete sletter valgt dekor, og dekor vises som gruppe i laglista', async (
   await expect(liste(page).getByRole('button', { name: /Dekor \(1\)/ })).toBeVisible();
 
   // Valgt card slettes også, og kan angres
-  await liste(page).getByRole('button', { name: '1. Slora' }).click();
+  await liste(page).getByRole('button', { name: '1. Utsikten' }).click();
   await page.keyboard.press('Delete');
   await expect(page.getByTestId('card-1')).toBeHidden();
   await page.keyboard.press('Control+z');
@@ -59,12 +59,12 @@ test('Delete sletter valgt dekor, og dekor vises som gruppe i laglista', async (
 test('nytt card, og skriften endres ikke når cardet endrer størrelse', async ({ page }) => {
   await apneDemo(page);
   await liste(page).getByRole('button', { name: '+ Nytt card' }).click();
-  const nytt = page.getByTestId('card-9');
+  const nytt = page.getByTestId('card-6');
   await expect(nytt.getByRole('heading')).toHaveText('Nytt card');
   await expect(page.getByRole('textbox', { name: 'Tittel' })).toHaveValue('Nytt card');
 
   const card = page.getByTestId('card-1');
-  await liste(page).getByRole('button', { name: '1. Slora' }).click();
+  await liste(page).getByRole('button', { name: '1. Utsikten' }).click();
   const skrift = () => card.getByRole('heading').evaluate((h) => getComputedStyle(h).fontSize);
   const foer = await skrift();
   const b = (await card.boundingBox())!;

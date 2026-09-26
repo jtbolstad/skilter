@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
 async function apneDemo(page: Page) {
-  await page.goto('/?demo&ny');
+  await page.goto('/?demo=innebygd&ny');
   await expect(page.getByTestId('kart').locator('img').first()).toBeVisible({ timeout: 30_000 });
 }
 
@@ -28,7 +28,7 @@ async function lagPng(page: Page, b: number, h: number): Promise<Buffer> {
 
 test('stående bilde kan legges til høyre og venstre i cardet', async ({ page }) => {
   await apneDemo(page);
-  await liste(page).getByRole('button', { name: '6. Pilgrimsleden' }).click();
+  await liste(page).getByRole('button', { name: '5. Bålplassen' }).click();
   await page.locator('input[type=file]').setInputFiles({
     name: 'staende.png',
     mimeType: 'image/png',
@@ -37,7 +37,7 @@ test('stående bilde kan legges til høyre og venstre i cardet', async ({ page }
   await expect(page.getByText('Bildet er stående')).toBeVisible();
   await page.getByRole('button', { name: '◨ Til høyre' }).click();
 
-  const card = page.getByTestId('card-6');
+  const card = page.getByTestId('card-5');
   const bildeboks = card.getByTestId('cardbilde');
   await expect(bildeboks.locator('img').first()).toBeVisible();
   const bilde = (await bildeboks.boundingBox())!;
@@ -85,7 +85,7 @@ test('tema, oppsettmal og dekor', async ({ page }) => {
   await page.getByRole('button', { name: /Cards over og under/ }).click();
   const kart = (await page.getByTestId('kart').boundingBox())!;
   const card1 = (await page.getByTestId('card-1').boundingBox())!;
-  const card8 = (await page.getByTestId('card-8').boundingBox())!;
+  const card8 = (await page.getByTestId('card-5').boundingBox())!;
   expect(card1.y + card1.height).toBeLessThanOrEqual(kart.y + 1);
   expect(card8.y).toBeGreaterThanOrEqual(kart.y + kart.height - 1);
 
@@ -113,14 +113,14 @@ test('skjermbilde av utseendet', async ({ page }) => {
   await page.getByRole('button', { name: 'Dekor som i utkastet' }).click();
   await liste(page).getByRole('button', { name: '🏷️ Banner' }).click();
   await page.getByLabel('Undertittel (steder, skilt med komma)').fill('Hauketo, Prinsdal');
-  await liste(page).getByRole('button', { name: '6. Pilgrimsleden' }).click();
+  await liste(page).getByRole('button', { name: '5. Bålplassen' }).click();
   await page.locator('input[type=file]').setInputFiles({
     name: 'staende.png',
     mimeType: 'image/png',
     buffer: await lagPng(page, 300, 420),
   });
   await page.getByRole('button', { name: '◨ Til høyre' }).click();
-  await liste(page).getByRole('button', { name: '7. Milesteinen' }).click();
+  await liste(page).getByRole('button', { name: '4. Varden' }).click();
   await page.getByRole('button', { name: '◧ Venstre' }).click();
   await page.getByRole('combobox', { name: 'Bildeformat' }).selectOption('2:3');
   await liste(page).getByRole('button', { name: '🪧 Skilt' }).click();

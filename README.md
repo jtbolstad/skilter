@@ -58,6 +58,7 @@ mappa over `app/` uten mappevelger.
 | `pnpm dev`       | Utviklingsserver på port 5330                     |
 | `pnpm test`      | Enhetstester (Vitest)                             |
 | `pnpm test:e2e`  | E2E-tester (Playwright, installert Chrome)        |
+| `BARE_DEMO=1 pnpm test:e2e` | E2E som i CI, bare mot demoprosjektet |
 | `pnpm lint`      | Biome: lint og formatering (`pnpm format` retter) |
 | `pnpm build`     | Typesjekk (TypeScript 7) og bygg til `dist/`      |
 | `pnpm app:dev`   | Skrivebordsapp (Tauri) mot dev-serveren           |
@@ -68,6 +69,7 @@ havner i `src-tauri/target/release/bundle/nsis/`.
 
 ### Utgivelse
 
+- **Tester** (typesjekk, lint, enhet og E2E mot demoprosjektet) kjøres ved hver push og pull request.
 - **Nettversjonen** publiseres til GitHub Pages ved hver push til `master`.
 - **Windows-installeren** bygges ved en `v*`-tagg og legges på en GitHub-release. Øk versjonen i
   `package.json` og `src-tauri/tauri.conf.json` først, så:

@@ -68,6 +68,9 @@ Vite-pluginen i [vite-prosjekt.ts](../vite-prosjekt.ts) serverer fillista (`/__p
 (`/__prosjekt/fil/<sti>`). Demoen lagrer i IndexedDB i stedet for på disk; `?demo&ny` starter fra
 `tekst.txt` igjen. E2E-testene bruker demomodus fordi mappevelgeren er en systemdialog.
 
+**Innebygd demo:** `?demo=innebygd` åpner demoprosjektet i `public/demo/` (virker også i produksjon og i
+Tauri). Fillista står i `public/demo/filer.json`.
+
 **Illustrasjoner til bruksanvisningen:** `DOKUMENTASJON=1 pnpm test:e2e dokumentasjon` lager bildene i
 `docs/bilder/` på nytt.
 
@@ -347,7 +350,10 @@ ikke får plass (målt med `ResizeObserver` i `Brodtekst`).
 | Enhet | `src/**/*.test.ts` | Parser, import, oppsettmaler (alle maler × formater), utsnitt med rotasjon, lenker, ruter, målestokk, dekor innenfor rammen, lagring og migrering, historikk, store-handlinger, PNG-metadata |
 | E2E   | `e2e/*.spec.ts`    | Åpne mappe, beskjære, koble punkt, tegne og redigere veier, stedsnavn, autolagring og omlasting, angre, PNG-størrelse og DPI, PDF-sidestørrelse, stående bilder, banner, tema, dekor         |
 
-E2E-testene kjører mot demomodus i installert Chrome (`channel: 'chrome'`). Skjermbilder tas bare når
+E2E-testene kjører mot demomodus i installert Chrome (`channel: 'chrome'`). De fleste bruker den
+innebygde demoen og kjører i CI ([tester.yml](../.github/workflows/tester.yml)) ved hver push og pull
+request. `skilt`, `dokumentasjon`, `osm` og `nettkart` trenger den ekte prosjektmappa over `app/` og
+kjøres bare når den finnes; `BARE_DEMO=1 pnpm test:e2e` kjører som i CI. Skjermbilder tas bare når
 `SKJERMBILDER=<mappe>` er satt. Illustrasjonsskriptet (`dokumentasjon.spec.ts`) hoppes over uten
 `DOKUMENTASJON=1`.
 

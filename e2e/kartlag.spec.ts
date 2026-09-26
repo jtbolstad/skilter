@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
 async function apneKart(page: Page) {
-  await page.goto('/?demo');
+  await page.goto('/?demo=innebygd');
   await expect(page.getByTestId('kart').locator('img').first()).toBeVisible({ timeout: 30_000 });
   await page.locator('aside').getByRole('button', { name: '🗺️ Kart' }).click();
   return (await page.getByTestId('kart').boundingBox())!;

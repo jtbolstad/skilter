@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { writeFileSync } from 'node:fs';
 
 async function apneDemo(page: Page, ny = true) {
-  await page.goto(ny ? '/?demo&ny' : '/?demo');
+  await page.goto(ny ? '/?demo=innebygd&ny' : '/?demo=innebygd');
   await expect(page.getByTestId('kart').locator('img').first()).toBeVisible({ timeout: 30_000 });
 }
 
@@ -17,16 +17,16 @@ function pngInfo(buf: Buffer) {
 
 test('lagrer automatisk og husker endringer etter omlasting', async ({ page }) => {
   await apneDemo(page);
-  await page.locator('aside').getByRole('button', { name: '1. Slora' }).click();
-  await page.getByLabel('Tittel').fill('Slora ved Ljanselva');
+  await page.locator('aside').getByRole('button', { name: '1. Utsikten' }).click();
+  await page.getByLabel('Tittel').fill('Utsikten over dalen');
   await expect(page.getByTestId('lagringsstatus')).toContainText('Lagret', { timeout: 5000 });
 
   await apneDemo(page, false);
-  await expect(page.getByTestId('card-1').getByRole('heading')).toHaveText('Slora ved Ljanselva');
+  await expect(page.getByTestId('card-1').getByRole('heading')).toHaveText('Utsikten over dalen');
 
   // ?ny starter fra tekst.txt igjen
   await apneDemo(page, true);
-  await expect(page.getByTestId('card-1').getByRole('heading')).toHaveText('Slora');
+  await expect(page.getByTestId('card-1').getByRole('heading')).toHaveText('Utsikten');
 });
 
 test('angre og gjør om', async ({ page }) => {
@@ -58,7 +58,7 @@ test('eksporterer PNG i riktig størrelse og DPI', async ({ page }, info) => {
   const nedlasting = page.waitForEvent('download', { timeout: 150_000 });
   await dialog.getByRole('button', { name: '🖼️ PNG' }).click();
   const fil = await nedlasting;
-  expect(fil.suggestedFilename()).toBe('et-historisk-kulturlandskap-841x594mm-150dpi.png');
+  expect(fil.suggestedFilename()).toBe('stier-i-demodalen-841x594mm-150dpi.png');
   const sti = info.outputPath('skilt.png');
   await fil.saveAs(sti);
   await expect(dialog.getByTestId('eksportstatus')).toContainText('Lastet ned');
