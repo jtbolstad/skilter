@@ -34,11 +34,19 @@ describe('lagOppsett', () => {
     }
   }
 
-  it('kart øverst fyller cards radvis', () => {
-    const o = lagOppsett('kart-over', FORMATER.A1, 8);
+  it('over og under: halvparten over kartet og resten under, radvis', () => {
+    const o = lagOppsett('over-under', FORMATER.A1, 8);
     expect(o.cards[1]!.x).toBeGreaterThan(o.cards[0]!.x);
     expect(o.cards[1]!.y).toBeCloseTo(o.cards[0]!.y);
-    expect(o.cards[4]!.y).toBeGreaterThan(o.cards[0]!.y);
+    for (const c of o.cards.slice(0, 4)) expect(c.y + c.h).toBeLessThanOrEqual(o.kart.y);
+    for (const c of o.cards.slice(4)) expect(c.y).toBeGreaterThanOrEqual(o.kart.y + o.kart.h);
+  });
+
+  it('kartet står i midten i begge malene', () => {
+    for (const { verdi } of OPPSETTMALER) {
+      const o = lagOppsett(verdi, FORMATER.A1, 8);
+      expect(o.kart.x + o.kart.b / 2).toBeCloseTo(FORMATER.A1.bredde_mm / 2);
+    }
   });
 
   it('sider fyller nedover i hver kolonne', () => {

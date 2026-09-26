@@ -77,22 +77,25 @@ function Lagliste({ skilt }: { skilt: Skilt }) {
           </button>
         )}
         {visDekor &&
-          skilt.dekor.map((d, i) => (
-            <button
-              key={d.id}
-              className={`${rad(valg.type === 'dekor' && valg.id === d.id)} pl-6`}
-              onClick={() => velg({ type: 'dekor', id: d.id })}
-            >
-              <span
-                className="size-3 shrink-0 rounded-sm border border-stone-300"
-                style={{ background: d.farge }}
-              />
-              <span className="truncate text-stone-600">
-                {DEKORTYPER.find((t) => t.type === d.type)?.navn ?? d.type}{' '}
-                {skilt.dekor.filter((x, j) => x.type === d.type && j < i).length + 1}
-              </span>
-            </button>
-          ))}
+          skilt.dekor
+            .map((d, i) => (
+              <button
+                key={d.id}
+                className={`${rad(valg.type === 'dekor' && valg.id === d.id)} pl-6`}
+                onClick={() => velg({ type: 'dekor', id: d.id })}
+              >
+                <span
+                  className="size-3 shrink-0 rounded-sm border border-stone-300"
+                  style={{ background: d.farge }}
+                />
+                <span className="truncate text-stone-600">
+                  {DEKORTYPER.find((t) => t.type === d.type)?.navn ?? d.type}{' '}
+                  {skilt.dekor.filter((x, j) => x.type === d.type && j < i).length + 1}
+                </span>
+              </button>
+            ))
+            // Øverst i lista er den som ligger øverst på skiltet (sist lagt til)
+            .reverse()}
         {skilt.cards.map((c) => (
           <button
             key={c.id}

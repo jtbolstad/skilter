@@ -31,14 +31,14 @@ export function Lerret({ skilt }: { skilt: Skilt }) {
       }}
       onPointerDown={() => velg({ type: 'skilt' })}
     >
-      {/* Dekor ligger bakerst, bak banner, kart og cards */}
-      {skilt.dekor.map((d) => (
-        <DekorVisning key={d.id} dekor={d} />
-      ))}
       <BannerVisning banner={skilt.banner} />
       <KartRamme kart={skilt.kart} />
       {skilt.cards.map((c) => (
         <CardVisning key={c.id} card={c} />
+      ))}
+      {/* Dekor ligger foran banner, kart og cards; den sist lagt til øverst */}
+      {skilt.dekor.map((d) => (
+        <DekorVisning key={d.id} dekor={d} />
       ))}
       <LenkeOverlegg skilt={skilt} />
       {rutenett && <Rutenett rute={RUTENETT_MM * skala} />}

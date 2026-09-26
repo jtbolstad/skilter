@@ -20,15 +20,19 @@ export const CARD_FARGER = [
   '#3a6f2a',
 ];
 
-export type Oppsettmal = 'sider' | 'kart-venstre' | 'kart-over';
+/** Kartet står alltid i midten; cards ligger på sidene eller over og under. */
+export type Oppsettmal = 'sider' | 'over-under';
 
 export const OPPSETTMALER: { verdi: Oppsettmal; navn: string; beskrivelse: string }[] = [
-  { verdi: 'sider', navn: 'Kart i midten', beskrivelse: 'Cards i en kolonne på hver side (som utkastet)' },
-  { verdi: 'kart-venstre', navn: 'Kart til venstre', beskrivelse: 'Cards i to kolonner til høyre' },
   {
-    verdi: 'kart-over',
-    navn: 'Kart øverst',
-    beskrivelse: 'Cards i rader under kartet – passer stående format',
+    verdi: 'sider',
+    navn: 'Cards til venstre og høyre',
+    beskrivelse: 'Kartet i midten, en kolonne på hver side (som utkastet)',
+  },
+  {
+    verdi: 'over-under',
+    navn: 'Cards over og under',
+    beskrivelse: 'Kartet i midten, rader over og under – passer stående format',
   },
 ];
 
@@ -73,20 +77,23 @@ export function lagOppsett(
   const bunn = H - 24 * u; // plass til forfatterlinja
   const hele = { x: marg, y: topp, b: B - 2 * marg, h: bunn - topp };
 
-  if (mal === 'kart-venstre') {
-    const kart = { ...hele, b: hele.b * 0.42 };
-    const kortOmrade = { x: kart.x + kart.b + mellomrom * 1.5, y: topp, b: 0, h: hele.h };
-    kortOmrade.b = B - marg - kortOmrade.x;
-    return { banner, kart, cards: rutenett(kortOmrade, antallCards, Math.min(2, antallCards), mellomrom) };
-  }
-
-  if (mal === 'kart-over') {
-    const kart = { ...hele, h: hele.h * 0.5 };
-    const kortOmrade = { x: marg, y: kart.y + kart.h + mellomrom * 1.5, b: hele.b, h: 0 };
-    kortOmrade.h = bunn - kortOmrade.y;
-    const liggende = B >= H;
-    const kolonner = Math.max(1, Math.min(antallCards, liggende ? 4 : 2));
-    return { banner, kart, cards: rutenett(kortOmrade, antallCards, kolonner, mellomrom, 'radvis') };
+  if (mal === 'over-under') {
+    // Halvparten over kartet, resten under, radvis fra venstre
+    const over = Math.ceil(antallCards / 2);
+    const under = antallCards - over;
+    const perRad = B >= H ? 4 : 3;
+    const radH = hele.h * 0.3;
+    const kartY = topp + radH + mellomrom * 1.5;
+    const kart = { x: marg, y: kartY, b: hele.b, h: bunn - radH - mellomrom * 1.5 - kartY };
+    const rad = (y: number, antall: number) =>
+      rutenett(
+        { x: marg, y, b: hele.b, h: radH },
+        antall,
+        Math.max(1, Math.min(antall, perRad)),
+        mellomrom,
+        'radvis',
+      );
+    return { banner, kart, cards: [...rad(topp, over), ...rad(bunn - radH, under)] };
   }
 
   // «sider»: halvparten til venstre, resten til høyre

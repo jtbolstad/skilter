@@ -114,8 +114,12 @@ Velg et kort for å endre:
 > **«Tekst kuttet»** i hjørnet betyr at teksten ikke får plass. Gjør kortet større, bildet mindre,
 > teksten mindre, eller kort ned teksten. Merket kommer ikke med på trykk.
 
-Trykk **⤢ Tilpass bildene så teksten får plass** under **Tilpass** (velg **🪧 Skilt**), så gjør appen
-bildet i hvert kuttet kort akkurat så mye mindre som trengs. Det kan angres med ett trykk. Under
+Trykk **⤢ Tilpass** øverst i **🪧 Skilt**, så
+- gjør appen bildet i hvert kuttet kort akkurat så mye mindre som trengs,
+- gjør kort med luft under teksten lavere (bildet beholder størrelsen), og
+- fordeler kortene i hver kolonne jevnt, så ingen overlapper.
+
+Alt kan angres med ett trykk. Under
 **Alle cards** stiller du også tekststørrelse, rammetykkelse, hjørneradius og linjene til kartet for alle
 kortene på en gang.
 
@@ -274,14 +278,14 @@ Velg **🪧 Skilt**:
 
 - **Tema:** bakgrunnsfarge og skrift – serif (klassisk) eller sans (moderne).
 - **Oppsett:** plasserer banner, kart og kort på nytt.
-  - **Kart i midten:** kort i en kolonne på hver side, som utkastet.
-  - **Kart til venstre:** kort i to kolonner til høyre.
-  - **Kart øverst:** kort i rader under kartet – passer stående format.
+  Kartet står alltid i midten.
+  - **Cards til venstre og høyre:** en kolonne på hver side, som utkastet.
+  - **Cards over og under:** rader over og under kartet – passer stående format.
 - **Dekor:** **🌲 Dekor som i utkastet** legger inn trær, bro og gress. Du kan også legge til granskog,
   løvskog, steinbro, gress og kompassrose hver for seg.
 
 Velg en dekor i lista for å endre farge, speilvende, få **🎲 Ny variant**, duplisere eller slette den.
-Dekor ligger alltid bak kort, kart og banner.
+Dekor ligger foran kort, kart og banner, og den du la til sist, ligger øverst – også i laglista.
 
 ## 12. Lagring og angre
 

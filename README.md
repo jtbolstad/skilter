@@ -28,8 +28,8 @@ Installeren er ikke signert, så Windows SmartScreen kan vise «Ukjent utgiver»
   Legg til nye kort, slett med Delete.
 - **Alle kort på en gang:** tekststørrelse, rammetykkelse, hjørneradius, linjetykkelse og linjestil.
   Skriften er like stor i alle kort, uansett kortets størrelse.
-- **Tilpass automatisk:** gjør bildene akkurat så mye mindre at teksten får plass, og plasser kortene
-  på et 5 mm-rutenett. Rutenettet kan også slås på mens du drar (Alt = fritt).
+- **Tilpass automatisk:** gjør bildene akkurat så mye mindre at teksten får plass, kort med luft under
+  teksten lavere, og fordeler kortene så ingen overlapper. Plasser kortene på et 5 mm-rutenett. Rutenettet kan også slås på mens du drar (Alt = fritt).
 - **Bilder:** bytt, beskjær, zoom, roter og speilvend direkte på skiltet – originalfilene endres aldri.
 - **Kart:** eget kartbilde eller nettkart fra OpenStreetMap og Kartverket. Punkter koblet til kort,
   veier og stier (også fulgt langs stien med BRouter), tegnforklaring, stedsnavn, målestokk og nordpil.

@@ -3,7 +3,7 @@ import { DEKORTYPER } from '../geometri/dekor';
 import { OPPSETTMALER } from '../modell/oppsett';
 import type { Banner, Bannerstil, Dekor, Skilt, Tema } from '../modell/typer';
 import { useSkilt } from '../store';
-import { tilpassBilderTilTekst } from './autojuster';
+import { tilpass } from './tilpass';
 import { LENKESTILER } from './CardPanel';
 import { Felt, Gruppe, input, knapp, Seksjon } from './Skjema';
 
@@ -126,7 +126,7 @@ export function Tilpass() {
   const { festCardsTilRutenett } = useSkilt.getState();
   return (
     <Seksjon tittel="Tilpass">
-      <Autojuster />
+      <TilpassKnapp />
       <button className={knapp} onClick={festCardsTilRutenett}>
         # Plasser cards på rutenettet (5 mm)
       </button>
@@ -193,35 +193,36 @@ export function AlleCards({ skilt }: { skilt: Skilt }) {
   );
 }
 
-function Autojuster() {
+function TilpassKnapp() {
   const kuttet = useSkilt((t) => Object.values(t.tekstOverflyt).filter(Boolean).length);
   const [jobber, settJobber] = useState(false);
   const [melding, settMelding] = useState<string>();
+  const flertall = (n: number) => `${n} card${n === 1 ? '' : 's'}`;
 
   const kjor = async () => {
     settJobber(true);
-    const r = await tilpassBilderTilTekst();
+    const r = await tilpass();
     settJobber(false);
     const deler = [
-      r.justert ? `Gjorde bildet mindre i ${r.justert} card${r.justert === 1 ? '' : 's'}.` : '',
-      r.forMyeTekst ? `${r.forMyeTekst} har fortsatt for mye tekst – gjør cardet større.` : '',
-      r.utenBilde ? `${r.utenBilde} uten bilde må gjøres større eller få kortere tekst.` : '',
+      r.mindreBilde ? `Mindre bilde i ${flertall(r.mindreBilde)}.` : '',
+      r.lavere ? `Lavere: ${flertall(r.lavere)}.` : '',
+      r.flyttet ? `Flyttet ${flertall(r.flyttet)} så ingen overlapper.` : '',
+      r.forMyeTekst ? `${flertall(r.forMyeTekst)} har fortsatt for mye tekst – gjør cardet større.` : '',
+      r.utenBilde ? `${flertall(r.utenBilde)} uten bilde må gjøres større eller få kortere tekst.` : '',
     ];
-    settMelding(deler.filter(Boolean).join(' ') || 'All tekst får plass.');
+    settMelding(deler.filter(Boolean).join(' ') || 'Alt passer allerede.');
   };
 
   return (
     <div className="flex flex-col gap-1">
-      <button className={knapp} disabled={jobber || !kuttet} onClick={kjor}>
-        ⤢ Tilpass bildene så teksten får plass
+      <button className={knapp} disabled={jobber} onClick={kjor}>
+        ⤢ Tilpass
       </button>
       <p className="text-stone-500">
         {jobber
           ? 'Tilpasser …'
           : (melding ??
-            (kuttet
-              ? `Teksten er kuttet i ${kuttet} card${kuttet === 1 ? '' : 's'}.`
-              : 'All tekst får plass.'))}
+            `${kuttet ? `Teksten er kuttet i ${flertall(kuttet)}. ` : ''}Gjør bildet mindre der teksten ikke får plass, cards lavere der det er luft under teksten, og fjerner overlapp.`)}
       </p>
     </div>
   );
@@ -367,7 +368,8 @@ export function DekorEgenskaper({ dekor }: { dekor: Dekor }) {
         </button>
       </div>
       <p className="text-stone-500">
-        Dra for å flytte, dra i hjørnene for å endre størrelse. Dekor ligger bak alt annet.
+        Dra for å flytte, dra i hjørnene for å endre størrelse. Dekor ligger foran banner, kart og cards, og
+        den sist lagt til øverst.
       </p>
     </Seksjon>
   );

@@ -11,7 +11,7 @@
 ## Autoplassering
 
 - [x] Plasser Cards på grid (knapp under «Alle cards»)
-- [x] Tilpass bildene så teksten får plass (knapp under «Alle cards»)
+- [x] Tilpass: mindre bilde der teksten er kuttet, lavere cards der det er luft, ingen overlapp
 
 ## Annet
 
@@ -35,6 +35,11 @@
 - [x] Piltaster flytter valgt ramme
 - [x] Shift + piltast gjør den større i pilens retning (Ctrl + Shift + piltast mindre)
 - [x] ? viser hurtigtastene
+
+## Oppsett og dekor
+
+- [x] Kartet alltid i midten: cards til venstre og høyre, eller over og under
+- [x] Ny dekor legges øverst (foran cards, først i laglista)
 
 ## Senere
 

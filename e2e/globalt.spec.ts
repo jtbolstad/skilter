@@ -99,3 +99,28 @@ test('rammer festes til rutenettet når det er slått på', async ({ page }) => 
   const mmY = (etter.y - lerret.y) / pxPerMm;
   expect(Math.abs(mmY - Math.round(mmY / 5) * 5)).toBeLessThan(0.5);
 });
+
+test('ny dekor legges øverst: foran cards på skiltet og først i laglista', async ({ page }) => {
+  await apneDemo(page);
+  await page.getByRole('button', { name: '+ Granskog' }).click();
+  await liste(page).getByRole('button', { name: '🪧 Skilt' }).click();
+  await page.getByRole('button', { name: '+ Kompassrose' }).click();
+
+  // Flytt kompassrosa over card 1 og sjekk at den ligger foran
+  await page.keyboard.press('Escape');
+  const card = (await page.getByTestId('card-1').boundingBox())!;
+  const kompass = page.getByTestId('dekor').nth(1);
+  const k = (await kompass.boundingBox())!;
+  await page.mouse.move(k.x + k.width / 2, k.y + k.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(card.x + card.width / 2, card.y + card.height / 2, { steps: 5 });
+  await page.mouse.up();
+  const midt = await page.evaluate(
+    ([x, y]) => document.elementFromPoint(x, y)?.closest('[data-testid]')?.getAttribute('data-testid'),
+    [card.x + card.width / 2, card.y + card.height / 2] as const,
+  );
+  expect(midt).toBe('dekor');
+
+  const rader = liste(page).getByRole('button', { name: /Granskog 1|Kompassrose 1/ });
+  await expect(rader.first()).toHaveText(/Kompassrose 1/);
+});

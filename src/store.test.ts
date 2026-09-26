@@ -155,10 +155,11 @@ describe('utseende', () => {
   it('brukOppsett flytter banner, kart og cards og kan angres', () => {
     nyGest();
     const foer = s().skilt!.kart.ramme;
-    s().brukOppsett('kart-venstre');
+    s().brukOppsett('over-under');
     const etter = s().skilt!;
-    expect(etter.kart.ramme.x).toBeLessThan(foer.x);
-    expect(etter.cards.every((c) => c.ramme.x > etter.kart.ramme.x + etter.kart.ramme.b)).toBe(true);
+    const k = etter.kart.ramme;
+    expect(k.b).toBeGreaterThan(foer.b);
+    expect(etter.cards.every((c) => c.ramme.y + c.ramme.h <= k.y || c.ramme.y >= k.y + k.h)).toBe(true);
     s().angre();
     expect(s().skilt!.kart.ramme).toEqual(foer);
   });

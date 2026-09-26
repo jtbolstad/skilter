@@ -82,10 +82,12 @@ test('tema, oppsettmal og dekor', async ({ page }) => {
   const font = await page.locator('[data-lerret]').evaluate((el) => getComputedStyle(el).fontFamily);
   expect(font).toContain('Source Sans 3');
 
-  await page.getByRole('button', { name: /Kart øverst/ }).click();
+  await page.getByRole('button', { name: /Cards over og under/ }).click();
   const kart = (await page.getByTestId('kart').boundingBox())!;
   const card1 = (await page.getByTestId('card-1').boundingBox())!;
-  expect(card1.y).toBeGreaterThan(kart.y + kart.height);
+  const card8 = (await page.getByTestId('card-8').boundingBox())!;
+  expect(card1.y + card1.height).toBeLessThanOrEqual(kart.y + 1);
+  expect(card8.y).toBeGreaterThanOrEqual(kart.y + kart.height - 1);
 
   await page.getByRole('button', { name: 'Dekor som i utkastet' }).click();
   await expect(page.getByTestId('dekor')).toHaveCount(4);
