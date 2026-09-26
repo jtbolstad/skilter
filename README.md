@@ -71,8 +71,9 @@ havner i `src-tauri/target/release/bundle/nsis/`.
 
 - **Tester** (typesjekk, lint, enhet og E2E mot demoprosjektet) kjøres ved hver push og pull request.
 - **Nettversjonen** publiseres til GitHub Pages ved hver push til `master`.
-- **Windows-installeren** bygges ved en `v*`-tagg og legges på en GitHub-release. Øk versjonen i
-  `package.json` og `src-tauri/tauri.conf.json` først, så:
+- **Windows-installeren** bygges ved en `v*`-tagg og legges på en GitHub-release, med notatene fra
+  [CHANGELOG.md](CHANGELOG.md). Skriv endringene der, øk versjonen i `package.json`,
+  `src-tauri/tauri.conf.json` og `src-tauri/Cargo.toml`, og tagg:
 
 ```sh
 git tag -a v0.2.0 -m "Skilter 0.2.0"
@@ -99,6 +100,7 @@ Vil du bare prøve appen, trykk **🧪 Prøv demoprosjektet** på startsiden (el
 - [Bruksanvisning](docs/BRUKSANVISNING.md) – steg for steg, med illustrasjoner
 - [Teknisk beskrivelse](docs/TEKNISK.md) – arkitektur, datamodell, eksport og testing
 - [Plan](PLAN.md) – faser, avklaringer og status
+- [Endringslogg](CHANGELOG.md) – hva som er nytt i hver versjon
 - [TODO](TODO.md) – ønskeliste og hva som er gjort
 
 ## Teknologi
