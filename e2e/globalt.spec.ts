@@ -124,3 +124,23 @@ test('ny dekor legges øverst: foran cards på skiltet og først i laglista', as
   const rader = liste(page).getByRole('button', { name: /Granskog 1|Kompassrose 1/ });
   await expect(rader.first()).toHaveText(/Kompassrose 1/);
 });
+
+test('linja fra et card til kartet går under andre cards', async ({ page }) => {
+  await apneDemo(page);
+  // Card 5 (høyre kolonne) kobles til et punkt helt til venstre i kartet, så linja krysser kartet
+  await liste(page).getByRole('button', { name: /^5\./ }).click();
+  await page.getByRole('button', { name: 'Plasser punkt på kartet' }).click();
+  const kart = (await page.getByTestId('kart').boundingBox())!;
+  await page.mouse.click(kart.x + kart.width * 0.1, kart.y + kart.height * 0.5);
+  await expect(page.getByTestId('lenke')).toHaveCount(1);
+
+  const underCards = await page.evaluate(() => {
+    const linje = document.querySelector('[data-testid="lenke"]')!.closest('svg')!;
+    const card = document.querySelector('[data-testid^="card-"]')!;
+    return (
+      getComputedStyle(linje).zIndex === 'auto' &&
+      Boolean(linje.compareDocumentPosition(card) & Node.DOCUMENT_POSITION_FOLLOWING)
+    );
+  });
+  expect(underCards).toBe(true);
+});

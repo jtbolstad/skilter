@@ -33,6 +33,8 @@ export function Lerret({ skilt }: { skilt: Skilt }) {
     >
       <BannerVisning banner={skilt.banner} />
       <KartRamme kart={skilt.kart} />
+      {/* Linjene til kartpunktene ligger over kartet, men under cardene de går ut fra */}
+      <LenkeOverlegg skilt={skilt} />
       {skilt.cards.map((c) => (
         <CardVisning key={c.id} card={c} />
       ))}
@@ -40,7 +42,6 @@ export function Lerret({ skilt }: { skilt: Skilt }) {
       {skilt.dekor.map((d) => (
         <DekorVisning key={d.id} dekor={d} />
       ))}
-      <LenkeOverlegg skilt={skilt} />
       {rutenett && <Rutenett rute={RUTENETT_MM * skala} />}
 
       {skilt.forfatter && (

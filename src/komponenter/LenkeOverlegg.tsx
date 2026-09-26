@@ -19,7 +19,7 @@ export function LenkeOverlegg({ skilt }: { skilt: Skilt }) {
 
   return (
     <svg
-      className="pointer-events-none absolute inset-0 z-20"
+      className="pointer-events-none absolute inset-0"
       width={B * skala}
       height={H * skala}
       viewBox={`0 0 ${B} ${H}`}
