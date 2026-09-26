@@ -5,6 +5,7 @@ import { angre, gjeldendeGest, gjorOm, registrer, tomHistorikk, type Historikk }
 import { DEKORTYPER } from './geometri/dekor';
 import { festHeleRammen, RUTENETT_MM } from './geometri/rutenett';
 import { type Pilhandling, pilRamme, type Retning } from './geometri/tastatur';
+import { bildepunktTilRamme, plasser, rammeTilBildepunkt, type Storrelse } from './geometri/utsnitt';
 import { flyttMellomKart, kalibreringFraGeo } from './geometri/geo';
 import { CARD_FARGER, lagOppsett, type Oppsettmal } from './modell/oppsett';
 import { RUTEMALER } from './modell/rutestiler';
@@ -65,6 +66,8 @@ interface Tilstand {
   /** Rammer festes til rutenettet når de flyttes eller endrer størrelse */
   festTilRutenett: boolean;
   visHurtigtaster: boolean;
+  /** Pikselstørrelsen på kartbildet, når det er lastet – trengs for å flytte punkter i mm */
+  kartbilde?: Storrelse;
 
   apneProsjekt(mappe: Filmappe, skilt: Skilt): void;
   angre(): void;
@@ -103,8 +106,10 @@ interface Tilstand {
   slettCard(id: string): void;
   settFestTilRutenett(fest: boolean): void;
   settVisHurtigtaster(vis: boolean): void;
+  settKartbilde(storrelse: Storrelse | undefined): void;
   /**
    * Flytter eller endrer størrelse på valgt card, banner, kart eller dekor med piltastene.
+   * Valgt vei eller stedsnavn flyttes (men endrer ikke størrelse).
    * Returnerer om noe var valgt som kan flyttes.
    */
   pilValgt(retning: Retning, handling: Pilhandling): boolean;
@@ -279,9 +284,32 @@ export const useSkilt = create<Tilstand>()((set, get) => {
     },
     settFestTilRutenett: (festTilRutenett) => set({ festTilRutenett }),
     settVisHurtigtaster: (visHurtigtaster) => set({ visHurtigtaster }),
+    settKartbilde: (kartbilde) => set({ kartbilde }),
     pilValgt: (retning, handling) => {
-      const { skilt: sk, valg, modus, festTilRutenett } = get();
+      const { skilt: sk, valg, modus, festTilRutenett, kartbilde } = get();
       if (!sk || modus.type !== 'normal') return false;
+      if (valg.type === 'rute' || valg.type === 'stedsnavn') {
+        if (handling !== 'flytt' || !sk.kart.bilde || !kartbilde) return false;
+        // Punktene ligger i kartbildets koordinater: regn om via plasseringen i kartrammen
+        const p = plasser(sk.kart.bilde, sk.kart.ramme, kartbilde);
+        const steg = festTilRutenett ? RUTENETT_MM : 1;
+        const dx = retning === 'venstre' ? -steg : retning === 'hoyre' ? steg : 0;
+        const dy = retning === 'opp' ? -steg : retning === 'ned' ? steg : 0;
+        const flytt = (pt: Bildepunkt) => {
+          const r = bildepunktTilRamme(pt, p);
+          return rammeTilBildepunkt(r.x + dx, r.y + dy, p);
+        };
+        if (valg.type === 'rute') {
+          const rute = sk.ruter.find((r) => r.id === valg.id);
+          if (!rute) return false;
+          get().endreRute(rute.id, { punkter: rute.punkter.map(flytt), via: rute.via?.map(flytt) });
+        } else {
+          const sted = sk.stedsnavn.find((x) => x.id === valg.id);
+          if (!sted) return false;
+          get().endreStedsnavn(sted.id, { posisjon: flytt(sted.posisjon) });
+        }
+        return true;
+      }
       const ny = (r: Rektangel) =>
         pilRamme(r, retning, handling, { rute: festTilRutenett ? RUTENETT_MM : undefined, min: MIN_CARD_MM });
       if (valg.type === 'card') {
@@ -481,6 +509,7 @@ export const useSkilt = create<Tilstand>()((set, get) => {
         farge2: type === 'steinbro' ? '#2f5a3c' : undefined,
         speilvendt: false,
         fro: Math.floor(Math.random() * 1e6),
+        foran: true,
       };
       get().endreSkilt((s2) => ({ ...s2, dekor: [...s2.dekor, dekor] }));
       set({ valg: { type: 'dekor', id }, modus: { type: 'normal' } });

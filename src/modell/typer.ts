@@ -171,6 +171,8 @@ export interface Dekor {
   speilvendt: boolean;
   /** Frø for tilfeldig variasjon (trehøyder o.l.) */
   fro: number;
+  /** Foran banner, kart og cards. Mangler (eldre skilt, dekor som i utkastet) = bak. */
+  foran?: boolean;
 }
 
 export interface Tema {

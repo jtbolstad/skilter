@@ -345,6 +345,15 @@ export function DekorEgenskaper({ dekor }: { dekor: Dekor }) {
         <button className={knapp} onClick={() => endre({ speilvendt: !dekor.speilvendt })}>
           ⇋ Speilvend
         </button>
+        <button
+          className={knapp}
+          onClick={() => endre({ foran: !dekor.foran })}
+          title={
+            dekor.foran ? 'Ligger nå foran banner, kart og cards' : 'Ligger nå bak banner, kart og cards'
+          }
+        >
+          {dekor.foran ? '⤓ Legg bak' : '⤒ Legg foran'}
+        </button>
         {dekor.type !== 'steinbro' && dekor.type !== 'kompass' && (
           <button className={knapp} onClick={() => endre({ fro: Math.floor(Math.random() * 1e6) })}>
             🎲 Ny variant
@@ -368,8 +377,8 @@ export function DekorEgenskaper({ dekor }: { dekor: Dekor }) {
         </button>
       </div>
       <p className="text-stone-500">
-        Dra for å flytte, dra i hjørnene for å endre størrelse. Dekor ligger foran banner, kart og cards, og
-        den sist lagt til øverst.
+        Dra for å flytte, dra i hjørnene for å endre størrelse. Ny dekor legges foran banner, kart og cards –
+        bytt med «Legg bak» og «Legg foran».
       </p>
     </Seksjon>
   );

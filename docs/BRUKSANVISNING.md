@@ -285,7 +285,7 @@ Velg **🪧 Skilt**:
   løvskog, steinbro, gress og kompassrose hver for seg.
 
 Velg en dekor i lista for å endre farge, speilvende, få **🎲 Ny variant**, duplisere eller slette den.
-Dekor ligger foran kort, kart og banner, og den du la til sist, ligger øverst – også i laglista.
+Ny dekor legges foran kort, kart og banner, og den du la til sist, ligger øverst – også i laglista. Trykk **⤓ Legg bak** for å legge den bak, for eksempel trær i bakgrunnen. **🌲 Dekor som i utkastet** legges bak.
 
 ## 12. Lagring og angre
 
@@ -329,7 +329,7 @@ Håndtak, markeringer og varsler som «Tekst kuttet» kommer ikke med i eksporte
 | Enter                           | Avslutt tegning av vei                       |
 | Backspace (under tegning)       | Fjern siste punkt                            |
 | Shift + dra (under tegning)     | Tegn frihånd                                 |
-| Piltast                         | Flytt valgt kort, banner, kart eller dekor 1 mm (til neste rutelinje når rutenettet er på) |
+| Piltast                         | Flytt valgt kort, banner, kart, dekor, vei eller stedsnavn 1 mm (5 mm / neste rutelinje når rutenettet er på) |
 | Shift + piltast                 | Gjør valgt ramme større i pilens retning     |
 | Ctrl + Shift + piltast          | Gjør valgt ramme mindre fra den siden        |
 | Delete                          | Slett valgt kort, vei, stedsnavn eller dekor |

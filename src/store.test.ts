@@ -99,6 +99,32 @@ describe('ruter og stedsnavn', () => {
     expect(s().modus.type).toBe('tegn-rute');
   });
 
+  it('piltaster flytter valgt stedsnavn og vei i mm, men endrer ikke størrelse', () => {
+    s().settKartbilde({ b: 2000, h: 1000 });
+    const sted = s().nyttStedsnavn(punkt(0.5, 0.5));
+    expect(s().pilValgt('hoyre', 'flytt')).toBe(true);
+    const p = s().skilt!.stedsnavn.find((x) => x.id === sted)!.posisjon;
+    expect(p.x).toBeGreaterThan(0.5);
+    expect(p.y).toBeCloseTo(0.5);
+    expect(s().pilValgt('hoyre', 'storre')).toBe(false);
+
+    const rute = s().nyRute(0);
+    s().leggTilRutepunkter(rute, [punkt(0.2, 0.2), punkt(0.4, 0.3)]);
+    s().avsluttTegning();
+    s().velg({ type: 'rute', id: rute });
+    expect(s().pilValgt('ned', 'flytt')).toBe(true);
+    const [a, b] = s().skilt!.ruter[0]!.punkter;
+    expect(a!.y).toBeGreaterThan(0.2);
+    expect(b!.y - a!.y).toBeCloseTo(0.1);
+    expect(a!.x).toBeCloseTo(0.2);
+  });
+
+  it('piltaster på vei gjør ingenting før kartbildet er lastet', () => {
+    s().settKartbilde(undefined);
+    s().nyttStedsnavn(punkt(0.5, 0.5));
+    expect(s().pilValgt('hoyre', 'flytt')).toBe(false);
+  });
+
   it('stedsnavn opprettes, endres og slettes', () => {
     const id = s().nyttStedsnavn(punkt(0.4, 0.4));
     expect(s().valg).toEqual({ type: 'stedsnavn', id });
@@ -172,6 +198,14 @@ describe('utseende', () => {
     s().slettDekor(id);
     expect(s().skilt!.dekor).toEqual([]);
     expect(s().valg.type).toBe('skilt');
+  });
+
+  it('ny dekor legges foran, dekor som i utkastet bak', () => {
+    s().leggTilDekor('kompass');
+    s().leggTilUtkastDekor();
+    const [kompass, ...utkast] = s().skilt!.dekor;
+    expect(kompass!.foran).toBe(true);
+    expect(utkast.every((d) => !d.foran)).toBe(true);
   });
 
   it('utkastdekor legger trær, bro og gress innenfor skiltet', () => {

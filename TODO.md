@@ -35,11 +35,13 @@
 - [x] Piltaster flytter valgt ramme
 - [x] Shift + piltast gjør den større i pilens retning (Ctrl + Shift + piltast mindre)
 - [x] ? viser hurtigtastene
+- [x] Piltaster flytter også valgt vei og stedsnavn
 
 ## Oppsett og dekor
 
 - [x] Kartet alltid i midten: cards til venstre og høyre, eller over og under
 - [x] Ny dekor legges øverst (foran cards, først i laglista)
+- [x] Dekor bak eller foran, per dekor («Legg bak» / «Legg foran»)
 
 ## Senere
 

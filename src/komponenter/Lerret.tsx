@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { RUTENETT_MM } from '../geometri/rutenett';
 import type { Skilt } from '../modell/typer';
 import { useSkilt } from '../store';
@@ -6,6 +7,7 @@ import { CardVisning } from './CardVisning';
 import { DekorVisning } from './DekorVisning';
 import { KartRamme } from './KartRamme';
 import { LenkeOverlegg } from './LenkeOverlegg';
+import { useForhandsvisning } from './useForhandsvisning';
 import { useEksport, useSkala } from './visning';
 
 export const TEMAFONT = { serif: 'var(--font-serif)', sans: 'var(--font-sans)' } as const;
@@ -15,6 +17,11 @@ export function Lerret({ skilt }: { skilt: Skilt }) {
   const eksport = useEksport();
   const velg = useSkilt((t) => t.velg);
   const rutenett = useSkilt((t) => t.festTilRutenett) && !eksport;
+  // Kartbildets størrelse i store, så piltastene kan flytte veier og stedsnavn i mm
+  const kartbilde = useForhandsvisning(skilt.kart.bilde?.fil);
+  useEffect(() => {
+    useSkilt.getState().settKartbilde(kartbilde && { b: kartbilde.bredde, h: kartbilde.hoyde });
+  }, [kartbilde]);
   const { bredde_mm: B, hoyde_mm: H } = skilt.format;
   const u = Math.min(B, H) / 594;
   const px = (mm: number) => mm * u * skala;
@@ -31,6 +38,12 @@ export function Lerret({ skilt }: { skilt: Skilt }) {
       }}
       onPointerDown={() => velg({ type: 'skilt' })}
     >
+      {/* Dekor bak ligger bakerst, dekor foran over cardene; sist lagt til øverst */}
+      {skilt.dekor
+        .filter((d) => !d.foran)
+        .map((d) => (
+          <DekorVisning key={d.id} dekor={d} />
+        ))}
       <BannerVisning banner={skilt.banner} />
       <KartRamme kart={skilt.kart} />
       {/* Linjene til kartpunktene ligger over kartet, men under cardene de går ut fra */}
@@ -38,10 +51,11 @@ export function Lerret({ skilt }: { skilt: Skilt }) {
       {skilt.cards.map((c) => (
         <CardVisning key={c.id} card={c} />
       ))}
-      {/* Dekor ligger foran banner, kart og cards; den sist lagt til øverst */}
-      {skilt.dekor.map((d) => (
-        <DekorVisning key={d.id} dekor={d} />
-      ))}
+      {skilt.dekor
+        .filter((d) => d.foran)
+        .map((d) => (
+          <DekorVisning key={d.id} dekor={d} />
+        ))}
       {rutenett && <Rutenett rute={RUTENETT_MM * skala} />}
 
       {skilt.forfatter && (
