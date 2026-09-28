@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, type Locator, test, type Page } from '@playwright/test';
 
 async function apneDemo(page: Page) {
   await page.goto('/?demo=innebygd&ny');
@@ -66,7 +66,7 @@ test('tittelen kan stå over, under eller oppå bildet', async ({ page }) => {
   await card.getByRole('heading').click();
   const bildeboks = card.getByTestId('cardbilde');
   await expect(bildeboks.locator('img').first()).toBeVisible();
-  const gruppe = page.getByRole('group', { name: 'Tittel', exact: true });
+  const gruppe = page.getByRole('group', { name: 'Plassering av tittelen' });
   const boks = async () => ({
     bilde: (await bildeboks.boundingBox())!,
     tittel: (await card.getByTestId('cardtittel').boundingBox())!,
@@ -113,9 +113,18 @@ test('banner: stil, undertittel og linjer', async ({ page }) => {
 
 test('tema, oppsettmal og dekor', async ({ page }) => {
   await apneDemo(page);
-  await page.getByRole('button', { name: 'Sans (moderne)' }).click();
-  const font = await page.locator('[data-lerret]').evaluate((el) => getComputedStyle(el).fontFamily);
-  expect(font).toContain('Source Sans 3');
+  await page.getByRole('combobox', { name: 'Skrift' }).selectOption('Source Sans');
+  const fontfamilie = (l: Locator) => l.evaluate((el) => getComputedStyle(el).fontFamily);
+  expect(await fontfamilie(page.locator('[data-lerret]'))).toContain('Source Sans 3');
+  // Titlene følger teksten til de får sin egen font
+  const tittel = page.getByTestId('card-1').getByTestId('cardtittel');
+  expect(await fontfamilie(tittel)).toContain('Source Sans 3');
+  await page.getByRole('combobox', { name: 'Titler' }).selectOption('Playfair Display');
+  expect(await fontfamilie(tittel)).toContain('Playfair Display');
+  expect(await fontfamilie(page.getByTestId('banner').getByRole('heading'))).toContain('Playfair Display');
+  expect(await fontfamilie(page.getByTestId('card-1').locator('p').first())).toContain('Source Sans 3');
+  // Fontfila er faktisk lastet (ellers blir PDF-en med reservefont)
+  expect(await page.evaluate(() => document.fonts.check('700 20px "Playfair Display"'))).toBe(true);
 
   await page.getByRole('button', { name: /Cards over og under/ }).click();
   const kart = (await page.getByTestId('kart').boundingBox())!;

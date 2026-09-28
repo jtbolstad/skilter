@@ -1,5 +1,6 @@
-import { useEffect } from 'react';
+import { type CSSProperties, useEffect } from 'react';
 import { RUTENETT_MM } from '../geometri/rutenett';
+import { fontfamilie } from '../modell/fonter';
 import type { Skilt } from '../modell/typer';
 import { useSkilt } from '../store';
 import { BannerVisning } from './BannerVisning';
@@ -9,8 +10,6 @@ import { KartRamme } from './KartRamme';
 import { LenkeHandtak, LenkeOverlegg } from './LenkeOverlegg';
 import { useForhandsvisning } from './useForhandsvisning';
 import { useEksport, useSkala } from './visning';
-
-export const TEMAFONT = { serif: 'var(--font-serif)', sans: 'var(--font-sans)' } as const;
 
 export function Lerret({ skilt }: { skilt: Skilt }) {
   const skala = useSkala();
@@ -34,7 +33,9 @@ export function Lerret({ skilt }: { skilt: Skilt }) {
         width: Math.round(B * skala),
         height: Math.round(H * skala),
         background: skilt.tema.bakgrunn,
-        fontFamily: TEMAFONT[skilt.tema.font],
+        fontFamily: fontfamilie(skilt.tema.font),
+        // Titlene i cards og banneret bruker denne
+        ...({ '--tittelfont': fontfamilie(skilt.tema.tittelfont ?? skilt.tema.font) } as CSSProperties),
       }}
       onPointerDown={() => velg({ type: 'skilt' })}
     >

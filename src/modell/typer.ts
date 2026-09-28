@@ -1,3 +1,4 @@
+import type { Fontnavn } from './fonter';
 /** Punkt i kartbildet, normalisert 0–1. Geo-koordinater kommer med nettkart (fase 6). */
 export interface Bildepunkt {
   type: 'bilde';
@@ -186,7 +187,9 @@ export interface Dekor {
 
 export interface Tema {
   bakgrunn: string;
-  font: 'serif' | 'sans';
+  font: Fontnavn;
+  /** Font for titlene i cards og banneret. Mangler = samme som `font`. */
+  tittelfont?: Fontnavn;
   /** Skalering av rammetykkelsen på alle cards (1 = standard, 0 = ingen ramme) */
   kantbredde: number;
   /** Skalering av hjørneradiusen på alle cards (0 = skarpe hjørner) */

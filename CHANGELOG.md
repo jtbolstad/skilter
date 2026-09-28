@@ -11,6 +11,8 @@ og versjonsnumrene følger [semantisk versjonering](https://semver.org/lang/no/)
 - **Avrundede hjørner på bildene**, med samme radius som cardene (kan slås av under «Alle cards»).
 - **Tittelplassering** per card: over bildet, under bildet eller på bildet (øvre venstre hjørne, på
   cardets bakgrunn).
+- **Flere fonter**: ni å velge mellom (Source Serif, Lora, Merriweather, EB Garamond, Playfair Display,
+  Roboto Slab, Source Sans, Open Sans og Oswald), og egen font for titlene i cards og banneret.
 
 ### Endret
 

@@ -69,7 +69,7 @@ test('beskjærer, zoomer og roterer bildet', async ({ page }) => {
 test('redigerer tekst og layout', async ({ page }) => {
   await apneDemo(page);
   await velgCard(page, '7. Milesteinen');
-  await page.getByLabel('Tittel').fill('Milesteinen ved Ljabru');
+  await page.getByLabel('Tittel', { exact: true }).fill('Milesteinen ved Ljabru');
   await expect(page.getByTestId('card-7').getByRole('heading')).toHaveText('Milesteinen ved Ljabru');
 
   await page

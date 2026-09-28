@@ -161,7 +161,7 @@ function Utseende({ card }: { card: Card }) {
           ))}
         </div>
       </Gruppe>
-      <Gruppe etikett="Tittel">
+      <Gruppe etikett="Plassering av tittelen">
         <div className="flex gap-1">
           {TITTELPLASSER.filter((t) => t.verdi !== 'under' || !bildeTilSiden(card)).map((t) => (
             <button

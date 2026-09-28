@@ -193,6 +193,7 @@ function Tittel({ card, paBilde = false }: { card: Card; paBilde?: boolean }) {
       className={`shrink-0 leading-tight font-bold ${paBilde ? 'absolute top-0 left-0 max-w-[85%] bg-[#fbf8f1]' : ''}`}
       style={{
         fontSize: m.tittel * skala,
+        fontFamily: 'var(--tittelfont)',
         ...(paBilde && {
           padding: `0 ${m.gap * 1.5 * skala}px ${m.gap * 0.6 * skala}px 0`,
           borderBottomRightRadius: avrundet ? m.radius * skala : 0,

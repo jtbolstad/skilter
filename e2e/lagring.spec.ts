@@ -18,7 +18,7 @@ function pngInfo(buf: Buffer) {
 test('lagrer automatisk og husker endringer etter omlasting', async ({ page }) => {
   await apneDemo(page);
   await page.locator('aside').getByRole('button', { name: '1. Utsikten' }).click();
-  await page.getByLabel('Tittel').fill('Utsikten over dalen');
+  await page.getByLabel('Tittel', { exact: true }).fill('Utsikten over dalen');
   await expect(page.getByTestId('lagringsstatus')).toContainText('Lagret', { timeout: 5000 });
 
   await apneDemo(page, false);

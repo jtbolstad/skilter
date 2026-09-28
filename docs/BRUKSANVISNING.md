@@ -185,7 +185,7 @@ bildet vises, og lar tittelen gå over hele bredden.
 
 Skru av **Tittel over hele bredden** hvis tittelen skal stå ved siden av bildet i stedet.
 
-Under **Tittel** i kortpanelet velger du hvor tittelen står: **Over bildet**, **Under bildet** (når
+Under **Plassering av tittelen** i kortpanelet velger du hvor tittelen står: **Over bildet**, **Under bildet** (når
 bildet ligger over teksten) eller **På bildet** – i bildets øvre venstre hjørne på kortets bakgrunn,
 uten at bildet blir mindre.
 
@@ -281,7 +281,8 @@ endres i størrelse som alt annet.
 
 Velg **🪧 Skilt**:
 
-- **Tema:** bakgrunnsfarge og skrift – serif (klassisk) eller sans (moderne).
+- **Tema:** bakgrunnsfarge, skrift og egen skrift for titlene – ni fonter å velge mellom, blant
+  annet Source Serif, Lora, EB Garamond, Playfair Display, Source Sans og Oswald.
 - **Oppsett:** plasserer banner, kart og kort på nytt.
   Kartet står alltid i midten.
   - **Cards til venstre og høyre:** en kolonne på hver side, som utkastet.

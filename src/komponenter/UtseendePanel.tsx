@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { DEKORTYPER } from '../geometri/dekor';
+import { FONTER, type Fontnavn, fontfamilie } from '../modell/fonter';
 import { OPPSETTMALER } from '../modell/oppsett';
 import type { Banner, Bannerstil, Dekor, Skilt, Tema } from '../modell/typer';
 import { useSkilt } from '../store';
@@ -45,22 +46,35 @@ export function TemaOgOppsett({ skilt }: { skilt: Skilt }) {
             />
           </div>
         </Gruppe>
-        <Gruppe etikett="Skrift">
-          <div className="flex gap-2">
-            <button
-              className={`${valgKnapp(skilt.tema.font === 'serif')} font-serif`}
-              onClick={() => endreTema({ font: 'serif' })}
-            >
-              Serif (klassisk)
-            </button>
-            <button
-              className={`${valgKnapp(skilt.tema.font === 'sans')} font-sans`}
-              onClick={() => endreTema({ font: 'sans' })}
-            >
-              Sans (moderne)
-            </button>
-          </div>
-        </Gruppe>
+        <Felt etikett="Skrift">
+          <select
+            className={input}
+            style={{ fontFamily: fontfamilie(skilt.tema.font) }}
+            value={skilt.tema.font}
+            onChange={(e) => endreTema({ font: e.target.value as Fontnavn })}
+          >
+            {FONTER.map((f) => (
+              <option key={f.id} value={f.id} style={{ fontFamily: f.familie }}>
+                {f.navn}
+              </option>
+            ))}
+          </select>
+        </Felt>
+        <Felt etikett="Titler">
+          <select
+            className={input}
+            style={{ fontFamily: fontfamilie(skilt.tema.tittelfont ?? skilt.tema.font) }}
+            value={skilt.tema.tittelfont ?? ''}
+            onChange={(e) => endreTema({ tittelfont: (e.target.value || undefined) as Fontnavn | undefined })}
+          >
+            <option value="">Samme som teksten</option>
+            {FONTER.map((f) => (
+              <option key={f.id} value={f.id} style={{ fontFamily: f.familie }}>
+                {f.navn}
+              </option>
+            ))}
+          </select>
+        </Felt>
       </Seksjon>
 
       <Seksjon tittel="Oppsett">

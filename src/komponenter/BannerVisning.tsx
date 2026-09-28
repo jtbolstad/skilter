@@ -80,7 +80,7 @@ export function BannerVisning({ banner }: { banner: Banner }) {
         >
           <h1
             className="leading-none font-bold tracking-wide whitespace-nowrap uppercase"
-            style={{ fontSize: h * 0.4 * s }}
+            style={{ fontSize: h * 0.4 * s, fontFamily: 'var(--tittelfont)' }}
           >
             {banner.tittel}
           </h1>
