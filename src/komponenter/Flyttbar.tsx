@@ -1,10 +1,12 @@
 import { useEffect, useRef, type PointerEvent, type ReactNode } from 'react';
 import { festRamme, type Handtak } from '../geometri/rutenett';
 import type { Rektangel } from '../modell/typer';
-import { useSkilt } from '../store';
+import { type Rammeref, rammeTil, sammeRef, useSkilt } from '../store';
 import { useEksport, useSkala } from './visning';
 
 interface Props {
+  /** Hvilket element rammen tilhører – for flervalg med Ctrl/Shift + klikk */
+  element: Rammeref;
   ramme: Rektangel;
   valgt: boolean;
   onVelg(): void;
@@ -18,7 +20,11 @@ interface Props {
 
 const MIN_MM = 20;
 
+/** Ctrl, Shift eller Cmd holdt nede: klikket legger til i eller tar ut av valget */
+const erFlervalgKlikk = (e: PointerEvent) => e.ctrlKey || e.shiftKey || e.metaKey;
+
 export function Flyttbar({
+  element,
   ramme,
   valgt,
   onVelg,
@@ -30,9 +36,19 @@ export function Flyttbar({
 }: Props) {
   const skala = useSkala();
   const eksport = useEksport();
-  const start = useRef<{ handtak: Handtak; x: number; y: number; ramme: Rektangel; fanget: boolean }>(
-    undefined,
+  const flervalgt = useSkilt(
+    (t) => t.valg.type === 'flere' && t.valg.valgte.some((r) => sammeRef(r, element)),
   );
+  const start = useRef<{
+    handtak: Handtak;
+    x: number;
+    y: number;
+    ramme: Rektangel;
+    fanget: boolean;
+    /** Dra i ett av flere valgte elementer flytter alle, fra rammene de hadde da draget startet */
+    gruppe?: { ref: Rammeref; ramme: Rektangel }[];
+    flyttet: boolean;
+  }>(undefined);
   const boks = useRef<HTMLDivElement>(null);
   const sluttVent = useRef<() => void>(undefined);
   useEffect(() => () => sluttVent.current?.(), []);
@@ -44,9 +60,18 @@ export function Flyttbar({
   const ned = (e: PointerEvent, handtak: Handtak, fangNaa = false) => {
     if (e.button !== 0) return;
     e.stopPropagation();
-    onVelg();
+    if (handtak === 'flytt' && erFlervalgKlikk(e)) return useSkilt.getState().veksleValg(element);
+    const { valg, skilt } = useSkilt.getState();
+    const gruppe =
+      handtak === 'flytt' && flervalgt && valg.type === 'flere' && skilt
+        ? valg.valgte.flatMap((ref) => {
+            const r = rammeTil(skilt, ref);
+            return r ? [{ ref, ramme: r }] : [];
+          })
+        : undefined;
+    if (!gruppe) onVelg();
     if (fangNaa) e.currentTarget.setPointerCapture(e.pointerId);
-    start.current = { handtak, x: e.clientX, y: e.clientY, ramme, fanget: fangNaa };
+    start.current = { handtak, x: e.clientX, y: e.clientY, ramme, fanget: fangNaa, gruppe, flyttet: false };
     if (!fangNaa) ventPaaBevegelse();
   };
 
@@ -103,10 +128,24 @@ export function Flyttbar({
     }
     // Alt holdt nede slår av rutenettet midlertidig
     const fest = useSkilt.getState().festTilRutenett && !e.altKey;
-    onEndre(fest ? festRamme(r, s.handtak, MIN_MM) : r);
+    const ny = fest ? festRamme(r, s.handtak, MIN_MM) : r;
+    s.flyttet = true;
+    if (!s.gruppe) return onEndre(ny);
+    // Alle flyttes like mye som dette elementet (etter festing til rutenettet)
+    const ddx = ny.x - s.ramme.x;
+    const ddy = ny.y - s.ramme.y;
+    useSkilt
+      .getState()
+      .settRammer(
+        s.gruppe.map((g) => ({ ref: g.ref, ramme: { ...g.ramme, x: g.ramme.x + ddx, y: g.ramme.y + ddy } })),
+      );
   };
 
-  const opp = () => (start.current = undefined);
+  const opp = () => {
+    // Klikk uten å dra i et av flere valgte velger bare det
+    if (start.current?.gruppe && !start.current.flyttet) onVelg();
+    start.current = undefined;
+  };
   const hendelser = { onPointerMove: flytt, onPointerUp: opp, onPointerCancel: opp };
 
   return (
@@ -123,14 +162,18 @@ export function Flyttbar({
       onPointerDown={(e) => {
         if (flyttMedInnhold) return ned(e, 'flytt');
         e.stopPropagation();
-        onVelg();
+        if (erFlervalgKlikk(e)) useSkilt.getState().veksleValg(element);
+        else onVelg();
       }}
       {...(flyttMedInnhold ? hendelser : {})}
     >
       {children}
-      {valgt && !eksport && (
+      {(valgt || flervalgt) && !eksport && (
         <>
-          <div className="pointer-events-none absolute -inset-[3px] rounded-sm border-2 border-sky-500" />
+          <div
+            data-testid={flervalgt ? 'flervalgt' : undefined}
+            className="pointer-events-none absolute -inset-[3px] rounded-sm border-2 border-sky-500"
+          />
           {!flyttMedInnhold && (
             <div
               className="absolute -top-7 left-1/2 flex h-6 -translate-x-1/2 cursor-move items-center gap-1 rounded bg-sky-500 px-2 text-xs text-white shadow"
@@ -140,19 +183,20 @@ export function Flyttbar({
               ✥ {etikett ?? 'Flytt'}
             </div>
           )}
-          {(['nv', 'no', 'sv', 'so'] as const).map((h) => (
-            <div
-              key={h}
-              className="absolute size-3 rounded-full border-2 border-sky-500 bg-white"
-              style={{
-                [h.startsWith('n') ? 'top' : 'bottom']: -7,
-                [h.endsWith('v') ? 'left' : 'right']: -7,
-                cursor: h === 'nv' || h === 'so' ? 'nwse-resize' : 'nesw-resize',
-              }}
-              onPointerDown={(e) => ned(e, h, true)}
-              {...hendelser}
-            />
-          ))}
+          {valgt &&
+            (['nv', 'no', 'sv', 'so'] as const).map((h) => (
+              <div
+                key={h}
+                className="absolute size-3 rounded-full border-2 border-sky-500 bg-white"
+                style={{
+                  [h.startsWith('n') ? 'top' : 'bottom']: -7,
+                  [h.endsWith('v') ? 'left' : 'right']: -7,
+                  cursor: h === 'nv' || h === 'so' ? 'nwse-resize' : 'nesw-resize',
+                }}
+                onPointerDown={(e) => ned(e, h, true)}
+                {...hendelser}
+              />
+            ))}
         </>
       )}
     </div>

@@ -62,6 +62,7 @@ export function BannerVisning({ banner }: { banner: Banner }) {
 
   return (
     <Flyttbar
+      element={{ type: 'banner' }}
       ramme={banner.ramme}
       valgt={valgt}
       onVelg={() => velg({ type: 'banner' })}

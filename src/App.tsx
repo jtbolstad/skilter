@@ -195,7 +195,11 @@ function Arbeidsflate() {
       // Angre i tekstfelt håndteres av nettleseren (skjemafelt er allerede sortert ut over)
       if (!(e.ctrlKey || e.metaKey)) return;
       const bokstav = e.key.toLowerCase();
-      if (bokstav === 'z' && !e.shiftKey) {
+      if (bokstav === 'a' && s.skilt && s.modus.type === 'normal') {
+        e.preventDefault();
+        const valgte = s.skilt.cards.map((c) => ({ type: 'card' as const, id: c.id }));
+        s.velg(valgte.length > 1 ? { type: 'flere', valgte } : (valgte[0] ?? { type: 'skilt' }));
+      } else if (bokstav === 'z' && !e.shiftKey) {
         e.preventDefault();
         s.angre();
       } else if (bokstav === 'y' || (bokstav === 'z' && e.shiftKey)) {

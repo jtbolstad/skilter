@@ -18,6 +18,7 @@ export function DekorVisning({ dekor }: { dekor: Dekor }) {
 
   return (
     <Flyttbar
+      element={{ type: 'dekor', id: dekor.id }}
       ramme={dekor.ramme}
       valgt={valgt}
       onVelg={() => velg({ type: 'dekor', id: dekor.id })}

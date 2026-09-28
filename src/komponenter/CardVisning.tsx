@@ -118,6 +118,7 @@ export function CardVisning({ card }: { card: Card }) {
 
   return (
     <Flyttbar
+      element={{ type: 'card', id: card.id }}
       ramme={card.ramme}
       valgt={valgt}
       onVelg={() => velg({ type: 'card', id: card.id })}

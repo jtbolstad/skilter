@@ -13,6 +13,9 @@ og versjonsnumrene følger [semantisk versjonering](https://semver.org/lang/no/)
   cardets bakgrunn).
 - **Flere fonter**: ni å velge mellom (Source Serif, Lora, Merriweather, EB Garamond, Playfair Display,
   Roboto Slab, Source Sans, Open Sans og Oswald), og egen font for titlene i cards og banneret.
+- **Flervalg**: Ctrl/Shift + klikk på skiltet eller i laglista, Ctrl + A for alle cards. Valgte kan få
+  samme bredde eller høyde (som største eller minste), rettes inn (venstre, midten, høyre, topp, bunn)
+  og få lik avstand loddrett eller vannrett. Dra, piltaster og Delete virker på alle valgte.
 
 ### Endret
 

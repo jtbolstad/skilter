@@ -43,6 +43,7 @@ export function KartRamme({ kart }: { kart: Kart }) {
 
   return (
     <Flyttbar
+      element={{ type: 'kart' }}
       ramme={kart.ramme}
       valgt={valgt}
       onVelg={() => velg({ type: 'kart' })}

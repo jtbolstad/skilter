@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import type { Filmappe } from './fil/mappetilgang';
 import { importerMappe } from './modell/importerMappe';
 import { nyGest } from './modell/historikk';
-import { useSkilt } from './store';
+import { rammeTil, useSkilt, valgteRammer } from './store';
 
 const TEKST = 'T\n\n1. Slora\nTekst\n\n6. Pilgrimsleden\nTekst';
 
@@ -335,5 +335,59 @@ describe('byttKartbilde', () => {
     expect(s().skilt!.punkter[0]!.posisjon).toEqual(punkt(0.2, 0.3));
     expect(s().skilt!.kart.kalibrering).toBeUndefined();
     expect(s().skilt!.kart.geo).toBeUndefined();
+  });
+});
+
+describe('flervalg', () => {
+  beforeEach(lagProsjekt);
+  const a = { type: 'card', id: 'card-1' } as const;
+  const b = { type: 'card', id: 'card-6' } as const;
+
+  it('veksleValg legger til og tar ut, og går tilbake til enkeltvalg', () => {
+    s().velg(a);
+    s().veksleValg(b);
+    expect(s().valg).toEqual({ type: 'flere', valgte: [a, b] });
+    s().veksleValg({ type: 'kart' });
+    expect(valgteRammer(s().valg)).toHaveLength(3);
+    s().veksleValg({ type: 'kart' });
+    s().veksleValg(a);
+    expect(s().valg).toEqual(b);
+    s().veksleValg(b);
+    expect(s().valg).toEqual({ type: 'skilt' });
+  });
+
+  it('piltastene flytter alle valgte, i ett angresteg', () => {
+    s().velg({ type: 'flere', valgte: [a, b, { type: 'banner' }] });
+    const foer = [a, b].map((r) => rammeTil(s().skilt!, r)!.x);
+    const banner = s().skilt!.banner.ramme.x;
+    nyGest();
+    expect(s().pilValgt('hoyre', 'flytt')).toBe(true);
+    expect([a, b].map((r) => rammeTil(s().skilt!, r)!.x)).toEqual(foer.map((x) => x + 1));
+    expect(s().skilt!.banner.ramme.x).toBe(banner + 1);
+    s().angre();
+    expect([a, b].map((r) => rammeTil(s().skilt!, r)!.x)).toEqual(foer);
+  });
+
+  it('settRammer endrer flere rammer i ett angresteg', () => {
+    const ny = { x: 1, y: 2, b: 30, h: 40 };
+    nyGest();
+    s().settRammer([
+      { ref: a, ramme: ny },
+      { ref: { type: 'kart' }, ramme: ny },
+    ]);
+    expect(rammeTil(s().skilt!, a)).toEqual(ny);
+    expect(s().skilt!.kart.ramme).toEqual(ny);
+    s().angre();
+    expect(rammeTil(s().skilt!, a)).not.toEqual(ny);
+    expect(s().skilt!.kart.ramme).not.toEqual(ny);
+  });
+
+  it('Delete sletter valgte cards og dekor, men ikke kart og banner', () => {
+    const dekor = s().leggTilDekor('gress');
+    s().velg({ type: 'flere', valgte: [a, { type: 'dekor', id: dekor }, { type: 'kart' }] });
+    expect(s().slettValgt()).toBe(true);
+    expect(s().skilt!.cards.map((c) => c.id)).toEqual(['card-6']);
+    expect(s().skilt!.dekor).toEqual([]);
+    expect(s().valg).toEqual({ type: 'skilt' });
   });
 });

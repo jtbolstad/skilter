@@ -28,6 +28,13 @@ import type {
   Tema,
 } from './modell/typer';
 
+/** Et element med ramme på skiltet – det som kan velges flere av og rettes inn. */
+export type Rammeref =
+  | { type: 'card'; id: string }
+  | { type: 'dekor'; id: string }
+  | { type: 'banner' }
+  | { type: 'kart' };
+
 export type Valg =
   | { type: 'skilt' }
   | { type: 'kart' }
@@ -35,7 +42,45 @@ export type Valg =
   | { type: 'rute'; id: string }
   | { type: 'stedsnavn'; id: string }
   | { type: 'banner' }
-  | { type: 'dekor'; id: string };
+  | { type: 'dekor'; id: string }
+  /** To eller flere rammer valgt med Ctrl/Shift + klikk */
+  | { type: 'flere'; valgte: Rammeref[] };
+
+export const erRammeref = (v: Valg): v is Rammeref =>
+  v.type === 'card' || v.type === 'dekor' || v.type === 'banner' || v.type === 'kart';
+
+export const sammeRef = (a: Rammeref, b: Rammeref) =>
+  a.type === b.type && ('id' in a ? a.id : '') === ('id' in b ? b.id : '');
+
+/** Rammene som er valgt: én eller flere, eller ingen når noe uten ramme (eller ingenting) er valgt. */
+export const valgteRammer = (v: Valg): Rammeref[] =>
+  v.type === 'flere' ? v.valgte : erRammeref(v) ? [v] : [];
+
+/** Rammen til et element, eller undefined hvis det ikke finnes. */
+export function rammeTil(sk: Skilt, ref: Rammeref): Rektangel | undefined {
+  if (ref.type === 'banner') return sk.banner.ramme;
+  if (ref.type === 'kart') return sk.kart.ramme;
+  if (ref.type === 'card') return sk.cards.find((c) => c.id === ref.id)?.ramme;
+  return sk.dekor.find((d) => d.id === ref.id)?.ramme;
+}
+
+/** Skiltet med nye rammer for elementene. */
+export function medRammer(sk: Skilt, endringer: { ref: Rammeref; ramme: Rektangel }[]): Skilt {
+  const ny = (ref: Rammeref) => endringer.find((e) => sammeRef(e.ref, ref))?.ramme;
+  return {
+    ...sk,
+    banner: { ...sk.banner, ramme: ny({ type: 'banner' }) ?? sk.banner.ramme },
+    kart: { ...sk.kart, ramme: ny({ type: 'kart' }) ?? sk.kart.ramme },
+    cards: sk.cards.map((c) => {
+      const r = ny({ type: 'card', id: c.id });
+      return r ? { ...c, ramme: r } : c;
+    }),
+    dekor: sk.dekor.map((d) => {
+      const r = ny({ type: 'dekor', id: d.id });
+      return r ? { ...d, ramme: r } : d;
+    }),
+  };
+}
 export type Modus =
   | { type: 'normal' }
   | { type: 'kalibrer'; punkter: Bildepunkt[] }
@@ -91,6 +136,10 @@ interface Tilstand {
    */
   byttKartbilde(nytt: { fil: string; geo?: Georeferanse; osm?: Osmutsnitt; kildetekst?: string }): boolean;
   velg(valg: Valg): void;
+  /** Ctrl/Shift + klikk: legger elementet til i valget, eller tar det ut */
+  veksleValg(ref: Rammeref): void;
+  /** Nye rammer for flere elementer på en gang (ett angresteg) */
+  settRammer(endringer: { ref: Rammeref; ramme: Rektangel }[]): void;
   settModus(modus: Modus): void;
   settVisningsskala(skala: number): void;
   endreSkilt(endring: (s: Skilt) => Skilt): void;
@@ -226,6 +275,18 @@ export const useSkilt = create<Tilstand>()((set, get) => {
       if (!beholdModus) get().avsluttTegning();
       set({ valg, modus: beholdModus ? m : { type: 'normal' } });
     },
+    veksleValg: (ref) => {
+      const naa = valgteRammer(get().valg);
+      const valgte = naa.some((r) => sammeRef(r, ref)) ? naa.filter((r) => !sammeRef(r, ref)) : [...naa, ref];
+      get().velg(
+        valgte.length === 0
+          ? { type: 'skilt' }
+          : valgte.length === 1
+            ? valgte[0]!
+            : { type: 'flere', valgte },
+      );
+    },
+    settRammer: (endringer) => get().endreSkilt((sk) => medRammer(sk, endringer)),
     settModus: (modus) => set({ modus }),
     settVisningsskala: (visningsskala) => set({ visningsskala: Math.min(8, Math.max(0.2, visningsskala)) }),
     endreSkilt: (endring) => set((t) => (t.skilt ? { skilt: endring(t.skilt) } : {})),
@@ -238,6 +299,13 @@ export const useSkilt = create<Tilstand>()((set, get) => {
     slettValgt: () => {
       const { valg, modus } = get();
       if (modus.type !== 'normal') return false;
+      if (valg.type === 'flere') {
+        // Banner og kart kan ikke slettes, bare cards og dekor
+        const slettes = valg.valgte.filter((r) => r.type === 'card' || r.type === 'dekor');
+        for (const r of slettes) r.type === 'card' ? get().slettCard(r.id) : get().slettDekor(r.id);
+        if (slettes.length) set({ valg: { type: 'skilt' } });
+        return slettes.length > 0;
+      }
       if (valg.type === 'card') get().slettCard(valg.id);
       else if (valg.type === 'rute') get().slettRute(valg.id);
       else if (valg.type === 'stedsnavn') get().slettStedsnavn(valg.id);
@@ -312,6 +380,15 @@ export const useSkilt = create<Tilstand>()((set, get) => {
       }
       const ny = (r: Rektangel) =>
         pilRamme(r, retning, handling, { rute: festTilRutenett ? RUTENETT_MM : undefined, min: MIN_CARD_MM });
+      if (valg.type === 'flere') {
+        get().settRammer(
+          valg.valgte.flatMap((ref) => {
+            const r = rammeTil(sk, ref);
+            return r ? [{ ref, ramme: ny(r) }] : [];
+          }),
+        );
+        return true;
+      }
       if (valg.type === 'card') {
         const card = sk.cards.find((c) => c.id === valg.id);
         if (!card) return false;

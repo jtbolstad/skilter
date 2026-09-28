@@ -1,12 +1,13 @@
-import { useState } from 'react';
+import { type MouseEvent, useState } from 'react';
 import { DEKORTYPER } from '../geometri/dekor';
 import { parseTekst, TEKSTFORMATER, tekstfiler, type Tekstformat } from '../modell/tekstParser';
 import { formaterAvstand, meterPerPiksel } from '../geometri/malestokk';
 import { FORMATER, type Formatnavn } from '../modell/oppsett';
 import type { Kart, Skilt } from '../modell/typer';
-import { useSkilt } from '../store';
+import { type Rammeref, sammeRef, useSkilt, valgteRammer } from '../store';
 import { KartgrunnlagSeksjon } from '../kart/KartgrunnlagPanel';
 import { CardEgenskaper } from './CardPanel';
+import { Flervalg } from './FlervalgPanel';
 import { AlleCards, BannerEgenskaper, DekorEgenskaper, TemaOgOppsett, Tilpass } from './UtseendePanel';
 import { KartlagSeksjoner, RuteEgenskaper, StedsnavnEgenskaper, Stilprove } from './RutePanel';
 import { DpiVarsel, Felt, input, knapp, Seksjon } from './Skjema';
@@ -29,6 +30,7 @@ export function Sidepanel({ skilt }: { skilt: Skilt }) {
       {sted && <StedsnavnEgenskaper key={sted.id} sted={sted} />}
       {valg.type === 'banner' && <BannerEgenskaper banner={skilt.banner} />}
       {dekor && <DekorEgenskaper key={dekor.id} dekor={dekor} />}
+      {valg.type === 'flere' && <Flervalg skilt={skilt} valgte={valg.valgte} />}
     </aside>
   );
 }
@@ -44,6 +46,11 @@ function Lagliste({ skilt }: { skilt: Skilt }) {
     settForrigeValg(valg);
     if (valg.type === 'dekor') settVisDekor(true);
   }
+  const valgte = valgteRammer(valg);
+  const erValgt = (ref: Rammeref) => valgte.some((r) => sammeRef(r, ref));
+  // Ctrl/Shift + klikk legger til i valget, som på lerretet
+  const velgRamme = (ref: Rammeref) => (e: MouseEvent) =>
+    e.ctrlKey || e.shiftKey || e.metaKey ? useSkilt.getState().veksleValg(ref) : velg(ref);
   const rad = (aktiv: boolean) =>
     `flex w-full items-center gap-2 rounded px-2 py-1 text-left ${aktiv ? 'bg-sky-100 text-sky-900' : 'hover:bg-stone-100'}`;
 
@@ -53,10 +60,10 @@ function Lagliste({ skilt }: { skilt: Skilt }) {
         <button className={rad(valg.type === 'skilt')} onClick={() => velg({ type: 'skilt' })}>
           🪧 Skilt
         </button>
-        <button className={rad(valg.type === 'banner')} onClick={() => velg({ type: 'banner' })}>
+        <button className={rad(erValgt({ type: 'banner' }))} onClick={velgRamme({ type: 'banner' })}>
           🏷️ Banner
         </button>
-        <button className={rad(valg.type === 'kart')} onClick={() => velg({ type: 'kart' })}>
+        <button className={rad(erValgt({ type: 'kart' }))} onClick={velgRamme({ type: 'kart' })}>
           🗺️ Kart
         </button>
         {skilt.ruter.map((r) => (
@@ -81,8 +88,8 @@ function Lagliste({ skilt }: { skilt: Skilt }) {
             .map((d, i) => (
               <button
                 key={d.id}
-                className={`${rad(valg.type === 'dekor' && valg.id === d.id)} pl-6`}
-                onClick={() => velg({ type: 'dekor', id: d.id })}
+                className={`${rad(erValgt({ type: 'dekor', id: d.id }))} pl-6`}
+                onClick={velgRamme({ type: 'dekor', id: d.id })}
               >
                 <span
                   className="size-3 shrink-0 rounded-sm border border-stone-300"
@@ -99,8 +106,8 @@ function Lagliste({ skilt }: { skilt: Skilt }) {
         {skilt.cards.map((c) => (
           <button
             key={c.id}
-            className={rad(valg.type === 'card' && valg.id === c.id)}
-            onClick={() => velg({ type: 'card', id: c.id })}
+            className={rad(erValgt({ type: 'card', id: c.id }))}
+            onClick={velgRamme({ type: 'card', id: c.id })}
           >
             <span className="size-3 shrink-0 rounded-sm" style={{ background: c.farge }} />
             <span className="truncate">

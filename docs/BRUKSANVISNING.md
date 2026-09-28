@@ -128,6 +128,17 @@ bildene** for skarpe bildehjørner.
 (eller **Slett card**) for å fjerne det; det kan angres med Ctrl+Z. Skriften i kortene er like stor
 uansett hvor store kortene er – bruk **Tekststørrelse** under **Alle cards** for å endre den.
 
+**Flere kort på en gang:** hold **Ctrl** eller **Shift** og klikk på kort (også banner, kart og dekor) –
+på skiltet eller i laglista. **Ctrl + A** velger alle kortene. Panelet viser da:
+
+- **Samme størrelse:** bredde som det bredeste eller smaleste, høyde som det høyeste eller laveste.
+- **Rett inn:** venstre, midten eller høyre, og topp, midten eller bunn.
+- **Lik avstand:** like mellomrom loddrett eller vannrett (minst tre valgt). Det første og siste står i
+  ro.
+
+Dra i ett av de valgte eller bruk piltastene for å flytte alle, og **Delete** sletter valgte kort og
+dekor. Hver justering er ett angresteg.
+
 Har du endret tekstfila etter at du startet? Velg **🪧 Skilt**, velg fil og format (vanligvis
 **Automatisk**) og trykk **↻ Les inn tekst på nytt**. Titler og tekster oppdateres, mens oppsett og
 bilder beholdes.
@@ -339,6 +350,8 @@ Håndtak, markeringer og varsler som «Tekst kuttet» kommer ikke med i eksporte
 | Shift + piltast                 | Gjør valgt ramme større i pilens retning     |
 | Ctrl + Shift + piltast          | Gjør valgt ramme mindre fra den siden        |
 | Delete                          | Slett valgt kort, vei, stedsnavn eller dekor |
+| Ctrl/Shift + klikk              | Legg til i eller ta ut av valget             |
+| Ctrl + A                        | Velg alle kort                               |
 | Alt + dra                       | Flytt fritt når rutenettet er på             |
 | ?                               | Vis alle hurtigtastene (også ⌨ i verktøylinja) |
 

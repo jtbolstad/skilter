@@ -15,6 +15,14 @@ const TASTER: { gruppe: string; taster: [string[], string][] }[] = [
     ],
   },
   {
+    gruppe: 'Flere valgt',
+    taster: [
+      [['Ctrl', 'klikk'], 'Legg til i eller ta ut av valget (også Shift + klikk)'],
+      [['Ctrl', 'A'], 'Velg alle cards'],
+      [['←', '→', '↑', '↓'], 'Flytt alle valgte – dra i ett av dem flytter også alle'],
+    ],
+  },
+  {
     gruppe: 'Veier',
     taster: [
       [['Enter'], 'Avslutt tegningen'],
