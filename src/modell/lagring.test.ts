@@ -37,6 +37,7 @@ describe('lagring', () => {
       kantbredde: 1,
       hjorneradius: 1,
       lenkebredde: 1,
+      avrundedeBilder: true,
     });
     expect(s.cards[0]!.tittelHelBredde).toBe(false);
   });

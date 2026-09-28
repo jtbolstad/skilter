@@ -121,6 +121,7 @@ export const STANDARD_TEMA: Tema = {
   kantbredde: 1,
   hjorneradius: 1,
   lenkebredde: 1,
+  avrundedeBilder: true,
 };
 
 /** Banner som i utkastet: mørkegrønt penselstrøk med lys tekst. */

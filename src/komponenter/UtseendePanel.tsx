@@ -168,6 +168,14 @@ export function AlleCards({ skilt }: { skilt: Skilt }) {
         maks={8}
         onEndre={tema1('hjorneradius')}
       />
+      <label className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          checked={tema.avrundedeBilder}
+          onChange={(e) => endreTema({ avrundedeBilder: e.target.checked })}
+        />
+        Avrundede hjørner på bildene
+      </label>
       <Prosent
         etikett="Linjetykkelse til kartet"
         verdi={tema.lenkebredde}

@@ -42,6 +42,7 @@ export function CardVisning({ card }: { card: Card }) {
   const overflyt = useSkilt((t) => t.tekstOverflyt[card.id] ?? false) && !eksport;
   const skala = useSkala();
   const stil = useCardstil();
+  const avrundet = useSkilt((t) => t.skilt!.tema.avrundedeBilder);
   const { velg, endreCard, endreBilde, settModus } = useSkilt.getState();
   const [slippMal, settSlippMal] = useState(false);
 
@@ -69,7 +70,11 @@ export function CardVisning({ card }: { card: Card }) {
       <div
         data-testid="cardbilde"
         className={`relative shrink-0 self-center ${beskjaerer ? 'z-10' : 'overflow-hidden'}`}
-        style={{ width: px(bildeRamme.b), height: px(bildeRamme.h) }}
+        style={{
+          width: px(bildeRamme.b),
+          height: px(bildeRamme.h),
+          borderRadius: avrundet && !beskjaerer ? px(m.radius) : undefined,
+        }}
         onDoubleClick={(e) => {
           e.stopPropagation();
           if (card.bilde) settModus(beskjaerer ? { type: 'normal' } : { type: 'beskjaer', cardId: card.id });
@@ -87,7 +92,7 @@ export function CardVisning({ card }: { card: Card }) {
           <div
             data-kun-editor
             className="grid size-full place-items-center border-2 border-dashed border-stone-300 text-center text-stone-400"
-            style={{ fontSize: px(m.tekst) }}
+            style={{ fontSize: px(m.tekst), borderRadius: avrundet ? px(m.radius) : undefined }}
           >
             Dra et bilde hit
           </div>

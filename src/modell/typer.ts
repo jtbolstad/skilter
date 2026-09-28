@@ -189,6 +189,8 @@ export interface Tema {
   hjorneradius: number;
   /** Skalering av linjene fra cards til kartpunktene */
   lenkebredde: number;
+  /** Bildene i cards får samme hjørneradius som cardene */
+  avrundedeBilder: boolean;
 }
 
 export interface Skilt {

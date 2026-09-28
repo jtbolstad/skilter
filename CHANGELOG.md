@@ -5,6 +5,15 @@ og versjonsnumrene følger [semantisk versjonering](https://semver.org/lang/no/)
 
 ## [Ikke utgitt]
 
+### Lagt til
+
+- **Festepunktet** for linja på cardet kan dras langs kanten («↺ Automatisk festepunkt» tilbakestiller).
+- **Avrundede hjørner på bildene**, med samme radius som cardene (kan slås av under «Alle cards»).
+
+### Endret
+
+- Kartpunktet tegnes over linja, og linjer til punkter utenfor kartutsnittet vises ikke.
+
 ## [0.2.0] – 2026-09-26
 
 ### Lagt til

@@ -21,8 +21,17 @@ test('justeringer for alle cards: tekst, ramme, hjørner og linjestil', async ({
 
   await page.getByRole('slider', { name: /Rammetykkelse/ }).fill('0');
   await expect(card).toHaveCSS('border-top-width', '0px');
+  // Bildene har samme hjørneradius som cardet, og kan slås av
+  const bilde = card.getByTestId('cardbilde');
+  const radius = await card.evaluate((c) => getComputedStyle(c).borderTopLeftRadius);
+  await expect(bilde).toHaveCSS('border-top-left-radius', radius);
+  await page.getByRole('checkbox', { name: 'Avrundede hjørner på bildene' }).uncheck();
+  await expect(bilde).toHaveCSS('border-top-left-radius', '0px');
+  await page.getByRole('checkbox', { name: 'Avrundede hjørner på bildene' }).check();
+
   await page.getByRole('slider', { name: /Hjørneradius/ }).fill('0');
   await expect(card).toHaveCSS('border-radius', '0px');
+  await expect(bilde).toHaveCSS('border-top-left-radius', '0px');
 
   // Linjestil krever et card koblet til kartet
   await expect(
