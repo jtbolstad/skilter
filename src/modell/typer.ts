@@ -117,6 +117,8 @@ export interface Kartpunkt {
   posisjon: Bildepunkt;
 }
 
+export type Tittelplassering = 'over' | 'under' | 'pa-bilde';
+
 export interface Card {
   id: string;
   nummer: number;
@@ -128,6 +130,8 @@ export interface Card {
   bildeAndel: number;
   /** Ved bilde til siden: tittelen går over hele bredden, bildet står ved siden av teksten */
   tittelHelBredde: boolean;
+  /** Hvor tittelen står: over bildet, under bildet eller oppå bildets øvre venstre hjørne. Mangler = over. */
+  tittelPlassering?: Tittelplassering;
   bildeAspekt: Bildeaspekt;
   kildemappe?: string;
   /** Enkel markering: *kursiv* og **fet**. Tom linje skiller avsnitt. */

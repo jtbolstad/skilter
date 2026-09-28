@@ -9,6 +9,7 @@ import {
   lenkeanker,
   lenkesti,
   tittelHoyde,
+  tittelplass,
 } from './card';
 
 const card = (c: Partial<Card> = {}): Card => ({
@@ -69,6 +70,33 @@ describe('stående bilder', () => {
     const uten = bildeRammeForCard(card({ layout: 'bilde-hoyre' }));
     const med = bildeRammeForCard(card({ layout: 'bilde-hoyre', tittelHelBredde: true }));
     expect(med.h).toBeCloseTo(uten.h - tittelHoyde(card()));
+  });
+
+  it('tittel på bildet tar ingen høyde fra bildet', () => {
+    const bilde: Card['bilde'] = {
+      fil: 'a.jpg',
+      sentrumX: 0.5,
+      sentrumY: 0.5,
+      zoom: 1,
+      rotasjon: 0,
+      tilpass: 'fyll',
+    };
+    // Høyt bilde som begrenses av plassen: tittel på bildet gir mer plass
+    const over = bildeRammeForCard(card({ bilde, bildeAndel: 0.9 }));
+    const pa = bildeRammeForCard(card({ bilde, bildeAndel: 0.9, tittelPlassering: 'pa-bilde' }));
+    expect(pa.h).toBeGreaterThan(over.h);
+    // Tittel over hele bredden ved bilde til siden trekkes ikke fra når tittelen står på bildet
+    const side = card({ bilde, layout: 'bilde-hoyre', tittelHelBredde: true });
+    expect(bildeRammeForCard({ ...side, tittelPlassering: 'pa-bilde' }).h).toBeCloseTo(
+      bildeRammeForCard(side).h + tittelHoyde(card()),
+    );
+  });
+
+  it('tittelplass faller tilbake til «over» når valget ikke passer', () => {
+    expect(tittelplass(card())).toBe('over');
+    expect(tittelplass(card({ tittelPlassering: 'pa-bilde' }))).toBe('over');
+    expect(tittelplass(card({ tittelPlassering: 'under' }))).toBe('under');
+    expect(tittelplass(card({ tittelPlassering: 'under', layout: 'bilde-venstre' }))).toBe('over');
   });
 
   it('stående bilde over teksten krympes i bredden', () => {

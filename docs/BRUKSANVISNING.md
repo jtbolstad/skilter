@@ -121,7 +121,8 @@ Trykk **⤢ Tilpass** øverst i **🪧 Skilt**, så
 
 Alt kan angres med ett trykk. Under
 **Alle cards** stiller du også tekststørrelse, rammetykkelse, hjørneradius og linjene til kartet for alle
-kortene på en gang.
+kortene på en gang. Bildene får samme avrundede hjørner som kortene – skru av **Avrundede hjørner på
+bildene** for skarpe bildehjørner.
 
 **+ Nytt card** nederst i laglista lager et tomt kort midt på skiltet. Velg et kort og trykk **Delete**
 (eller **Slett card**) for å fjerne det; det kan angres med Ctrl+Z. Skriften i kortene er like stor
@@ -183,6 +184,10 @@ bildet vises, og lar tittelen gå over hele bredden.
 | ![Stående bilde til høyre](bilder/08-staende-hoyre.png) | ![Stående bilde til venstre](bilder/09-staende-venstre.png) |
 
 Skru av **Tittel over hele bredden** hvis tittelen skal stå ved siden av bildet i stedet.
+
+Under **Tittel** i kortpanelet velger du hvor tittelen står: **Over bildet**, **Under bildet** (når
+bildet ligger over teksten) eller **På bildet** – i bildets øvre venstre hjørne på kortets bakgrunn,
+uten at bildet blir mindre.
 
 ## 7. Koble kort til kartet
 

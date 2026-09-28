@@ -1,9 +1,16 @@
 import { useState } from 'react';
-import { bildeRammeForCard, bildeTilSiden, cardstil } from '../geometri/card';
+import { bildeRammeForCard, bildeTilSiden, cardstil, tittelplass } from '../geometri/card';
 import { delRotasjon, klem, MAKS_ZOOM, roterKvart, type Storrelse } from '../geometri/utsnitt';
 import { bilderIMappe, erBilde, nyttUtsnitt } from '../modell/importerMappe';
 import { CARD_FARGER } from '../modell/oppsett';
-import type { Bildeaspekt, Bildeutsnitt, Card, Cardlayout, Lenkestil } from '../modell/typer';
+import type {
+  Bildeaspekt,
+  Bildeutsnitt,
+  Card,
+  Cardlayout,
+  Lenkestil,
+  Tittelplassering,
+} from '../modell/typer';
 import { useSkilt } from '../store';
 import { BILDE_DRA_TYPE, useNaturligAspekt } from './CardVisning';
 import { punktErSynlig } from './LenkeOverlegg';
@@ -11,7 +18,7 @@ import { DpiVarsel, Felt, Gruppe, input, knapp, Seksjon } from './Skjema';
 import { useForhandsvisning } from './useForhandsvisning';
 
 const valgKnapp = (aktiv: boolean) =>
-  `flex-1 rounded border px-2 py-1 ${aktiv ? 'border-sky-500 bg-sky-50 text-sky-900' : 'border-stone-300 hover:bg-stone-100'}`;
+  `flex-1 rounded border px-2 py-1 ${aktiv ? 'border-sky-500 bg-sky-50 text-sky-900' : 'border-stone-300 hover:bg-stone-100'} disabled:opacity-40`;
 
 export function CardEgenskaper({ card }: { card: Card }) {
   return (
@@ -89,6 +96,12 @@ const LAYOUTER: { verdi: Cardlayout; navn: string; tittel: string }[] = [
   { verdi: 'bilde-hoyre', navn: '◨ Høyre', tittel: 'Bildet til høyre for teksten' },
 ];
 
+const TITTELPLASSER: { verdi: Tittelplassering; navn: string; tittel: string }[] = [
+  { verdi: 'over', navn: 'Over bildet', tittel: 'Tittelen over bildet' },
+  { verdi: 'under', navn: 'Under bildet', tittel: 'Tittelen mellom bildet og teksten' },
+  { verdi: 'pa-bilde', navn: 'På bildet', tittel: 'Tittelen i øvre venstre hjørne av bildet' },
+];
+
 /** Foreslår å legge stående bilder ved siden av teksten. */
 function StaendeBildeHint({ card }: { card: Card }) {
   const aspekt = useNaturligAspekt(card);
@@ -148,7 +161,22 @@ function Utseende({ card }: { card: Card }) {
           ))}
         </div>
       </Gruppe>
-      {bildeTilSiden(card) && (
+      <Gruppe etikett="Tittel">
+        <div className="flex gap-1">
+          {TITTELPLASSER.filter((t) => t.verdi !== 'under' || !bildeTilSiden(card)).map((t) => (
+            <button
+              key={t.verdi}
+              title={t.tittel}
+              disabled={t.verdi === 'pa-bilde' && !card.bilde}
+              className={valgKnapp(tittelplass(card) === t.verdi)}
+              onClick={() => endreCard(card.id, { tittelPlassering: t.verdi })}
+            >
+              {t.navn}
+            </button>
+          ))}
+        </div>
+      </Gruppe>
+      {bildeTilSiden(card) && tittelplass(card) === 'over' && (
         <label className="flex items-center gap-2">
           <input
             type="checkbox"

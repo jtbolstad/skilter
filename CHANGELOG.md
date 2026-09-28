@@ -9,6 +9,8 @@ og versjonsnumrene følger [semantisk versjonering](https://semver.org/lang/no/)
 
 - **Festepunktet** for linja på cardet kan dras langs kanten («↺ Automatisk festepunkt» tilbakestiller).
 - **Avrundede hjørner på bildene**, med samme radius som cardene (kan slås av under «Alle cards»).
+- **Tittelplassering** per card: over bildet, under bildet eller på bildet (øvre venstre hjørne, på
+  cardets bakgrunn).
 
 ### Endret
 

@@ -1,4 +1,4 @@
-import type { Bildeaspekt, Card, Rektangel, Skilt, Tema } from '../modell/typer';
+import type { Bildeaspekt, Card, Rektangel, Skilt, Tema, Tittelplassering } from '../modell/typer';
 import type { Storrelse } from './utsnitt';
 
 export const ASPEKTER: Record<Exclude<Bildeaspekt, 'fri' | 'bilde'>, number> = {
@@ -51,6 +51,17 @@ export function indreStorrelse(card: Cardmal, stil: Cardstil = {}): Storrelse {
 export const bildeTilSiden = (card: Pick<Card, 'layout'>) =>
   card.layout === 'bilde-venstre' || card.layout === 'bilde-hoyre';
 
+/**
+ * Tittelplasseringen som faktisk brukes: «på bildet» krever et bilde, og «under bildet» gjelder bare
+ * når bildet står over teksten.
+ */
+export function tittelplass(card: Pick<Card, 'tittelPlassering' | 'layout' | 'bilde'>): Tittelplassering {
+  const p = card.tittelPlassering ?? 'over';
+  if (p === 'pa-bilde' && !card.bilde) return 'over';
+  if (p === 'under' && bildeTilSiden(card)) return 'over';
+  return p;
+}
+
 /** Høyden tittelen tar (én linje) inkludert mellomrom under. */
 export function tittelHoyde(card: Cardmal, stil: Cardstil = {}): number {
   const m = cardMal(card, stil);
@@ -63,6 +74,8 @@ export function tittelHoyde(card: Cardmal, stil: Cardstil = {}): number {
  */
 export function bildeRammeForCard(card: Card, naturligAspekt?: number, stil: Cardstil = {}): Storrelse {
   const indre = indreStorrelse(card, stil);
+  // Tittel oppå bildet tar ingen høyde fra bildet
+  const paBilde = tittelplass(card) === 'pa-bilde';
   const aspekt =
     card.bildeAspekt === 'fri'
       ? undefined
@@ -71,11 +84,11 @@ export function bildeRammeForCard(card: Card, naturligAspekt?: number, stil: Car
         : ASPEKTER[card.bildeAspekt];
 
   if (bildeTilSiden(card)) {
-    const h = card.tittelHelBredde ? indre.h - tittelHoyde(card, stil) : indre.h;
+    const h = card.tittelHelBredde && !paBilde ? indre.h - tittelHoyde(card, stil) : indre.h;
     const onsket = aspekt ? h * aspekt : indre.b * card.bildeAndel;
     return { b: Math.min(onsket, indre.b * MAKS_ANDEL), h };
   }
-  const tilgjengelig = indre.h - tittelHoyde(card, stil);
+  const tilgjengelig = paBilde ? indre.h : indre.h - tittelHoyde(card, stil);
   const onsket = aspekt ? indre.b / aspekt : card.ramme.h * card.bildeAndel;
   // Høye bilder over teksten krympes i bredden i stedet for å fylle hele cardet
   if (onsket > tilgjengelig * MAKS_ANDEL && aspekt) {

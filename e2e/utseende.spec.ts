@@ -60,6 +60,41 @@ test('stående bilde kan legges til høyre og venstre i cardet', async ({ page }
   expect(tittel2.x).toBeGreaterThanOrEqual(venstre.x + venstre.width - 1);
 });
 
+test('tittelen kan stå over, under eller oppå bildet', async ({ page }) => {
+  await apneDemo(page);
+  const card = page.getByTestId('card-1');
+  await card.getByRole('heading').click();
+  const bildeboks = card.getByTestId('cardbilde');
+  await expect(bildeboks.locator('img').first()).toBeVisible();
+  const gruppe = page.getByRole('group', { name: 'Tittel', exact: true });
+  const boks = async () => ({
+    bilde: (await bildeboks.boundingBox())!,
+    tittel: (await card.getByTestId('cardtittel').boundingBox())!,
+  });
+
+  const over = await boks();
+  expect(over.tittel.y + over.tittel.height).toBeLessThanOrEqual(over.bilde.y + 1);
+  await expect(gruppe.getByRole('button', { name: 'Over bildet' })).toHaveClass(/sky/);
+
+  await gruppe.getByRole('button', { name: 'Under bildet' }).click();
+  const under = await boks();
+  expect(under.tittel.y).toBeGreaterThanOrEqual(under.bilde.y + under.bilde.height - 1);
+
+  // Oppå bildet: i øvre venstre hjørne, og bildet blir ikke mindre av det
+  await gruppe.getByRole('button', { name: 'På bildet' }).click();
+  const pa = await boks();
+  expect(pa.tittel.x).toBeCloseTo(pa.bilde.x, 0);
+  expect(pa.tittel.y).toBeCloseTo(pa.bilde.y, 0);
+  expect(pa.bilde.height).toBeGreaterThanOrEqual(under.bilde.height - 1);
+  await expect(bildeboks.getByTestId('cardtittel')).toHaveText(
+    await card.getByTestId('cardtittel').innerText(),
+  );
+
+  // «Under bildet» finnes ikke når bildet står ved siden av teksten
+  await page.getByRole('button', { name: '◧ Venstre' }).click();
+  await expect(gruppe.getByRole('button', { name: 'Under bildet' })).toHaveCount(0);
+});
+
 test('banner: stil, undertittel og linjer', async ({ page }) => {
   await apneDemo(page);
   await liste(page).getByRole('button', { name: '🏷️ Banner' }).click();

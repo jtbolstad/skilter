@@ -6,6 +6,7 @@ import {
   cardMal,
   cardstil,
   dragSkillelinje,
+  tittelplass,
 } from '../geometri/card';
 import { delRotasjon } from '../geometri/utsnitt';
 import { nyttUtsnitt } from '../modell/importerMappe';
@@ -52,6 +53,8 @@ export function CardVisning({ card }: { card: Card }) {
   const bildeRamme = bildeRammeForCard(card, aspekt, stil);
   const side = bildeTilSiden(card);
   const hoyre = card.layout === 'bilde-hoyre';
+  const plass = tittelplass(card);
+  const tittelOver = plass === 'over';
 
   const slipp = (e: DragEvent) => {
     e.preventDefault();
@@ -97,6 +100,7 @@ export function CardVisning({ card }: { card: Card }) {
             Dra et bilde hit
           </div>
         )}
+        {plass === 'pa-bilde' && <Tittel card={card} paBilde />}
         {card.bilde?.kreditering && (
           <span
             className="pointer-events-none absolute right-0 bottom-0 text-white italic"
@@ -141,7 +145,7 @@ export function CardVisning({ card }: { card: Card }) {
       >
         {side ? (
           <>
-            {card.tittelHelBredde && <Tittel card={card} />}
+            {card.tittelHelBredde && tittelOver && <Tittel card={card} />}
             <div
               className={`flex min-h-0 flex-1 ${hoyre ? 'flex-row-reverse' : 'flex-row'}`}
               style={{ gap: px(m.gap) }}
@@ -149,16 +153,17 @@ export function CardVisning({ card }: { card: Card }) {
               {bilde}
               {valgt && card.bilde && <Skillelinje card={card} aspekt={aspekt} retning="loddrett" />}
               <div className="flex min-w-0 flex-1 flex-col" style={{ gap: px(m.gap) }}>
-                {!card.tittelHelBredde && <Tittel card={card} />}
+                {!card.tittelHelBredde && tittelOver && <Tittel card={card} />}
                 <Brodtekst card={card} />
               </div>
             </div>
           </>
         ) : (
           <>
-            <Tittel card={card} />
+            {tittelOver && <Tittel card={card} />}
             {bilde}
             {valgt && card.bilde && <Skillelinje card={card} aspekt={aspekt} retning="vannrett" />}
+            {plass === 'under' && <Tittel card={card} />}
             <Brodtekst card={card} />
           </>
         )}
@@ -176,11 +181,24 @@ export function CardVisning({ card }: { card: Card }) {
   );
 }
 
-function Tittel({ card }: { card: Card }) {
+/** Tittelen. `paBilde`: i øvre venstre hjørne av bildet, på cardets bakgrunn, som et hakk i bildet. */
+function Tittel({ card, paBilde = false }: { card: Card; paBilde?: boolean }) {
   const skala = useSkala();
   const stil = useCardstil();
+  const avrundet = useSkilt((t) => t.skilt!.tema.avrundedeBilder);
+  const m = cardMal(card, stil);
   return (
-    <h2 className="shrink-0 leading-tight font-bold" style={{ fontSize: cardMal(card, stil).tittel * skala }}>
+    <h2
+      data-testid="cardtittel"
+      className={`shrink-0 leading-tight font-bold ${paBilde ? 'absolute top-0 left-0 max-w-[85%] bg-[#fbf8f1]' : ''}`}
+      style={{
+        fontSize: m.tittel * skala,
+        ...(paBilde && {
+          padding: `0 ${m.gap * 1.5 * skala}px ${m.gap * 0.6 * skala}px 0`,
+          borderBottomRightRadius: avrundet ? m.radius * skala : 0,
+        }),
+      }}
+    >
       {card.tittel}
     </h2>
   );
