@@ -17,7 +17,7 @@ export function eksportmal(skilt: Skilt, dpi: number): Eksportmal {
   return { bredde_px, hoyde_px, megapiksler: (bredde_px * hoyde_px) / 1e6 };
 }
 
-export function filnavn(skilt: Skilt, dpi: number, endelse: 'png' | 'pdf'): string {
+export function filnavn(skilt: Skilt, dpi: number, endelse: 'png' | 'pdf', utkast = false): string {
   const navn =
     (skilt.banner.tittel || skilt.navn)
       .toLowerCase()
@@ -28,7 +28,7 @@ export function filnavn(skilt: Skilt, dpi: number, endelse: 'png' | 'pdf'): stri
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-|-$/g, '') || 'skilt';
   const { bredde_mm: b, hoyde_mm: h } = skilt.format;
-  return `${navn}-${Math.round(b)}x${Math.round(h)}mm${endelse === 'png' ? `-${dpi}dpi` : ''}.${endelse}`;
+  return `${navn}-${Math.round(b)}x${Math.round(h)}mm${endelse === 'png' ? `-${dpi}dpi` : ''}${utkast ? '-utkast' : ''}.${endelse}`;
 }
 
 /** Venter til alle bilder i elementet er lastet og dekodet. */

@@ -11,6 +11,8 @@ export interface Visning {
   eksport: boolean;
   /** Trykkoppløsning som bildekildene må holde (bare ved eksport) */
   dpi?: number;
+  /** Legg «UTKAST» på skrå over skiltet (bare ved eksport) */
+  utkast?: boolean;
 }
 
 const VisningKontekst = createContext<Visning | undefined>(undefined);
@@ -18,14 +20,18 @@ const VisningKontekst = createContext<Visning | undefined>(undefined);
 export function Eksportvisning({
   skala,
   dpi,
+  utkast = false,
   children,
 }: {
   skala: number;
   dpi: number;
+  utkast?: boolean;
   children: ReactNode;
 }) {
   return (
-    <VisningKontekst.Provider value={{ skala, eksport: true, dpi }}>{children}</VisningKontekst.Provider>
+    <VisningKontekst.Provider value={{ skala, eksport: true, dpi, utkast }}>
+      {children}
+    </VisningKontekst.Provider>
   );
 }
 

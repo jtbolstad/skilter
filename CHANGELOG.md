@@ -17,6 +17,9 @@ og versjonsnumrene følger [semantisk versjonering](https://semver.org/lang/no/)
   samme bredde eller høyde (som største eller minste), rettes inn (venstre, midten, høyre, topp, bunn)
   og få lik avstand loddrett eller vannrett. Dra, piltaster og Delete virker på alle valgte.
 
+- **Utkast-merke ved eksport**: «Merk som utkast» legger et halvgjennomsiktig «UTKAST» på skrå over
+  skiltet i PDF og PNG. Filnavnet får «-utkast».
+
 ### Endret
 
 - Kartpunktet tegnes over linja, og linjer til punkter utenfor kartutsnittet vises ikke.

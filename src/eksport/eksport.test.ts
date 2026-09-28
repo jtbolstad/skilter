@@ -21,5 +21,11 @@ describe('eksport', () => {
   it('lager trygge filnavn', () => {
     expect(filnavn(skilt, 300, 'png')).toBe('et-historisk-kulturlandskap-ljabru-ost-841x594mm-300dpi.png');
     expect(filnavn(skilt, 300, 'pdf')).toBe('et-historisk-kulturlandskap-ljabru-ost-841x594mm.pdf');
+    expect(filnavn(skilt, 150, 'png', true)).toBe(
+      'et-historisk-kulturlandskap-ljabru-ost-841x594mm-150dpi-utkast.png',
+    );
+    expect(filnavn(skilt, 300, 'pdf', true)).toBe(
+      'et-historisk-kulturlandskap-ljabru-ost-841x594mm-utkast.pdf',
+    );
   });
 });

@@ -242,7 +242,7 @@ test('illustrasjoner til bruksanvisningen', async ({ page }) => {
   );
 
   // 13. Ferdig skilt
-  await page.getByRole('button', { name: 'Tilpass' }).click();
+  await page.getByRole('button', { name: 'Tilpass', exact: true }).click();
   await page.waitForTimeout(1500);
   // Skjul hjelpeelementer som ikke kommer med i eksporten
   await page.addStyleTag({ content: '[data-kun-editor] { display: none !important; }' });
@@ -251,7 +251,33 @@ test('illustrasjoner til bruksanvisningen', async ({ page }) => {
   // 14. Eksport
   await page.getByRole('button', { name: '⬇ Eksporter' }).click();
   await page.waitForTimeout(800);
+  await page.getByLabel(/Merk som utkast/).check();
   await page
     .getByRole('dialog', { name: 'Eksporter skiltet' })
     .screenshot({ path: `${MAPPE}/20-eksport.png` });
+
+  // 15. Utkast: eksportflaten tegnet med UTKAST-merket, skalert ned og flyttet inn i bildet
+  await page.evaluate(() => {
+    window.print = () => undefined;
+  });
+  await page.getByRole('button', { name: /PDF/ }).click();
+  const flate = page.locator('#utskrift [data-lerret]');
+  await flate.waitFor();
+  await page.waitForTimeout(1500);
+  const rot = page.locator('#utskrift [data-eksportflate]');
+  await rot.evaluate((e) => {
+    Object.assign(e.style, {
+      left: '0',
+      top: '0',
+      zIndex: '99999',
+      transformOrigin: 'top left',
+      transform: 'scale(0.35)',
+    });
+  });
+  const b = await boks(flate);
+  await page.screenshot({
+    path: `${MAPPE}/21-utkast.jpg`,
+    clip: { x: 0, y: 0, width: Math.min(1600, b.width), height: Math.min(1000, b.height) },
+    quality: 85,
+  });
 });

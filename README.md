@@ -40,7 +40,8 @@ Installeren er ikke signert, så Windows SmartScreen kan vise «Ukjent utgiver»
 - **Tastatur:** piltaster flytter valgt ramme, Shift + pil gjør den større, Delete sletter, og `?` viser
   alle hurtigtastene.
 - **Lagres automatisk** til `skilt.json` i mappa, med angre og gjør om.
-- **Eksport:** PDF med vektortekst og innebygde fonter, eller PNG i 150/300 DPI.
+- **Eksport:** PDF med vektortekst og innebygde fonter, eller PNG i 150/300 DPI. Valgfritt «UTKAST»
+  på skrå over skiltet for korrektur.
 - **Demoprosjekt** med tekst, bilder og kart – prøv appen uten egen mappe.
 
 ## Kom i gang

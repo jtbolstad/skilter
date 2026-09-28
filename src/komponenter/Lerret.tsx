@@ -9,11 +9,13 @@ import { DekorVisning } from './DekorVisning';
 import { KartRamme } from './KartRamme';
 import { LenkeHandtak, LenkeOverlegg } from './LenkeOverlegg';
 import { useForhandsvisning } from './useForhandsvisning';
-import { useEksport, useSkala } from './visning';
+import { UtkastMerke } from './UtkastMerke';
+import { useEksport, useSkala, useVisning } from './visning';
 
 export function Lerret({ skilt }: { skilt: Skilt }) {
   const skala = useSkala();
   const eksport = useEksport();
+  const utkast = useVisning().utkast;
   const velg = useSkilt((t) => t.velg);
   const rutenett = useSkilt((t) => t.festTilRutenett) && !eksport;
   // Kartbildets størrelse i store, så piltastene kan flytte veier og stedsnavn i mm
@@ -68,6 +70,7 @@ export function Lerret({ skilt }: { skilt: Skilt }) {
           {skilt.forfatter}
         </p>
       )}
+      {utkast && <UtkastMerke bredde={B} hoyde={H} />}
     </div>
   );
 }

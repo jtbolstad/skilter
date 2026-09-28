@@ -15,7 +15,7 @@ import { settPngDpi } from './png';
 /** CSS-piksler per mm – ved utskrift blir 1 mm på lerretet 1 mm på papiret */
 const UTSKRIFT_SKALA = 96 / 25.4;
 
-type Jobb = { type: 'png' | 'pdf'; dpi: 150 | 300 };
+type Jobb = { type: 'png' | 'pdf'; dpi: 150 | 300; utkast: boolean };
 type Status =
   | { type: 'klar' }
   | { type: 'arbeider'; tekst: string }
@@ -29,6 +29,7 @@ export function EksportPanel({ onLukk }: { onLukk(): void }) {
   const skilt = useSkilt((t) => t.skilt)!;
   const overflyt = useSkilt((t) => Object.values(t.tekstOverflyt).filter(Boolean).length);
   const [dpi, settDpi] = useState<150 | 300>(skilt.format.dpi);
+  const [utkast, settUtkast] = useState(false);
   const [jobb, settJobb] = useState<Jobb>();
   const [status, settStatus] = useState<Status>({ type: 'klar' });
   const mal = eksportmal(skilt, dpi);
@@ -40,7 +41,7 @@ export function EksportPanel({ onLukk }: { onLukk(): void }) {
       type: 'arbeider',
       tekst: type === 'pdf' ? 'Forbereder utskrift …' : `Lager PNG i ${dpi} DPI …`,
     });
-    settJobb({ type, dpi });
+    settJobb({ type, dpi, utkast });
   };
   const ferdig = (s: Status) => {
     settJobb(undefined);
@@ -76,6 +77,12 @@ export function EksportPanel({ onLukk }: { onLukk(): void }) {
       </Seksjon>
 
       <Kvalitetssjekk skilt={skilt} dpi={dpi} overflyt={overflyt} />
+
+      <label className="flex items-center gap-2">
+        <input type="checkbox" checked={utkast} onChange={(e) => settUtkast(e.target.checked)} />
+        Merk som utkast
+        <span className="text-stone-500">(«UTKAST» på skrå over skiltet)</span>
+      </label>
 
       <div className="flex flex-col gap-2">
         <button
@@ -114,8 +121,8 @@ export function EksportPanel({ onLukk }: { onLukk(): void }) {
         </p>
       )}
 
-      {jobb?.type === 'png' && <PngJobb skilt={skilt} dpi={jobb.dpi} onFerdig={ferdig} />}
-      {jobb?.type === 'pdf' && <PdfJobb skilt={skilt} dpi={jobb.dpi} onFerdig={ferdig} />}
+      {jobb?.type === 'png' && <PngJobb skilt={skilt} jobb={jobb} onFerdig={ferdig} />}
+      {jobb?.type === 'pdf' && <PdfJobb skilt={skilt} jobb={jobb} onFerdig={ferdig} />}
     </div>
   );
 }
@@ -185,11 +192,13 @@ function Eksportflate({
   skilt,
   skala,
   dpi,
+  utkast,
   onKlar,
 }: {
   skilt: Skilt;
   skala: number;
   dpi: number;
+  utkast: boolean;
   onKlar(el: HTMLElement): void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -202,7 +211,7 @@ function Eksportflate({
   });
   return (
     <div ref={ref} data-eksportflate style={{ position: 'fixed', left: -200_000, top: 0 }}>
-      <Eksportvisning skala={skala} dpi={dpi}>
+      <Eksportvisning skala={skala} dpi={dpi} utkast={utkast}>
         <Lerret skilt={skilt} />
       </Eksportvisning>
     </div>
@@ -211,19 +220,21 @@ function Eksportflate({
 
 const feilmelding = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
-function PngJobb({ skilt, dpi, onFerdig }: { skilt: Skilt; dpi: number; onFerdig(s: Status): void }) {
+function PngJobb({ skilt, jobb, onFerdig }: { skilt: Skilt; jobb: Jobb; onFerdig(s: Status): void }) {
   const mappe = useSkilt((t) => t.mappe);
+  const { dpi, utkast } = jobb;
   return createPortal(
     <Eksportflate
       skilt={skilt}
       skala={dpi / 25.4}
       dpi={dpi}
+      utkast={utkast}
       onKlar={async (el) => {
         try {
           await ventPaBilder(el);
           const blob = await domToBlob(el, { scale: 1, type: 'image/png', backgroundColor: '#f4efe3' });
           const bytes = settPngDpi(new Uint8Array(await blob.arrayBuffer()), dpi);
-          const navn = filnavn(skilt, dpi, 'png');
+          const navn = filnavn(skilt, dpi, 'png', utkast);
           const sti = await lagreEksport(mappe, navn, new Blob([bytes as BlobPart], { type: 'image/png' }));
           onFerdig({ type: 'ferdig', tekst: sti ? `✓ Lagret i ${sti}` : `✓ Lastet ned ${navn}` });
         } catch (e) {
@@ -239,7 +250,8 @@ function PngJobb({ skilt, dpi, onFerdig }: { skilt: Skilt; dpi: number; onFerdig
  * Utskrift: skiltet legges i et eget element som er det eneste som skrives ut, med sidestørrelse
  * lik skiltet og ingen marger. Nettleserens «Lagre som PDF» gir vektortekst og fulle bilder.
  */
-function PdfJobb({ skilt, dpi, onFerdig }: { skilt: Skilt; dpi: number; onFerdig(s: Status): void }) {
+function PdfJobb({ skilt, jobb, onFerdig }: { skilt: Skilt; jobb: Jobb; onFerdig(s: Status): void }) {
+  const { dpi, utkast } = jobb;
   const { bredde_mm: B, hoyde_mm: H } = skilt.format;
   return createPortal(
     <div id="utskrift">
@@ -256,11 +268,12 @@ function PdfJobb({ skilt, dpi, onFerdig }: { skilt: Skilt; dpi: number; onFerdig
         skilt={skilt}
         skala={UTSKRIFT_SKALA}
         dpi={dpi}
+        utkast={utkast}
         onKlar={async (el) => {
           try {
             await ventPaBilder(el);
             const tittel = document.title;
-            document.title = filnavn(skilt, dpi, 'pdf').replace(/\.pdf$/, '');
+            document.title = filnavn(skilt, dpi, 'pdf', utkast).replace(/\.pdf$/, '');
             window.addEventListener(
               'afterprint',
               () => {

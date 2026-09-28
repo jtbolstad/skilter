@@ -107,3 +107,21 @@ test('skjermbilde av eksportdialogen', async ({ page }) => {
   await page.waitForTimeout(800);
   await page.screenshot({ path: `${process.env.SKJERMBILDER}/eksportdialog.png` });
 });
+
+test('utkast-valget legger UTKAST over skiltet i eksporten', async ({ page }) => {
+  test.setTimeout(120_000);
+  await page.addInitScript(() => {
+    window.print = () => {
+      (window as unknown as { skrevetUt: boolean }).skrevetUt = true;
+    };
+  });
+  await apneDemo(page);
+  await page.getByRole('button', { name: '⬇ Eksporter' }).click();
+  await page.getByLabel(/Merk som utkast/).check();
+  await page.getByRole('button', { name: /PDF/ }).click();
+  await page.waitForFunction(() => (window as unknown as { skrevetUt?: boolean }).skrevetUt, null, {
+    timeout: 60_000,
+  });
+  await expect(page.locator('#utskrift [data-utkast]')).toHaveText('UTKAST');
+  await expect(page.locator('[data-lerret]:not(#utskrift *) [data-utkast]')).toHaveCount(0);
+});

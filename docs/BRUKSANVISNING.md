@@ -213,6 +213,8 @@ uten at bildet blir mindre.
 - **Dra markøren** for å flytte punktet.
 - Velg linje: **Knekt**, **Rett** eller **Kurve**. Linja festes automatisk til siden av kortet som
   vender mot punktet.
+- **Flytt festepunktet:** når kortet er valgt, vises et blått punkt på kanten der linja starter. Dra
+  det langs kanten. **↺ Automatisk festepunkt** (eller dobbeltklikk på punktet) setter det tilbake.
 - **Fjern kobling** tar bort linja og punktet.
 
 Appen varsler hvis punktet havner utenfor den synlige delen av kartet.
@@ -321,12 +323,17 @@ Trykk **⬇ Eksporter**.
 
 1. **Velg oppløsning:** 150 DPI holder for store skilt som leses på avstand, 300 DPI for nærlesing.
 2. **Se på «Sjekk»:** bilder som blir uskarpe og kort der teksten ikke får plass.
-3. **Velg format:**
+3. **Utkast (valgfritt):** huk av **Merk som utkast** for å legge et halvgjennomsiktig «UTKAST» på skrå
+   over hele skiltet, i både PDF og PNG. Filnavnet får «-utkast» på slutten. Valget gjelder bare den
+   ene eksporten, så husk å ta det av når du eksporterer den endelige fila.
+4. **Velg format:**
    - **📄 PDF (anbefalt for trykk):** utskriftsvinduet åpnes. Velg **Lagre som PDF** som skriver og
      trykk **Lagre**. Sidestørrelsen settes automatisk til skiltets størrelse uten marger. Tekst og
      streker blir skarpe i alle størrelser.
    - **🖼️ PNG:** bildet lagres i mappa `eksport/` i prosjektmappa. PNG er sperret for A0 i 300 DPI
      fordi bildet blir for stort for nettleseren; bruk PDF der.
+
+![Skilt merket som utkast](bilder/21-utkast.jpg)
 
 Håndtak, markeringer og varsler som «Tekst kuttet» kommer ikke med i eksporten.
 

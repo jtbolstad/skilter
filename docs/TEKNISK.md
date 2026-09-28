@@ -338,6 +338,14 @@ får en pHYs-blokk med DPI ([png.ts](../src/eksport/png.ts)). Med ekte mappe lag
 ellers lastes den ned. PNG sperres over 150 megapiksler (A0 ved 300 DPI er 139 MP og ligger nær Chromes
 grense for canvas); PDF anbefales for store formater.
 
+### Utkast-merke
+
+`Eksportvisning` tar imot `utkast`, som `Lerret` leser fra visningskonteksten og tegner
+[UtkastMerke](../src/komponenter/UtkastMerke.tsx) sist på lerretet. Merket er en SVG i mm med teksten
+«UTKAST» rotert langs diagonalen (halvgjennomsiktig rød, tittelfonten), så det blir vektor i PDF og
+skalerer med PNG-oppløsningen. Valget lever i `EksportPanel` og følger jobben; `filnavn()` legger til
+`-utkast`. Editoren tegner aldri merket.
+
 ### Kvalitetssjekk
 
 Før eksport viser dialogen bilder med effektiv DPI under 80 % av valgt oppløsning, og cards der teksten
