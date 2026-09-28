@@ -135,7 +135,12 @@ export interface Card {
   /** Skalering av tittel og brødtekst */
   tekststorrelse: number;
   farge: string;
-  lenke?: { punktId: string; stil: Lenkestil };
+  lenke?: {
+    punktId: string;
+    stil: Lenkestil;
+    /** Festepunkt langs kanten (0–1, ovenfra eller fra venstre). Mangler = automatisk mot punktet. */
+    anker?: number;
+  };
 }
 
 export interface Format {

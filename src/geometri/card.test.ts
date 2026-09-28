@@ -129,6 +129,14 @@ describe('lenker', () => {
     expect(lenkeanker(r, { x: 50, y: -40 }).side).toBe('topp');
   });
 
+  it('fast anker ligger langs kanten, også når punktet flytter seg', () => {
+    expect(lenkeanker(r, { x: 200, y: 50 }, 0.3)).toEqual({ x: 100, y: 30, side: 'hoyre' });
+    expect(lenkeanker(r, { x: 200, y: 90 }, 0.3).y).toBe(30);
+    expect(lenkeanker(r, { x: 50, y: 300 }, 0.8)).toEqual({ x: 80, y: 100, side: 'bunn' });
+    // Ikke helt ut i hjørnet
+    expect(lenkeanker(r, { x: 200, y: 50 }, 0).y).toBe(5);
+  });
+
   it('rett linje slutter før markøren', () => {
     expect(lenkesti(r, { x: 200, y: 50 }, 'rett', 10)).toBe('M100 50L190 50');
   });

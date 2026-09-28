@@ -422,6 +422,18 @@ function Kartkobling({ card }: { card: Card }) {
               </button>
             ))}
           </div>
+          {card.lenke.anker === undefined ? (
+            <p className="text-stone-500">
+              Dra det blå punktet på kanten av cardet for å flytte festepunktet.
+            </p>
+          ) : (
+            <button
+              className={knapp}
+              onClick={() => endreCard(card.id, { lenke: { ...card.lenke!, anker: undefined } })}
+            >
+              ↺ Automatisk festepunkt
+            </button>
+          )}
           <button className={`${knapp} text-rose-700`} onClick={() => fjernLenke(card.id)}>
             Fjern kobling
           </button>

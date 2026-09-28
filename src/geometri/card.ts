@@ -111,10 +111,17 @@ export type Side = 'venstre' | 'hoyre' | 'topp' | 'bunn';
 
 const klem = (v: number, min: number, maks: number) => Math.min(maks, Math.max(min, v));
 
-/** Festepunkt på cardets kant, på siden som vender mot punktet. */
-export function lenkeanker(r: Rektangel, mal: Punkt): Punkt & { side: Side } {
-  const innY = klem(mal.y, r.y + r.h * 0.15, r.y + r.h * 0.85);
-  const innX = klem(mal.x, r.x + r.b * 0.15, r.x + r.b * 0.85);
+/** Hvor langt ut mot hjørnene et festepunkt kan ligge (andel av kanten) */
+export const ANKER_MIN = 0.05;
+
+/**
+ * Festepunkt på cardets kant, på siden som vender mot punktet. Uten `anker` følger det punktet
+ * (innenfor midtre 70 % av kanten); med `anker` (0–1) ligger det fast langs kanten.
+ */
+export function lenkeanker(r: Rektangel, mal: Punkt, anker?: number): Punkt & { side: Side } {
+  const a = anker === undefined ? undefined : klem(anker, ANKER_MIN, 1 - ANKER_MIN);
+  const innY = a === undefined ? klem(mal.y, r.y + r.h * 0.15, r.y + r.h * 0.85) : r.y + r.h * a;
+  const innX = a === undefined ? klem(mal.x, r.x + r.b * 0.15, r.x + r.b * 0.85) : r.x + r.b * a;
   if (mal.x >= r.x + r.b) return { x: r.x + r.b, y: innY, side: 'hoyre' };
   if (mal.x <= r.x) return { x: r.x, y: innY, side: 'venstre' };
   return mal.y < r.y ? { x: innX, y: r.y, side: 'topp' } : { x: innX, y: r.y + r.h, side: 'bunn' };
@@ -133,8 +140,14 @@ const f = (v: number) => Math.round(v * 100) / 100;
 /**
  * SVG-sti fra card til kartpunkt. Slutter `slutt` mm før punktet så linja ikke dekker markøren.
  */
-export function lenkesti(r: Rektangel, mal: Punkt, stil: 'rett' | 'knekt' | 'kurve', slutt: number): string {
-  const a = lenkeanker(r, mal);
+export function lenkesti(
+  r: Rektangel,
+  mal: Punkt,
+  stil: 'rett' | 'knekt' | 'kurve',
+  slutt: number,
+  anker?: number,
+): string {
+  const a = lenkeanker(r, mal, anker);
   const vannrett = a.side === 'venstre' || a.side === 'hoyre';
   if (stil === 'knekt') {
     const knekk = vannrett

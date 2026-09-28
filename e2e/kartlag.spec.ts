@@ -148,3 +148,40 @@ test('skjermbilde med veier og stedsnavn', async ({ page }) => {
   await page.waitForTimeout(800);
   await page.screenshot({ path: `${mappe}/kartlag.png` });
 });
+
+test('festepunktet på cardet kan dras langs kanten, og punktet ligger over linja', async ({ page }) => {
+  await page.goto('/?demo=innebygd&ny');
+  await expect(page.getByTestId('kart').locator('img').first()).toBeVisible({ timeout: 30_000 });
+  await page.locator('aside').first().getByRole('button', { name: '1. Utsikten' }).click();
+  await page.getByRole('button', { name: 'Plasser punkt på kartet' }).click();
+  const kart = (await page.getByTestId('kart').boundingBox())!;
+  await page.mouse.click(kart.x + kart.width * 0.4, kart.y + kart.height * 0.3);
+
+  const linje = page.getByTestId('lenke').locator('path').last();
+  const start = async () =>
+    (await linje.getAttribute('d'))!
+      .match(/^M([\d.]+) ([\d.]+)/)!
+      .slice(1)
+      .map(Number);
+  const [x0, y0] = await start();
+
+  // Punktet tegnes etter (over) linja
+  const rekkefolge = await page
+    .getByTestId('lenke')
+    .evaluate((g) => [...g.children].map((c) => c.getAttribute('data-testid') ?? c.tagName));
+  expect(rekkefolge.at(-1)).toBe('lenkepunkt');
+
+  const handtak = page.getByTestId('lenkehandtak');
+  const h = (await handtak.boundingBox())!;
+  await page.mouse.move(h.x + h.width / 2, h.y + h.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(h.x + h.width / 2, h.y + h.height / 2 + 25, { steps: 4 });
+  await page.mouse.up();
+  const [x1, y1] = await start();
+  expect(x1).toBeCloseTo(x0!, 1);
+  expect(y1).toBeGreaterThan(y0! + 5);
+
+  await page.getByRole('button', { name: '↺ Automatisk festepunkt' }).click();
+  const [, y2] = await start();
+  expect(y2).toBeCloseTo(y0!, 1);
+});

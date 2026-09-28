@@ -6,7 +6,7 @@ import { BannerVisning } from './BannerVisning';
 import { CardVisning } from './CardVisning';
 import { DekorVisning } from './DekorVisning';
 import { KartRamme } from './KartRamme';
-import { LenkeOverlegg } from './LenkeOverlegg';
+import { LenkeHandtak, LenkeOverlegg } from './LenkeOverlegg';
 import { useForhandsvisning } from './useForhandsvisning';
 import { useEksport, useSkala } from './visning';
 
@@ -51,6 +51,7 @@ export function Lerret({ skilt }: { skilt: Skilt }) {
       {skilt.cards.map((c) => (
         <CardVisning key={c.id} card={c} />
       ))}
+      <LenkeHandtak skilt={skilt} />
       {skilt.dekor
         .filter((d) => d.foran)
         .map((d) => (
