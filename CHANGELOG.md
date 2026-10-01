@@ -5,6 +5,8 @@ og versjonsnumrene følger [semantisk versjonering](https://semver.org/lang/no/)
 
 ## [Ikke utgitt]
 
+## [0.4.0] – 2026-10-01
+
 ### Lagt til
 
 - **Frie bilder og tekster**: «+ Tekst» og «+ Bilde (logo)…» nederst i laglista legger en logo eller en
@@ -95,7 +97,8 @@ Første utgivelse, med Windows-installer.
 - Eksport til PDF (vektortekst, innebygde fonter) og PNG i 150 eller 300 DPI.
 - Skrivebordsapp for Windows (Tauri).
 
-[Ikke utgitt]: https://github.com/jtbolstad/skilter/compare/v0.3.0...HEAD
+[Ikke utgitt]: https://github.com/jtbolstad/skilter/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/jtbolstad/skilter/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/jtbolstad/skilter/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/jtbolstad/skilter/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/jtbolstad/skilter/releases/tag/v0.1.0
