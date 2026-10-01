@@ -14,6 +14,8 @@ og versjonsnumrene følger [semantisk versjonering](https://semver.org/lang/no/)
 
 ### Endret
 
+- Laglista har egne grupper som kan åpnes og lukkes for **Cards** (med «+ Nytt card») og **Tekst og bilder**
+  (med «+ Tekst» og «+ Bilde (logo)…»).
 - Justeringsknappene i flervalg (samme størrelse, rett inn, lik avstand) har nå Lucide-ikoner i stedet
   for tegn i teksten. Navnet står i tooltip og som tilgjengelig navn.
 

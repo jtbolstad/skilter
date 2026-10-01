@@ -43,11 +43,15 @@ function Lagliste({ skilt }: { skilt: Skilt }) {
   const velg = useSkilt((t) => t.velg);
   const overflyt = useSkilt((t) => t.tekstOverflyt);
   const [visDekor, settVisDekor] = useState(false);
-  // Gruppa åpnes når en dekor velges på lerretet
+  const [visCards, settVisCards] = useState(true);
+  const [visFri, settVisFri] = useState(true);
+  // Gruppene åpnes når et element i dem velges på lerretet
   const [forrigeValg, settForrigeValg] = useState(valg);
   if (valg !== forrigeValg) {
     settForrigeValg(valg);
     if (valg.type === 'dekor') settVisDekor(true);
+    if (valg.type === 'card') settVisCards(true);
+    if (valg.type === 'fri') settVisFri(true);
   }
   const valgte = valgteRammer(valg);
   const erValgt = (ref: Rammeref) => valgte.some((r) => sammeRef(r, ref));
@@ -106,59 +110,80 @@ function Lagliste({ skilt }: { skilt: Skilt }) {
             ))
             // Øverst i lista er den som ligger øverst på skiltet (sist lagt til)
             .reverse()}
-        {skilt.cards.map((c) => (
-          <button
-            key={c.id}
-            className={rad(erValgt({ type: 'card', id: c.id }))}
-            onClick={velgRamme({ type: 'card', id: c.id })}
-          >
-            <span className="size-3 shrink-0 rounded-sm" style={{ background: c.farge }} />
-            <span className="truncate">
-              {c.nummer}. {c.tittel}
-            </span>
-            <span className="ml-auto flex gap-1 text-xs">
-              {!c.bilde && <span title="Mangler bilde">🖼️</span>}
-              {!c.lenke && <span title="Ikke koblet til kartet">📍</span>}
-              {overflyt[c.id] && <span title="Teksten får ikke plass">✂️</span>}
-            </span>
-          </button>
-        ))}
-        {skilt.fri.map((f) => (
-          <button
-            key={f.id}
-            className={rad(erValgt({ type: 'fri', id: f.id }))}
-            onClick={velgRamme({ type: 'fri', id: f.id })}
-          >
-            {f.type === 'bilde' ? '🖼️' : '🔤'}
-            <span className="truncate">
-              {f.type === 'bilde'
-                ? (f.bilde?.fil.split('/').at(-1) ?? 'Bilde')
-                : f.tekst.split('\n')[0] || 'Tekst'}
-            </span>
-          </button>
-        ))}
-        <button className={`${rad(false)} text-stone-500`} onClick={() => useSkilt.getState().leggTilCard()}>
-          + Nytt card
+        <button className={rad(false)} aria-expanded={visCards} onClick={() => settVisCards(!visCards)}>
+          🗂️ Cards
+          <span className="text-stone-500">({skilt.cards.length})</span>
+          <span className="ml-auto text-xs text-stone-500">{visCards ? '▾' : '▸'}</span>
         </button>
-        <button
-          className={`${rad(false)} text-stone-500`}
-          onClick={() => useSkilt.getState().leggTilFriTekst()}
-        >
-          + Tekst
+        {visCards && (
+          <>
+            {skilt.cards.map((c) => (
+              <button
+                key={c.id}
+                className={`${rad(erValgt({ type: 'card', id: c.id }))} pl-6`}
+                onClick={velgRamme({ type: 'card', id: c.id })}
+              >
+                <span className="size-3 shrink-0 rounded-sm" style={{ background: c.farge }} />
+                <span className="truncate">
+                  {c.nummer}. {c.tittel}
+                </span>
+                <span className="ml-auto flex gap-1 text-xs">
+                  {!c.bilde && <span title="Mangler bilde">🖼️</span>}
+                  {!c.lenke && <span title="Ikke koblet til kartet">📍</span>}
+                  {overflyt[c.id] && <span title="Teksten får ikke plass">✂️</span>}
+                </span>
+              </button>
+            ))}
+            <button
+              className={`${rad(false)} pl-6 text-stone-500`}
+              onClick={() => useSkilt.getState().leggTilCard()}
+            >
+              + Nytt card
+            </button>
+          </>
+        )}
+        <button className={rad(false)} aria-expanded={visFri} onClick={() => settVisFri(!visFri)}>
+          🔤 Tekst og bilder
+          <span className="text-stone-500">({skilt.fri.length})</span>
+          <span className="ml-auto text-xs text-stone-500">{visFri ? '▾' : '▸'}</span>
         </button>
-        <label className={`${rad(false)} cursor-pointer text-stone-500`}>
-          + Bilde (logo)…
-          <input
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => {
-              const fil = e.target.files?.[0];
-              if (fil) void useSkilt.getState().leggTilFriBilde(fil);
-              e.target.value = '';
-            }}
-          />
-        </label>
+        {visFri && (
+          <>
+            {skilt.fri.map((f) => (
+              <button
+                key={f.id}
+                className={`${rad(erValgt({ type: 'fri', id: f.id }))} pl-6`}
+                onClick={velgRamme({ type: 'fri', id: f.id })}
+              >
+                {f.type === 'bilde' ? '🖼️' : '🔤'}
+                <span className="truncate">
+                  {f.type === 'bilde'
+                    ? (f.bilde?.fil.split('/').at(-1) ?? 'Bilde')
+                    : f.tekst.split('\n')[0] || 'Tekst'}
+                </span>
+              </button>
+            ))}
+            <button
+              className={`${rad(false)} pl-6 text-stone-500`}
+              onClick={() => useSkilt.getState().leggTilFriTekst()}
+            >
+              + Tekst
+            </button>
+            <label className={`${rad(false)} cursor-pointer pl-6 text-stone-500`}>
+              + Bilde (logo)…
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const fil = e.target.files?.[0];
+                  if (fil) void useSkilt.getState().leggTilFriBilde(fil);
+                  e.target.value = '';
+                }}
+              />
+            </label>
+          </>
+        )}
       </div>
     </Seksjon>
   );
