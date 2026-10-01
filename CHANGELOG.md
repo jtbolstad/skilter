@@ -5,6 +5,18 @@ og versjonsnumrene følger [semantisk versjonering](https://semver.org/lang/no/)
 
 ## [Ikke utgitt]
 
+### Lagt til
+
+- **Frie bilder og tekster**: «+ Tekst» og «+ Bilde (logo)…» nederst i laglista legger en logo eller en
+  nettadresse rett på skiltet. Bildene skaleres, beskjæres, roteres og speilvendes som bildene i cards.
+  Teksten får egen font, størrelse, fet/kursiv, farge og justering. De kan legges foran eller bak
+  banner, kart og cards, flyttes, rettes inn sammen med andre rammer og slettes med Delete.
+
+### Endret
+
+- Justeringsknappene i flervalg (samme størrelse, rett inn, lik avstand) har nå Lucide-ikoner i stedet
+  for tegn i teksten. Navnet står i tooltip og som tilgjengelig navn.
+
 ## [0.3.0] – 2026-09-29
 
 ### Lagt til

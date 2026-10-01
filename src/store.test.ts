@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import type { Filmappe } from './fil/mappetilgang';
 import { importerMappe } from './modell/importerMappe';
 import { nyGest } from './modell/historikk';
+import { lesSkilt, serialiser } from './modell/lagring';
 import { rammeTil, useSkilt, valgteRammer } from './store';
 
 const TEKST = 'T\n\n1. Slora\nTekst\n\n6. Pilgrimsleden\nTekst';
@@ -198,6 +199,80 @@ describe('utseende', () => {
     s().slettDekor(id);
     expect(s().skilt!.dekor).toEqual([]);
     expect(s().valg.type).toBe('skilt');
+  });
+
+  it('fri tekst legges til, endres, angres og slettes', () => {
+    const id = s().leggTilFriTekst();
+    expect(s().valg).toEqual({ type: 'fri', id });
+    const tekst = s().skilt!.fri[0]!;
+    expect(tekst).toMatchObject({ type: 'tekst', font: s().skilt!.tema.font });
+
+    nyGest();
+    s().endreFri(id, { font: 'oswald', storrelse: 12, tekst: 'skilt.no' });
+    expect(s().skilt!.fri[0]).toMatchObject({ font: 'oswald', storrelse: 12, tekst: 'skilt.no' });
+    s().angre();
+    expect(s().skilt!.fri[0]).toMatchObject({ font: tekst.type === 'tekst' ? tekst.font : '' });
+
+    s().slettFri(id);
+    expect(s().skilt!.fri).toEqual([]);
+    expect(s().valg.type).toBe('skilt');
+  });
+
+  it('fritt bilde kopieres inn i prosjektet og kan byttes', async () => {
+    const id = await s().leggTilFriBilde(new File(['x'], 'logo.png', { type: 'image/png' }));
+    expect(id).toBeDefined();
+    const bilde = s().skilt!.fri[0]!;
+    expect(bilde.type === 'bilde' && bilde.bilde?.fil).toBe('Logo og bilder/logo.png');
+    expect(s().valg).toEqual({ type: 'fri', id });
+    expect(s().mappe!.filer).toContain('Logo og bilder/logo.png');
+
+    await s().byttFriBilde(id!, new File(['y'], 'logo.png', { type: 'image/png' }));
+    const nytt = s().skilt!.fri[0]!;
+    expect(nytt.type === 'bilde' && nytt.bilde?.fil).toBe('Logo og bilder/logo (2).png');
+
+    // Ikke-bilder legges ikke til
+    expect(await s().leggTilFriBilde(new File(['x'], 'a.txt', { type: 'text/plain' }))).toBeUndefined();
+    expect(s().skilt!.fri).toHaveLength(1);
+  });
+
+  it('frie elementer kan flyttes og slettes sammen med andre rammer', () => {
+    const tekst = s().leggTilFriTekst();
+    s().leggTilDekor('gress');
+    const dekor = s().skilt!.dekor[0]!.id;
+    s().velg({
+      type: 'flere',
+      valgte: [
+        { type: 'fri', id: tekst },
+        { type: 'dekor', id: dekor },
+      ],
+    });
+    const ny = { x: 10, y: 20, b: 30, h: 40 };
+    s().settRammer([{ ref: { type: 'fri', id: tekst }, ramme: ny }]);
+    expect(rammeTil(s().skilt!, { type: 'fri', id: tekst })).toEqual(ny);
+
+    expect(s().slettValgt()).toBe(true);
+    expect(s().skilt!.fri).toEqual([]);
+    expect(s().skilt!.dekor).toEqual([]);
+  });
+
+  it('frie elementer skaleres med formatet', () => {
+    const id = s().leggTilFriTekst();
+    const foer = rammeTil(s().skilt!, { type: 'fri', id })!;
+    const { bredde_mm, hoyde_mm } = s().skilt!.format;
+    s().endreFormat(bredde_mm * 2, hoyde_mm * 2);
+    const etter = rammeTil(s().skilt!, { type: 'fri', id })!;
+    expect(etter.b).toBeCloseTo(foer.b * 2);
+    expect(etter.x).toBeCloseTo(foer.x * 2);
+  });
+
+  it('frie elementer lagres og leses, eldre filer uten fri gir tom liste', () => {
+    s().leggTilFriTekst();
+    const lagret = serialiser(s().skilt!);
+    expect(lesSkilt(lagret).fri).toEqual(s().skilt!.fri);
+
+    const gammel = JSON.parse(lagret) as { skilt: { fri?: unknown } };
+    delete gammel.skilt.fri;
+    expect(lesSkilt(JSON.stringify(gammel)).fri).toEqual([]);
   });
 
   it('ny dekor legges foran, dekor som i utkastet bak', () => {

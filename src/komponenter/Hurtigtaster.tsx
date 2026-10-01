@@ -3,12 +3,12 @@ import { useSkilt } from '../store';
 
 const TASTER: { gruppe: string; taster: [string[], string][] }[] = [
   {
-    gruppe: 'Valgt card, banner, kart eller dekor',
+    gruppe: 'Valgt card, banner, kart, dekor, tekst eller bilde',
     taster: [
       [['←', '→', '↑', '↓'], 'Flytt 1 mm – til neste rutelinje når rutenettet er på'],
       [['Shift', 'pil'], 'Større i pilens retning'],
       [['Ctrl', 'Shift', 'pil'], 'Mindre fra den siden'],
-      [['Delete'], 'Slett valgt card, vei, stedsnavn eller dekor'],
+      [['Delete'], 'Slett valgt card, vei, stedsnavn, dekor, tekst eller bilde'],
       [['←', '→', '↑', '↓'], 'Flytt også valgt vei eller stedsnavn'],
       [['Alt', 'dra'], 'Flytt fritt når rutenettet er på'],
       [['Dobbeltklikk'], 'Beskjær bildet i et card'],

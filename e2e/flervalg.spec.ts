@@ -25,12 +25,12 @@ test('Ctrl/Shift + klikk velger flere, og de kan rettes inn og få samme bredde'
   await page.getByRole('button', { name: 'Bredde som bredeste' }).click();
   for (const n of [1, 2, 3]) expect((await boks(page, n)).width).toBeCloseTo(bredeste, 0);
 
-  await page.getByRole('button', { name: '⇤ Venstre' }).click();
+  await page.getByRole('button', { name: 'Venstre', exact: true }).click();
   const x = (await boks(page, 1)).x;
   for (const n of [2, 3]) expect((await boks(page, n)).x).toBeCloseTo(x, 0);
 
   await page.getByRole('button', { name: 'Bredde som smaleste' }).click();
-  await page.getByRole('button', { name: '⤒ Topp' }).click();
+  await page.getByRole('button', { name: 'Topp', exact: true }).click();
   const y = (await boks(page, 1)).y;
   for (const n of [2, 3]) expect((await boks(page, n)).y).toBeCloseTo(y, 0);
 
@@ -47,8 +47,8 @@ test('lik avstand, piltaster og dra flytter alle valgte', async ({ page }) => {
   await apneDemo(page);
   await page.getByTestId('card-1').click();
   for (const n of [2, 3]) await page.getByTestId(`card-${n}`).click({ modifiers: ['Control'] });
-  await page.getByRole('button', { name: '⇤ Venstre' }).click();
-  await page.getByRole('button', { name: '↕ Loddrett' }).click();
+  await page.getByRole('button', { name: 'Venstre', exact: true }).click();
+  await page.getByRole('button', { name: 'Lik avstand loddrett' }).click();
   const [a, b, c] = await Promise.all([1, 2, 3].map((n) => boks(page, n)));
   const sortert = [a!, b!, c!].sort((p, q) => p.y - q.y);
   const luft1 = sortert[1]!.y - (sortert[0]!.y + sortert[0]!.height);

@@ -6,6 +6,7 @@ import { useSkilt } from '../store';
 import { BannerVisning } from './BannerVisning';
 import { CardVisning } from './CardVisning';
 import { DekorVisning } from './DekorVisning';
+import { FriVisning } from './FriVisning';
 import { KartRamme } from './KartRamme';
 import { LenkeHandtak, LenkeOverlegg } from './LenkeOverlegg';
 import { useForhandsvisning } from './useForhandsvisning';
@@ -47,6 +48,11 @@ export function Lerret({ skilt }: { skilt: Skilt }) {
         .map((d) => (
           <DekorVisning key={d.id} dekor={d} />
         ))}
+      {skilt.fri
+        .filter((f) => f.bak)
+        .map((f) => (
+          <FriVisning key={f.id} fri={f} />
+        ))}
       <BannerVisning banner={skilt.banner} />
       <KartRamme kart={skilt.kart} />
       {/* Linjene til kartpunktene ligger over kartet, men under cardene de går ut fra */}
@@ -59,6 +65,11 @@ export function Lerret({ skilt }: { skilt: Skilt }) {
         .filter((d) => d.foran)
         .map((d) => (
           <DekorVisning key={d.id} dekor={d} />
+        ))}
+      {skilt.fri
+        .filter((f) => !f.bak)
+        .map((f) => (
+          <FriVisning key={f.id} fri={f} />
         ))}
       {rutenett && <Rutenett rute={RUTENETT_MM * skala} />}
 

@@ -15,6 +15,8 @@ interface Props {
   flyttMedInnhold: boolean;
   etikett?: string;
   zIndeks?: number;
+  /** Minste bredde og høyde i mm når rammen dras (standard 20) */
+  minMm?: number;
   children: ReactNode;
 }
 
@@ -32,6 +34,7 @@ export function Flyttbar({
   flyttMedInnhold,
   etikett,
   zIndeks,
+  minMm = MIN_MM,
   children,
 }: Props) {
   const skala = useSkala();
@@ -116,19 +119,19 @@ export function Flyttbar({
       r.y += dy;
     } else {
       if (s.handtak.includes('v')) {
-        const b = Math.max(MIN_MM, s.ramme.b - dx);
+        const b = Math.max(minMm, s.ramme.b - dx);
         r.x = s.ramme.x + s.ramme.b - b;
         r.b = b;
-      } else r.b = Math.max(MIN_MM, s.ramme.b + dx);
+      } else r.b = Math.max(minMm, s.ramme.b + dx);
       if (s.handtak.startsWith('n')) {
-        const h = Math.max(MIN_MM, s.ramme.h - dy);
+        const h = Math.max(minMm, s.ramme.h - dy);
         r.y = s.ramme.y + s.ramme.h - h;
         r.h = h;
-      } else r.h = Math.max(MIN_MM, s.ramme.h + dy);
+      } else r.h = Math.max(minMm, s.ramme.h + dy);
     }
     // Alt holdt nede slår av rutenettet midlertidig
     const fest = useSkilt.getState().festTilRutenett && !e.altKey;
-    const ny = fest ? festRamme(r, s.handtak, MIN_MM) : r;
+    const ny = fest ? festRamme(r, s.handtak, minMm) : r;
     s.flyttet = true;
     if (!s.gruppe) return onEndre(ny);
     // Alle flyttes like mye som dette elementet (etter festing til rutenettet)

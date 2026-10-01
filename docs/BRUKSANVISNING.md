@@ -136,12 +136,22 @@ på skiltet eller i laglista. **Ctrl + A** velger alle kortene. Panelet viser da
 - **Lik avstand:** like mellomrom loddrett eller vannrett (minst tre valgt). Det første og siste står i
   ro.
 
-Dra i ett av de valgte eller bruk piltastene for å flytte alle, og **Delete** sletter valgte kort og
-dekor. Hver justering er ett angresteg.
+Knappene har ikoner; hold musa over en knapp for å se hva den gjør. Dra i ett av de valgte eller bruk
+piltastene for å flytte alle, og **Delete** sletter valgte kort, dekor, tekster og bilder. Hver justering er ett angresteg.
 
 Har du endret tekstfila etter at du startet? Velg **🪧 Skilt**, velg fil og format (vanligvis
 **Automatisk**) og trykk **↻ Les inn tekst på nytt**. Titler og tekster oppdateres, mens oppsett og
 bilder beholdes.
+
+**Egen tekst og eget bilde (logo, nettadresse):** nederst i laglista legger **+ Tekst** en tekstboks
+midt på skiltet, og **+ Bilde (logo)…** legger inn en bildefil (kopiert til mappa «Logo og bilder» i
+prosjektet). Begge flyttes og skaleres med hjørnene.
+
+- **Bilde:** zoom, beskjær (dobbeltklikk), roter og speilvend som i et kort.
+- **Tekst:** skriv teksten i panelet (`*kursiv*` og `**fet**` virker). Velg font, størrelse, fet/kursiv,
+  farge og justering.
+- **Legg bak / Legg foran** flytter elementet bak eller foran banner, kart og kort.
+- Elementene kan velges sammen med andre og rettes inn med justeringsknappene.
 
 ## 5. Bilder: bytte, beskjære og justere
 

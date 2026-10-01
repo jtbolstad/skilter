@@ -8,6 +8,7 @@ import { type Rammeref, sammeRef, useSkilt, valgteRammer } from '../store';
 import { KartgrunnlagSeksjon } from '../kart/KartgrunnlagPanel';
 import { CardEgenskaper } from './CardPanel';
 import { Flervalg } from './FlervalgPanel';
+import { FriEgenskaper } from './FriPanel';
 import { AlleCards, BannerEgenskaper, DekorEgenskaper, TemaOgOppsett, Tilpass } from './UtseendePanel';
 import { KartlagSeksjoner, RuteEgenskaper, StedsnavnEgenskaper, Stilprove } from './RutePanel';
 import { DpiVarsel, Felt, input, knapp, Seksjon } from './Skjema';
@@ -19,6 +20,7 @@ export function Sidepanel({ skilt }: { skilt: Skilt }) {
   const rute = valg.type === 'rute' ? skilt.ruter.find((r) => r.id === valg.id) : undefined;
   const sted = valg.type === 'stedsnavn' ? skilt.stedsnavn.find((s) => s.id === valg.id) : undefined;
   const dekor = valg.type === 'dekor' ? skilt.dekor.find((d) => d.id === valg.id) : undefined;
+  const fri = valg.type === 'fri' ? skilt.fri.find((f) => f.id === valg.id) : undefined;
 
   return (
     <aside className="flex w-80 shrink-0 flex-col gap-5 overflow-y-auto border-l border-stone-200 bg-white p-4 text-sm">
@@ -30,6 +32,7 @@ export function Sidepanel({ skilt }: { skilt: Skilt }) {
       {sted && <StedsnavnEgenskaper key={sted.id} sted={sted} />}
       {valg.type === 'banner' && <BannerEgenskaper banner={skilt.banner} />}
       {dekor && <DekorEgenskaper key={dekor.id} dekor={dekor} />}
+      {fri && <FriEgenskaper key={fri.id} fri={fri} />}
       {valg.type === 'flere' && <Flervalg skilt={skilt} valgte={valg.valgte} />}
     </aside>
   );
@@ -120,9 +123,42 @@ function Lagliste({ skilt }: { skilt: Skilt }) {
             </span>
           </button>
         ))}
+        {skilt.fri.map((f) => (
+          <button
+            key={f.id}
+            className={rad(erValgt({ type: 'fri', id: f.id }))}
+            onClick={velgRamme({ type: 'fri', id: f.id })}
+          >
+            {f.type === 'bilde' ? '🖼️' : '🔤'}
+            <span className="truncate">
+              {f.type === 'bilde'
+                ? (f.bilde?.fil.split('/').at(-1) ?? 'Bilde')
+                : f.tekst.split('\n')[0] || 'Tekst'}
+            </span>
+          </button>
+        ))}
         <button className={`${rad(false)} text-stone-500`} onClick={() => useSkilt.getState().leggTilCard()}>
           + Nytt card
         </button>
+        <button
+          className={`${rad(false)} text-stone-500`}
+          onClick={() => useSkilt.getState().leggTilFriTekst()}
+        >
+          + Tekst
+        </button>
+        <label className={`${rad(false)} cursor-pointer text-stone-500`}>
+          + Bilde (logo)…
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const fil = e.target.files?.[0];
+              if (fil) void useSkilt.getState().leggTilFriBilde(fil);
+              e.target.value = '';
+            }}
+          />
+        </label>
       </div>
     </Seksjon>
   );

@@ -1,24 +1,14 @@
 import { useState } from 'react';
 import { bildeRammeForCard, bildeTilSiden, cardstil, tittelplass } from '../geometri/card';
-import { delRotasjon, klem, MAKS_ZOOM, roterKvart, type Storrelse } from '../geometri/utsnitt';
 import { bilderIMappe, erBilde, nyttUtsnitt } from '../modell/importerMappe';
 import { CARD_FARGER } from '../modell/oppsett';
-import type {
-  Bildeaspekt,
-  Bildeutsnitt,
-  Card,
-  Cardlayout,
-  Lenkestil,
-  Tittelplassering,
-} from '../modell/typer';
+import type { Bildeaspekt, Card, Cardlayout, Lenkestil, Tittelplassering } from '../modell/typer';
 import { useSkilt } from '../store';
 import { BILDE_DRA_TYPE, useNaturligAspekt } from './CardVisning';
 import { punktErSynlig } from './LenkeOverlegg';
-import { DpiVarsel, Felt, Gruppe, input, knapp, Seksjon } from './Skjema';
+import { BildeInnstillinger } from './BildeInnstillinger';
+import { Felt, Gruppe, input, knapp, Seksjon, valgKnapp } from './Skjema';
 import { useForhandsvisning } from './useForhandsvisning';
-
-const valgKnapp = (aktiv: boolean) =>
-  `flex-1 rounded border px-2 py-1 ${aktiv ? 'border-sky-500 bg-sky-50 text-sky-900' : 'border-stone-300 hover:bg-stone-100'} disabled:opacity-40`;
 
 export function CardEgenskaper({ card }: { card: Card }) {
   return (
@@ -207,111 +197,26 @@ function Utseende({ card }: { card: Card }) {
 function Bildekontroller({ card }: { card: Card }) {
   const modus = useSkilt((t) => t.modus);
   const { endreBilde, endreCard, settModus } = useSkilt.getState();
-  const f = useForhandsvisning(card.bilde?.fil);
   const aspekt = useNaturligAspekt(card);
   const tema = useSkilt((t) => t.skilt!.tema);
   const format = useSkilt((t) => t.skilt!.format);
   if (!card.bilde) return null;
 
   const ramme = bildeRammeForCard(card, aspekt, cardstil({ tema, format }));
-  const bilde: Storrelse | undefined = f && { b: f.bredde, h: f.hoyde };
-  const u = card.bilde;
   const beskjaerer = modus.type === 'beskjaer' && modus.cardId === card.id;
-  const sett = (ny: Bildeutsnitt) => endreBilde(card.id, bilde ? klem(ny, ramme, bilde) : ny);
-  const { kvart, fin } = delRotasjon(u.rotasjon);
 
   return (
-    <Seksjon tittel="Bilde">
-      <p className="truncate text-stone-600" title={u.fil}>
-        {u.fil.split('/').at(-1)}
-        {f && (
-          <span className="text-stone-400">
-            {' '}
-            · {f.bredde}×{f.hoyde}
-          </span>
-        )}
-      </p>
-      {bilde && <DpiVarsel utsnitt={u} ramme={ramme} bilde={bilde} />}
-      <button
-        className={beskjaerer ? 'rounded bg-sky-600 px-2 py-1 text-white' : knapp}
-        onClick={() => settModus(beskjaerer ? { type: 'normal' } : { type: 'beskjaer', cardId: card.id })}
-      >
-        {beskjaerer ? '✓ Ferdig med beskjæring' : '✂️ Beskjær (eller dobbelklikk bildet)'}
-      </button>
-      {beskjaerer && (
-        <p className="text-stone-500">Dra i bildet for å flytte utsnittet, scroll for å zoome.</p>
-      )}
-
-      <Felt etikett={`Zoom: ${Math.round(u.zoom * 100)} %`}>
-        <input
-          type="range"
-          min={0}
-          max={Math.log(MAKS_ZOOM)}
-          step={0.01}
-          value={Math.log(u.zoom)}
-          onChange={(e) => sett({ ...u, zoom: Math.exp(Number(e.target.value)) })}
-        />
-      </Felt>
-
-      <div className="flex gap-2">
-        <button className={valgKnapp(u.tilpass === 'fyll')} onClick={() => sett({ ...u, tilpass: 'fyll' })}>
-          Fyll ramma
-        </button>
-        <button
-          className={valgKnapp(u.tilpass === 'vis-hele')}
-          onClick={() => sett({ ...u, tilpass: 'vis-hele' })}
-        >
-          Vis hele
-        </button>
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        <button className={knapp} title="Roter 90° mot klokka" onClick={() => sett(roterKvart(u, -1))}>
-          ⟲ 90°
-        </button>
-        <button className={knapp} title="Roter 90° med klokka" onClick={() => sett(roterKvart(u, 1))}>
-          ⟳ 90°
-        </button>
-        <button className={knapp} onClick={() => sett({ ...u, speilvendt: !u.speilvendt })}>
-          ⇋ Speilvend
-        </button>
-        <button
-          className={knapp}
-          onClick={() =>
-            sett({ ...u, zoom: 1, sentrumX: 0.5, sentrumY: 0.5, rotasjon: 0, speilvendt: false })
-          }
-        >
-          Tilbakestill
-        </button>
-      </div>
-      <Felt etikett={`Rett opp: ${fin.toFixed(1).replace('.', ',')}°`}>
-        <input
-          type="range"
-          min={-10}
-          max={10}
-          step={0.1}
-          value={fin}
-          onChange={(e) => sett({ ...u, rotasjon: kvart + Number(e.target.value) })}
-        />
-      </Felt>
-      <Felt etikett="Kreditering (vises på skiltet)">
-        <input
-          className={input}
-          placeholder="Foto: …"
-          value={u.kreditering ?? ''}
-          onChange={(e) => endreBilde(card.id, { ...u, kreditering: e.target.value || undefined })}
-        />
-      </Felt>
-      <button
-        className={`${knapp} text-rose-700`}
-        onClick={() => {
-          settModus({ type: 'normal' });
-          endreCard(card.id, { bilde: undefined });
-        }}
-      >
-        Fjern bilde
-      </button>
-    </Seksjon>
+    <BildeInnstillinger
+      utsnitt={card.bilde}
+      ramme={ramme}
+      beskjaerer={beskjaerer}
+      settBeskjaer={(pa) => settModus(pa ? { type: 'beskjaer', cardId: card.id } : { type: 'normal' })}
+      onEndre={(u) => endreBilde(card.id, u)}
+      onFjern={() => {
+        settModus({ type: 'normal' });
+        endreCard(card.id, { bilde: undefined });
+      }}
+    />
   );
 }
 
@@ -377,7 +282,7 @@ function Bildevelger({ card }: { card: Card }) {
   );
 }
 
-function Miniatyr({ sti, valgt, onVelg }: { sti: string; valgt: boolean; onVelg(): void }) {
+export function Miniatyr({ sti, valgt, onVelg }: { sti: string; valgt: boolean; onVelg(): void }) {
   const f = useForhandsvisning(sti);
   return (
     <button

@@ -21,6 +21,9 @@ import type {
   Banner,
   Dekor,
   Dekortype,
+  FriBilde,
+  FriElement,
+  FriTekst,
   Georeferanse,
   Osmutsnitt,
   Skilt,
@@ -32,6 +35,7 @@ import type {
 export type Rammeref =
   | { type: 'card'; id: string }
   | { type: 'dekor'; id: string }
+  | { type: 'fri'; id: string }
   | { type: 'banner' }
   | { type: 'kart' };
 
@@ -43,11 +47,12 @@ export type Valg =
   | { type: 'stedsnavn'; id: string }
   | { type: 'banner' }
   | { type: 'dekor'; id: string }
+  | { type: 'fri'; id: string }
   /** To eller flere rammer valgt med Ctrl/Shift + klikk */
   | { type: 'flere'; valgte: Rammeref[] };
 
 export const erRammeref = (v: Valg): v is Rammeref =>
-  v.type === 'card' || v.type === 'dekor' || v.type === 'banner' || v.type === 'kart';
+  v.type === 'card' || v.type === 'dekor' || v.type === 'fri' || v.type === 'banner' || v.type === 'kart';
 
 export const sammeRef = (a: Rammeref, b: Rammeref) =>
   a.type === b.type && ('id' in a ? a.id : '') === ('id' in b ? b.id : '');
@@ -61,6 +66,7 @@ export function rammeTil(sk: Skilt, ref: Rammeref): Rektangel | undefined {
   if (ref.type === 'banner') return sk.banner.ramme;
   if (ref.type === 'kart') return sk.kart.ramme;
   if (ref.type === 'card') return sk.cards.find((c) => c.id === ref.id)?.ramme;
+  if (ref.type === 'fri') return sk.fri.find((f) => f.id === ref.id)?.ramme;
   return sk.dekor.find((d) => d.id === ref.id)?.ramme;
 }
 
@@ -79,6 +85,10 @@ export function medRammer(sk: Skilt, endringer: { ref: Rammeref; ramme: Rektange
       const r = ny({ type: 'dekor', id: d.id });
       return r ? { ...d, ramme: r } : d;
     }),
+    fri: sk.fri.map((f) => {
+      const r = ny({ type: 'fri', id: f.id });
+      return r ? ({ ...f, ramme: r } as FriElement) : f;
+    }),
   };
 }
 export type Modus =
@@ -86,6 +96,7 @@ export type Modus =
   | { type: 'kalibrer'; punkter: Bildepunkt[] }
   | { type: 'plasser-punkt'; cardId: string }
   | { type: 'beskjaer'; cardId: string }
+  | { type: 'beskjaer-fri'; id: string }
   | { type: 'tegn-rute'; ruteId: string }
   | { type: 'plasser-stedsnavn' };
 
@@ -128,6 +139,14 @@ interface Tilstand {
   leggTilDekor(type: Dekortype): string;
   endreDekor(id: string, patch: Partial<Dekor>): void;
   slettDekor(id: string): void;
+  /** Ny tekst midt på skiltet i temaets font. Returnerer id. */
+  leggTilFriTekst(): string;
+  /** Kopierer bildet inn i prosjektmappa og legger det som fritt bilde midt på skiltet. Returnerer id. */
+  leggTilFriBilde(fil: File): Promise<string | undefined>;
+  endreFri(id: string, patch: Partial<FriTekst> | Partial<FriBilde>): void;
+  slettFri(id: string): void;
+  /** Kopierer fila inn i prosjektmappa og bruker den som bilde i det frie bildet */
+  byttFriBilde(id: string, fil: File): Promise<void>;
   /** Trær øverst til venstre, bro øverst til høyre og gress langs bunnen, som i utkastet */
   leggTilUtkastDekor(): void;
   /**
@@ -191,6 +210,8 @@ interface Tilstand {
 
 /** Minste card-størrelse, som når rammer dras (Flyttbar) */
 const MIN_CARD_MM = 20;
+/** Minste størrelse på frie bilder og tekster (en nettadresse er liten) */
+export const MIN_FRI_MM = 5;
 
 /** Lys stein med mørke fuger, synlig mot papirbakgrunnen */
 const STEINFARGE = '#ddd3bf';
@@ -208,6 +229,33 @@ const skalerRamme = (r: Rektangel, sx: number, sy: number): Rektangel => ({
 });
 
 const erBildefil = (fil: File) => fil.type.startsWith('image/');
+
+/** Midt på skiltet, forskjøvet litt for hvert fri element fra før så nye ikke havner oppå hverandre */
+function friRamme(sk: Skilt, b: number, h: number): Rektangel {
+  const u = Math.min(sk.format.bredde_mm, sk.format.hoyde_mm) / 594;
+  const forskyv = (sk.fri.length % 6) * 6 * u;
+  return {
+    x: (sk.format.bredde_mm - b) / 2 + forskyv,
+    y: (sk.format.hoyde_mm - h) / 2 + forskyv,
+    b,
+    h,
+  };
+}
+
+/** Mappe i prosjektet for bilder som legges rett på skiltet (logo o.l.) */
+const FRI_BILDEMAPPE = 'Logo og bilder';
+
+/** Bredde/høyde-forholdet til et bilde. Faller tilbake på 3:2 hvis bildet ikke kan leses. */
+async function bildeaspekt(fil: File): Promise<number> {
+  try {
+    const bitmap = await createImageBitmap(fil);
+    const aspekt = bitmap.width / bitmap.height;
+    bitmap.close();
+    return Number.isFinite(aspekt) && aspekt > 0 ? aspekt : 1.5;
+  } catch {
+    return 1.5;
+  }
+}
 
 export const useSkilt = create<Tilstand>()((set, get) => {
   const endreCards = (fn: (cards: Card[], s: Skilt) => Partial<Skilt>) =>
@@ -271,6 +319,7 @@ export const useSkilt = create<Tilstand>()((set, get) => {
       const beholdModus =
         m.type === 'kalibrer' ||
         (m.type === 'beskjaer' && valg.type === 'card' && valg.id === m.cardId) ||
+        (m.type === 'beskjaer-fri' && valg.type === 'fri' && valg.id === m.id) ||
         (m.type === 'tegn-rute' && valg.type === 'rute' && valg.id === m.ruteId);
       if (!beholdModus) get().avsluttTegning();
       set({ valg, modus: beholdModus ? m : { type: 'normal' } });
@@ -300,9 +349,15 @@ export const useSkilt = create<Tilstand>()((set, get) => {
       const { valg, modus } = get();
       if (modus.type !== 'normal') return false;
       if (valg.type === 'flere') {
-        // Banner og kart kan ikke slettes, bare cards og dekor
-        const slettes = valg.valgte.filter((r) => r.type === 'card' || r.type === 'dekor');
-        for (const r of slettes) r.type === 'card' ? get().slettCard(r.id) : get().slettDekor(r.id);
+        // Banner og kart kan ikke slettes, bare cards, dekor og frie elementer
+        const slettes = valg.valgte.filter(
+          (r) => r.type === 'card' || r.type === 'dekor' || r.type === 'fri',
+        );
+        for (const r of slettes) {
+          if (r.type === 'card') get().slettCard(r.id);
+          else if (r.type === 'dekor') get().slettDekor(r.id);
+          else if (r.type === 'fri') get().slettFri(r.id);
+        }
         if (slettes.length) set({ valg: { type: 'skilt' } });
         return slettes.length > 0;
       }
@@ -310,6 +365,7 @@ export const useSkilt = create<Tilstand>()((set, get) => {
       else if (valg.type === 'rute') get().slettRute(valg.id);
       else if (valg.type === 'stedsnavn') get().slettStedsnavn(valg.id);
       else if (valg.type === 'dekor') get().slettDekor(valg.id);
+      else if (valg.type === 'fri') get().slettFri(valg.id);
       else return false;
       return true;
     },
@@ -378,13 +434,13 @@ export const useSkilt = create<Tilstand>()((set, get) => {
         }
         return true;
       }
-      const ny = (r: Rektangel) =>
-        pilRamme(r, retning, handling, { rute: festTilRutenett ? RUTENETT_MM : undefined, min: MIN_CARD_MM });
+      const ny = (r: Rektangel, min = MIN_CARD_MM) =>
+        pilRamme(r, retning, handling, { rute: festTilRutenett ? RUTENETT_MM : undefined, min });
       if (valg.type === 'flere') {
         get().settRammer(
           valg.valgte.flatMap((ref) => {
             const r = rammeTil(sk, ref);
-            return r ? [{ ref, ramme: ny(r) }] : [];
+            return r ? [{ ref, ramme: ny(r, ref.type === 'fri' ? MIN_FRI_MM : MIN_CARD_MM) }] : [];
           }),
         );
         return true;
@@ -397,6 +453,10 @@ export const useSkilt = create<Tilstand>()((set, get) => {
         const dekor = sk.dekor.find((d) => d.id === valg.id);
         if (!dekor) return false;
         get().endreDekor(dekor.id, { ramme: ny(dekor.ramme) });
+      } else if (valg.type === 'fri') {
+        const fri = sk.fri.find((f) => f.id === valg.id);
+        if (!fri) return false;
+        get().endreFri(fri.id, { ramme: ny(fri.ramme, MIN_FRI_MM) });
       } else if (valg.type === 'banner') get().endreBanner({ ramme: ny(sk.banner.ramme) });
       else if (valg.type === 'kart') get().endreKart({ ramme: ny(sk.kart.ramme) });
       else return false;
@@ -417,6 +477,7 @@ export const useSkilt = create<Tilstand>()((set, get) => {
             kart: { ...t.skilt.kart, ramme: skalerRamme(t.skilt.kart.ramme, sx, sy) },
             banner: { ...t.skilt.banner, ramme: skalerRamme(t.skilt.banner.ramme, sx, sy) },
             dekor: t.skilt.dekor.map((d) => ({ ...d, ramme: skalerRamme(d.ramme, sx, sy) })),
+            fri: t.skilt.fri.map((f) => ({ ...f, ramme: skalerRamme(f.ramme, sx, sy) }) as FriElement),
             cards: t.skilt.cards.map((c) => ({ ...c, ramme: skalerRamme(c.ramme, sx, sy) })),
           },
         };
@@ -601,6 +662,73 @@ export const useSkilt = create<Tilstand>()((set, get) => {
       get().endreSkilt((sk) => ({ ...sk, dekor: sk.dekor.filter((d) => d.id !== id) }));
       const v = get().valg;
       if (v.type === 'dekor' && v.id === id) set({ valg: { type: 'skilt' } });
+    },
+    leggTilFriTekst: () => {
+      const id = nyId('fri');
+      const sk = get().skilt;
+      if (!sk) return id;
+      const u = Math.min(sk.format.bredde_mm, sk.format.hoyde_mm) / 594;
+      const storrelse = 8 * u;
+      const b = 120 * u;
+      const h = storrelse * 2;
+      const tekst: FriTekst = {
+        id,
+        type: 'tekst',
+        ramme: friRamme(sk, b, h),
+        tekst: 'www.eksempel.no',
+        font: sk.tema.font,
+        storrelse,
+        fet: false,
+        kursiv: false,
+        farge: '#1f2a24',
+        justering: 'midt',
+      };
+      get().endreSkilt((s2) => ({ ...s2, fri: [...s2.fri, tekst] }));
+      set({ valg: { type: 'fri', id }, modus: { type: 'normal' } });
+      return id;
+    },
+    leggTilFriBilde: async (fil) => {
+      const { mappe, skilt } = get();
+      if (!mappe || !skilt || !erBildefil(fil)) return undefined;
+      const sti = ledigSti(mappe.filer, FRI_BILDEMAPPE, fil.name);
+      set({ mappe: await leggTilFil(mappe, sti, fil) });
+      const sk = get().skilt;
+      if (!sk) return undefined;
+      const aspekt = await bildeaspekt(fil);
+      const u = Math.min(sk.format.bredde_mm, sk.format.hoyde_mm) / 594;
+      // Størrelse etter bildets sideforhold, så hele bildet vises til å begynne med
+      const lengste = 80 * u;
+      const b = aspekt >= 1 ? lengste : lengste * aspekt;
+      const h = aspekt >= 1 ? lengste / aspekt : lengste;
+      const id = nyId('fri');
+      const element: FriBilde = {
+        id,
+        type: 'bilde',
+        ramme: friRamme(sk, b, h),
+        bilde: nyttUtsnitt(sti),
+      };
+      get().endreSkilt((s2) => ({ ...s2, fri: [...s2.fri, element] }));
+      set({ valg: { type: 'fri', id }, modus: { type: 'normal' } });
+      return id;
+    },
+    endreFri: (id, patch) =>
+      get().endreSkilt((sk) => ({
+        ...sk,
+        fri: sk.fri.map((f) => (f.id === id ? ({ ...f, ...patch } as FriElement) : f)),
+      })),
+    slettFri: (id) => {
+      get().endreSkilt((sk) => ({ ...sk, fri: sk.fri.filter((f) => f.id !== id) }));
+      const { valg, modus } = get();
+      if (valg.type === 'fri' && valg.id === id) set({ valg: { type: 'skilt' } });
+      if (modus.type === 'beskjaer-fri' && modus.id === id) set({ modus: { type: 'normal' } });
+    },
+    byttFriBilde: async (id, fil) => {
+      const { mappe, skilt } = get();
+      const element = skilt?.fri.find((f) => f.id === id);
+      if (!mappe || element?.type !== 'bilde' || !erBildefil(fil)) return;
+      const sti = ledigSti(mappe.filer, FRI_BILDEMAPPE, fil.name);
+      set({ mappe: await leggTilFil(mappe, sti, fil) });
+      get().endreFri(id, { bilde: { ...nyttUtsnitt(sti), kreditering: element.bilde?.kreditering } });
     },
     leggTilUtkastDekor: () =>
       get().endreSkilt((sk) => {
