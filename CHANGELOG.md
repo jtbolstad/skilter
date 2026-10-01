@@ -12,6 +12,9 @@ og versjonsnumrene følger [semantisk versjonering](https://semver.org/lang/no/)
   Teksten får egen font, størrelse, fet/kursiv, farge og justering. De kan legges foran eller bak
   banner, kart og cards, flyttes, rettes inn sammen med andre rammer og slettes med Delete.
 
+- **Trykkmerker i PDF**: beskjæringsmerker, midtmerker og 3 mm utfall på en side som er 20 mm større enn
+  skiltet. Slås på i eksportdialogen.
+
 ### Endret
 
 - Laglista har egne grupper som kan åpnes og lukkes for **Cards** (med «+ Nytt card») og **Tekst og bilder**

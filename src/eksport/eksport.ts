@@ -17,7 +17,81 @@ export function eksportmal(skilt: Skilt, dpi: number): Eksportmal {
   return { bredde_px, hoyde_px, megapiksler: (bredde_px * hoyde_px) / 1e6 };
 }
 
-export function filnavn(skilt: Skilt, dpi: number, endelse: 'png' | 'pdf', utkast = false): string {
+/** Utfall: bakgrunnen fortsetter så langt utenfor beskjæringen, så en liten forskyvning i kutt ikke gir hvit kant */
+export const UTFALL_MM = 3;
+/** Papir utenfor utfallet til beskjæringsmerker og tekstlinje */
+export const SLUGG_MM = 10;
+const MERKE_LENGDE_MM = 5;
+
+export interface Merkelinje {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+}
+
+export interface Trykkside {
+  /** Papirstørrelsen i mm: skiltet pluss sluggen på alle sider */
+  bredde: number;
+  hoyde: number;
+  /** Skiltets øvre venstre hjørne på papiret, i mm */
+  skilt: { x: number; y: number };
+  /** Beskjæringsmerker i hjørnene og midtmerker midt på hver side, i papirets mm */
+  linjer: Merkelinje[];
+}
+
+/**
+ * Siden til trykk med beskjæringsmerker. Merkene starter `utfall` fra beskjæringskanten, så de
+ * ikke trykkes i utfallet, og er `MERKE_LENGDE_MM` lange.
+ */
+export function trykkside(bredde: number, hoyde: number, utfall = UTFALL_MM, slugg = SLUGG_MM): Trykkside {
+  const x0 = slugg;
+  const y0 = slugg;
+  const x1 = slugg + bredde;
+  const y1 = slugg + hoyde;
+  const fra = utfall;
+  const til = utfall + MERKE_LENGDE_MM;
+  const linjer: Merkelinje[] = [];
+  // Hjørner: en vannrett og en loddrett strek utenfor hvert hjørne
+  for (const [x, y, sx, sy] of [
+    [x0, y0, -1, -1],
+    [x1, y0, 1, -1],
+    [x0, y1, -1, 1],
+    [x1, y1, 1, 1],
+  ] as const) {
+    linjer.push({ x1: x + sx * fra, y1: y, x2: x + sx * til, y2: y });
+    linjer.push({ x1: x, y1: y + sy * fra, x2: x, y2: y + sy * til });
+  }
+  // Midtmerker: peker mot midten av hver side
+  const mx = x0 + bredde / 2;
+  const my = y0 + hoyde / 2;
+  linjer.push({ x1: mx, y1: y0 - fra, x2: mx, y2: y0 - til });
+  linjer.push({ x1: mx, y1: y1 + fra, x2: mx, y2: y1 + til });
+  linjer.push({ x1: x0 - fra, y1: my, x2: x0 - til, y2: my });
+  linjer.push({ x1: x1 + fra, y1: my, x2: x1 + til, y2: my });
+  return {
+    bredde: bredde + 2 * slugg,
+    hoyde: hoyde + 2 * slugg,
+    skilt: { x: x0, y: y0 },
+    linjer,
+  };
+}
+
+/** Lokal dato og klokkeslett som «2026-10-01-1432», så filer fra ulike eksporter får ulike navn. */
+export function tidsstempel(d: Date): string {
+  const to = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${to(d.getMonth() + 1)}-${to(d.getDate())}-${to(d.getHours())}${to(d.getMinutes())}`;
+}
+
+/** @param tidspunkt legges bakerst i filnavnet når det er oppgitt (brukes for PDF) */
+export function filnavn(
+  skilt: Skilt,
+  dpi: number,
+  endelse: 'png' | 'pdf',
+  utkast = false,
+  merker = false,
+  tidspunkt?: Date,
+): string {
   const navn =
     (skilt.banner.tittel || skilt.navn)
       .toLowerCase()
@@ -28,7 +102,7 @@ export function filnavn(skilt: Skilt, dpi: number, endelse: 'png' | 'pdf', utkas
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-|-$/g, '') || 'skilt';
   const { bredde_mm: b, hoyde_mm: h } = skilt.format;
-  return `${navn}-${Math.round(b)}x${Math.round(h)}mm${endelse === 'png' ? `-${dpi}dpi` : ''}${utkast ? '-utkast' : ''}.${endelse}`;
+  return `${navn}-${Math.round(b)}x${Math.round(h)}mm${endelse === 'png' ? `-${dpi}dpi` : ''}${merker ? '-trykkmerker' : ''}${utkast ? '-utkast' : ''}${tidspunkt ? `-${tidsstempel(tidspunkt)}` : ''}.${endelse}`;
 }
 
 /** Venter til alle bilder i elementet er lastet og dekodet. */

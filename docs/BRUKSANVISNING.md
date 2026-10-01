@@ -336,9 +336,15 @@ Trykk **⬇ Eksporter**.
 3. **Utkast (valgfritt):** huk av **Merk som utkast** for å legge et halvgjennomsiktig «UTKAST» på skrå
    over hele skiltet, i både PDF og PNG. Filnavnet får «-utkast» på slutten. Valget gjelder bare den
    ene eksporten, så husk å ta det av når du eksporterer den endelige fila.
-4. **Velg format:**
+4. **Trykkmerker (valgfritt, bare PDF):** huk av **Trykkmerker i PDF** for å få beskjæringsmerker i
+   hjørnene, midtmerker midt på hver side og 3 mm utfall (bakgrunnsfargen fortsetter utenfor skiltet).
+   Under skiltet står en liten tekstlinje med tittel, format og dato. Siden blir 20 mm større enn
+   skiltet (10 mm slugg på hver side), og filnavnet får «-trykkmerker». Merkene er svarte linjer –
+   ikke registreringsfarge, siden PDF-en lages i RGB.
+5. **Velg format:**
    - **📄 PDF (anbefalt for trykk):** utskriftsvinduet åpnes. Velg **Lagre som PDF** som skriver og
-     trykk **Lagre**. Sidestørrelsen settes automatisk til skiltets størrelse uten marger. Tekst og
+     trykk **Lagre**. Filnavnet foreslås med dato og klokkeslett bakerst (f.eks.
+     `…-841x594mm-2026-10-01-1432.pdf`), så eksportene ikke overskriver hverandre. Sidestørrelsen settes automatisk til skiltets størrelse uten marger. Tekst og
      streker blir skarpe i alle størrelser.
    - **🖼️ PNG:** bildet lagres i mappa `eksport/` i prosjektmappa. PNG er sperret for A0 i 300 DPI
      fordi bildet blir for stort for nettleseren; bruk PDF der.
@@ -347,8 +353,9 @@ Trykk **⬇ Eksporter**.
 
 Håndtak, markeringer og varsler som «Tekst kuttet» kommer ikke med i eksporten.
 
-> **Tips til trykkeriet:** Send PDF-en. Oppgi format (f.eks. A1, 841 × 594 mm) og at fila er uten
-> skjæremerker og utfallende bakgrunn.
+> **Tips til trykkeriet:** Send PDF-en. Oppgi format (f.eks. A1, 841 × 594 mm). Uten **Trykkmerker i
+> PDF** er fila uten skjæremerker og utfallende bakgrunn. Med merker er trimformatet fortsatt
+> skiltets størrelse, og utfallet er 3 mm.
 
 ## 14. Tastatursnarveier
 
