@@ -86,10 +86,11 @@ test('tittelen kan stå over, under eller oppå bildet', async ({ page }) => {
   // Oppå bildet: i øvre venstre hjørne, og bildet blir ikke mindre av det
   await gruppe.getByRole('button', { name: 'På bildet' }).click();
   const pa = await boks();
-  expect(pa.tittel.x).toBeCloseTo(pa.bilde.x, 0);
-  expect(pa.tittel.y).toBeCloseTo(pa.bilde.y, 0);
+  // Tittelen stikker 1 px utenfor hjørnet, så det ikke blir en tynn skjøt mot bildet
+  expect(Math.abs(pa.tittel.x - pa.bilde.x)).toBeLessThanOrEqual(1.5);
+  expect(Math.abs(pa.tittel.y - pa.bilde.y)).toBeLessThanOrEqual(1.5);
   expect(pa.bilde.height).toBeGreaterThanOrEqual(under.bilde.height - 1);
-  await expect(bildeboks.getByTestId('cardtittel')).toHaveText(
+  await expect(bildeboks.locator('..').getByTestId('cardtittel')).toHaveText(
     await card.getByTestId('cardtittel').innerText(),
   );
 

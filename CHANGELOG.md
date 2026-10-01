@@ -5,6 +5,10 @@ og versjonsnumrene følger [semantisk versjonering](https://semver.org/lang/no/)
 
 ## [Ikke utgitt]
 
+### Rettet
+
+- Tittel «på bildet» har ikke lenger en tynn strek rundt seg.
+
 ## [0.4.0] – 2026-10-01
 
 ### Lagt til

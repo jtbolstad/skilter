@@ -70,49 +70,53 @@ export function CardVisning({ card }: { card: Card }) {
 
   const bilde =
     !card.bilde && eksport ? null : (
+      // Tittelen på bildet ligger utenfor den klippede bildeflaten. Ligger den inni, blør bildets
+      // kantutjevning gjennom tittelbakgrunnen og gir en tynn strek rundt tittelen.
       <div
-        data-testid="cardbilde"
-        className={`relative shrink-0 self-center ${beskjaerer ? 'z-10' : 'overflow-hidden'}`}
-        style={{
-          width: px(bildeRamme.b),
-          height: px(bildeRamme.h),
-          borderRadius: avrundet && !beskjaerer ? px(m.radius) : undefined,
-        }}
-        onDoubleClick={(e) => {
-          e.stopPropagation();
-          if (card.bilde) settModus(beskjaerer ? { type: 'normal' } : { type: 'beskjaer', cardId: card.id });
-        }}
+        className="relative shrink-0 self-center"
+        style={{ width: px(bildeRamme.b), height: px(bildeRamme.h) }}
       >
-        {card.bilde ? (
-          <Bildevisning
-            utsnitt={card.bilde}
-            ramme={bildeRamme}
-            interaktiv={beskjaerer}
-            visUtenfor={beskjaerer}
-            onEndre={(u) => endreBilde(card.id, u)}
-          />
-        ) : (
-          <div
-            data-kun-editor
-            className="grid size-full place-items-center border-2 border-dashed border-stone-300 text-center text-stone-400"
-            style={{ fontSize: px(m.tekst), borderRadius: avrundet ? px(m.radius) : undefined }}
-          >
-            Dra et bilde hit
-          </div>
-        )}
+        <div
+          data-testid="cardbilde"
+          className={`relative size-full ${beskjaerer ? 'z-10' : 'overflow-hidden'}`}
+          style={{ borderRadius: avrundet && !beskjaerer ? px(m.radius) : undefined }}
+          onDoubleClick={(e) => {
+            e.stopPropagation();
+            if (card.bilde)
+              settModus(beskjaerer ? { type: 'normal' } : { type: 'beskjaer', cardId: card.id });
+          }}
+        >
+          {card.bilde ? (
+            <Bildevisning
+              utsnitt={card.bilde}
+              ramme={bildeRamme}
+              interaktiv={beskjaerer}
+              visUtenfor={beskjaerer}
+              onEndre={(u) => endreBilde(card.id, u)}
+            />
+          ) : (
+            <div
+              data-kun-editor
+              className="grid size-full place-items-center border-2 border-dashed border-stone-300 text-center text-stone-400"
+              style={{ fontSize: px(m.tekst), borderRadius: avrundet ? px(m.radius) : undefined }}
+            >
+              Dra et bilde hit
+            </div>
+          )}
+          {card.bilde?.kreditering && (
+            <span
+              className="pointer-events-none absolute right-0 bottom-0 text-white italic"
+              style={{
+                fontSize: px(m.tekst * 0.55),
+                padding: `0 ${px(m.pad * 0.3)}px`,
+                textShadow: '0 0 3px rgb(0 0 0 / .8)',
+              }}
+            >
+              {card.bilde.kreditering}
+            </span>
+          )}
+        </div>
         {plass === 'pa-bilde' && <Tittel card={card} paBilde />}
-        {card.bilde?.kreditering && (
-          <span
-            className="pointer-events-none absolute right-0 bottom-0 text-white italic"
-            style={{
-              fontSize: px(m.tekst * 0.55),
-              padding: `0 ${px(m.pad * 0.3)}px`,
-              textShadow: '0 0 3px rgb(0 0 0 / .8)',
-            }}
-          >
-            {card.bilde.kreditering}
-          </span>
-        )}
       </div>
     );
 
@@ -191,12 +195,15 @@ function Tittel({ card, paBilde = false }: { card: Card; paBilde?: boolean }) {
   return (
     <h2
       data-testid="cardtittel"
-      className={`shrink-0 leading-tight font-bold ${paBilde ? 'absolute top-0 left-0 max-w-[85%] bg-[#fbf8f1]' : ''}`}
+      className={`shrink-0 leading-tight font-bold ${paBilde ? 'absolute z-20 max-w-[85%] bg-[#fbf8f1]' : ''}`}
       style={{
         fontSize: m.tittel * skala,
         fontFamily: 'var(--tittelfont)',
         ...(paBilde && {
-          padding: `0 ${m.gap * 1.5 * skala}px ${m.gap * 0.6 * skala}px 0`,
+          // Én piksel utenfor hjørnet (over cardets egen bakgrunn) skjuler skjøten mot bildet
+          top: -1,
+          left: -1,
+          padding: `1px ${m.gap * 1.5 * skala}px ${m.gap * 0.6 * skala}px 1px`,
           borderBottomRightRadius: avrundet ? m.radius * skala : 0,
         }),
       }}
