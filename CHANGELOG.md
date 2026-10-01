@@ -5,6 +5,8 @@ og versjonsnumrene følger [semantisk versjonering](https://semver.org/lang/no/)
 
 ## [Ikke utgitt]
 
+## [0.4.1] – 2026-10-01
+
 ### Rettet
 
 - Tittel «på bildet» har ikke lenger en tynn strek rundt seg.
@@ -101,7 +103,8 @@ Første utgivelse, med Windows-installer.
 - Eksport til PDF (vektortekst, innebygde fonter) og PNG i 150 eller 300 DPI.
 - Skrivebordsapp for Windows (Tauri).
 
-[Ikke utgitt]: https://github.com/jtbolstad/skilter/compare/v0.4.0...HEAD
+[Ikke utgitt]: https://github.com/jtbolstad/skilter/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/jtbolstad/skilter/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/jtbolstad/skilter/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/jtbolstad/skilter/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/jtbolstad/skilter/compare/v0.1.0...v0.2.0
