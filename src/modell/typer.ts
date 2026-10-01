@@ -185,6 +185,37 @@ export interface Dekor {
   foran?: boolean;
 }
 
+/** Fritt plassert bilde (logo o.l.) med samme skalering og beskjæring som bildene i cards. */
+export interface FriBilde {
+  id: string;
+  type: 'bilde';
+  ramme: Rektangel;
+  bilde?: Bildeutsnitt;
+  /** Foran banner, kart og cards. Mangler = foran. */
+  bak?: boolean;
+}
+
+export type Tekstjustering = 'venstre' | 'midt' | 'hoyre';
+
+/** Fri tekst (nettadresse, bildetekst o.l.) med egen font og størrelse. */
+export interface FriTekst {
+  id: string;
+  type: 'tekst';
+  ramme: Rektangel;
+  /** Enkel markering: *kursiv* og **fet**. Tom linje skiller avsnitt. */
+  tekst: string;
+  font: Fontnavn;
+  /** Skriftstørrelse i mm på skiltet */
+  storrelse: number;
+  fet: boolean;
+  kursiv: boolean;
+  farge: string;
+  justering: Tekstjustering;
+  bak?: boolean;
+}
+
+export type FriElement = FriBilde | FriTekst;
+
 export interface Tema {
   bakgrunn: string;
   font: Fontnavn;
@@ -206,6 +237,8 @@ export interface Skilt {
   tema: Tema;
   banner: Banner;
   dekor: Dekor[];
+  /** Frie bilder og tekster */
+  fri: FriElement[];
   forfatter?: string;
   kart: Kart;
   punkter: Kartpunkt[];

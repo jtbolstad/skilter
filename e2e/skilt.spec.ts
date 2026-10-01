@@ -103,6 +103,7 @@ test('legger til bilde for card uten bildemappe', async ({ page }) => {
   const png = Buffer.from(dataUrl.split(',')[1]!, 'base64');
   await page
     .locator('input[type=file]')
+    .last()
     .setInputFiles({ name: 'sti.png', mimeType: 'image/png', buffer: png });
   await expect(page.getByTestId('card-5').getByTestId('cardbilde').locator('img').first()).toBeVisible();
   await expect(page.getByTitle('5 Bålplassen/sti.png')).toBeVisible();

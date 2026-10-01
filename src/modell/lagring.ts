@@ -1,5 +1,5 @@
 import { lagOppsett, STANDARD_TEMA, standardBanner } from './oppsett';
-import type { Banner, Card, Dekor, Kart, Skilt, Tema } from './typer';
+import type { Banner, Card, Dekor, FriElement, Kart, Skilt, Tema } from './typer';
 
 export const PROSJEKTFIL = 'skilt.json';
 export const VERSJON = 1;
@@ -40,6 +40,7 @@ export function lesSkilt(tekst: string): Skilt {
       ...s.banner,
     } as Banner,
     dekor: (s.dekor ?? []) as Dekor[],
+    fri: (s.fri ?? []) as FriElement[],
     forfatter: s.forfatter,
     kart: {
       visMalestokk: true,

@@ -22,6 +22,12 @@
 - [x] Vis dekorlag i en gruppe i sidemenyen
 - [x] Nedlastbar app (Tauri, `pnpm app:build`)
 
+## Frie elementer
+
+- [x] Legge til bilder (logo) som kan skaleres og beskjæres som i cards
+- [x] Legge til tekstfelt (nettadresse) med valg av font og størrelse
+- [x] Lucide-ikoner på justeringsknappene
+
 ## Cards
 
 - [x] Skriften endres ikke når cardet endrer størrelse (skalerer med skiltformatet)

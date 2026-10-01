@@ -5,6 +5,25 @@ og versjonsnumrene følger [semantisk versjonering](https://semver.org/lang/no/)
 
 ## [Ikke utgitt]
 
+## [0.4.0] – 2026-10-01
+
+### Lagt til
+
+- **Frie bilder og tekster**: «+ Tekst» og «+ Bilde (logo)…» nederst i laglista legger en logo eller en
+  nettadresse rett på skiltet. Bildene skaleres, beskjæres, roteres og speilvendes som bildene i cards.
+  Teksten får egen font, størrelse, fet/kursiv, farge og justering. De kan legges foran eller bak
+  banner, kart og cards, flyttes, rettes inn sammen med andre rammer og slettes med Delete.
+
+- **Trykkmerker i PDF**: beskjæringsmerker, midtmerker og 3 mm utfall på en side som er 20 mm større enn
+  skiltet. Slås på i eksportdialogen.
+
+### Endret
+
+- Laglista har egne grupper som kan åpnes og lukkes for **Cards** (med «+ Nytt card») og **Tekst og bilder**
+  (med «+ Tekst» og «+ Bilde (logo)…»).
+- Justeringsknappene i flervalg (samme størrelse, rett inn, lik avstand) har nå Lucide-ikoner i stedet
+  for tegn i teksten. Navnet står i tooltip og som tilgjengelig navn.
+
 ## [0.3.0] – 2026-09-29
 
 ### Lagt til
@@ -78,7 +97,8 @@ Første utgivelse, med Windows-installer.
 - Eksport til PDF (vektortekst, innebygde fonter) og PNG i 150 eller 300 DPI.
 - Skrivebordsapp for Windows (Tauri).
 
-[Ikke utgitt]: https://github.com/jtbolstad/skilter/compare/v0.3.0...HEAD
+[Ikke utgitt]: https://github.com/jtbolstad/skilter/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/jtbolstad/skilter/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/jtbolstad/skilter/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/jtbolstad/skilter/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/jtbolstad/skilter/releases/tag/v0.1.0

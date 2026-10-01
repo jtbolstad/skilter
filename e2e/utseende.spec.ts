@@ -29,11 +29,14 @@ async function lagPng(page: Page, b: number, h: number): Promise<Buffer> {
 test('stående bilde kan legges til høyre og venstre i cardet', async ({ page }) => {
   await apneDemo(page);
   await liste(page).getByRole('button', { name: '5. Bålplassen' }).click();
-  await page.locator('input[type=file]').setInputFiles({
-    name: 'staende.png',
-    mimeType: 'image/png',
-    buffer: await lagPng(page, 300, 400),
-  });
+  await page
+    .locator('input[type=file]')
+    .last()
+    .setInputFiles({
+      name: 'staende.png',
+      mimeType: 'image/png',
+      buffer: await lagPng(page, 300, 400),
+    });
   await expect(page.getByText('Bildet er stående')).toBeVisible();
   await page.getByRole('button', { name: '◨ Til høyre' }).click();
 
@@ -158,11 +161,14 @@ test('skjermbilde av utseendet', async ({ page }) => {
   await liste(page).getByRole('button', { name: '🏷️ Banner' }).click();
   await page.getByLabel('Undertittel (steder, skilt med komma)').fill('Hauketo, Prinsdal');
   await liste(page).getByRole('button', { name: '5. Bålplassen' }).click();
-  await page.locator('input[type=file]').setInputFiles({
-    name: 'staende.png',
-    mimeType: 'image/png',
-    buffer: await lagPng(page, 300, 420),
-  });
+  await page
+    .locator('input[type=file]')
+    .last()
+    .setInputFiles({
+      name: 'staende.png',
+      mimeType: 'image/png',
+      buffer: await lagPng(page, 300, 420),
+    });
   await page.getByRole('button', { name: '◨ Til høyre' }).click();
   await liste(page).getByRole('button', { name: '4. Varden' }).click();
   await page.getByRole('button', { name: '◧ Venstre' }).click();

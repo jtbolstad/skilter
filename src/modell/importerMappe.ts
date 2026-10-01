@@ -71,6 +71,7 @@ export async function importerMappe(mappe: Prosjektmappe): Promise<Skilt> {
     tema: { ...STANDARD_TEMA },
     banner: standardBanner(oppsett.banner, tekst?.tittel || mappe.navn),
     dekor: [],
+    fri: [],
     forfatter: tekst?.forfatter,
     kart: {
       ramme: oppsett.kart,

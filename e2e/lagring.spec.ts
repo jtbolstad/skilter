@@ -74,6 +74,7 @@ test('PDF får én side i skiltets størrelse', async ({ page }) => {
   await page.addInitScript(() => {
     window.print = () => {
       (window as unknown as { skrevetUt: boolean }).skrevetUt = true;
+      (window as unknown as { utskriftsnavn: string }).utskriftsnavn = document.title;
     };
   });
   await apneDemo(page);
@@ -82,6 +83,9 @@ test('PDF får én side i skiltets størrelse', async ({ page }) => {
   await page.waitForFunction(() => (window as unknown as { skrevetUt?: boolean }).skrevetUt, null, {
     timeout: 60_000,
   });
+  // Filnavnet (dokumenttittelen under utskrift) slutter på dato og klokkeslett
+  const navn = await page.evaluate(() => (window as unknown as { utskriftsnavn: string }).utskriftsnavn);
+  expect(navn).toMatch(/-841x594mm-\d{4}-\d{2}-\d{2}-\d{4}$/);
   await page.emulateMedia({ media: 'print' });
   const pdf = await page.pdf({ preferCSSPageSize: true, printBackground: true });
   const tekst = pdf.toString('latin1');
@@ -94,6 +98,35 @@ test('PDF får én side i skiltets størrelse', async ({ page }) => {
   expect(Number(b)).toBeCloseTo((841 / 25.4) * 72, 0);
   expect(Number(h)).toBeCloseTo((594 / 25.4) * 72, 0);
   if (process.env.SKJERMBILDER) writeFileSync(`${process.env.SKJERMBILDER}/eksport.pdf`, pdf);
+
+  await page.evaluate(() => window.dispatchEvent(new Event('afterprint')));
+  await expect(page.getByTestId('eksportstatus')).toContainText('Ferdig');
+});
+
+test('PDF med trykkmerker er større enn skiltet og har fortsatt én side', async ({ page }) => {
+  test.setTimeout(120_000);
+  await page.addInitScript(() => {
+    window.print = () => {
+      (window as unknown as { skrevetUt: boolean }).skrevetUt = true;
+    };
+  });
+  await apneDemo(page);
+  await page.getByRole('button', { name: '⬇ Eksporter' }).click();
+  await page.getByLabel(/Trykkmerker i PDF/).check();
+  await page.getByRole('button', { name: /PDF/ }).click();
+  await page.waitForFunction(() => (window as unknown as { skrevetUt?: boolean }).skrevetUt, null, {
+    timeout: 60_000,
+  });
+  await expect(page.locator('[data-trykkmerker] line')).toHaveCount(12);
+  await page.emulateMedia({ media: 'print' });
+  const pdf = await page.pdf({ preferCSSPageSize: true, printBackground: true });
+  const tekst = pdf.toString('latin1');
+  expect(tekst.match(/\/Type\s*\/Page\b/g)).toHaveLength(1);
+  const [, b, h] = /\/MediaBox\s*\[\s*0 0 ([\d.]+) ([\d.]+)\s*\]/.exec(tekst)!;
+  // 861 × 614 mm: skiltet pluss 10 mm slugg på hver side
+  expect(Number(b)).toBeCloseTo((861 / 25.4) * 72, 0);
+  expect(Number(h)).toBeCloseTo((614 / 25.4) * 72, 0);
+  if (process.env.SKJERMBILDER) writeFileSync(`${process.env.SKJERMBILDER}/eksport-trykkmerker.pdf`, pdf);
 
   await page.evaluate(() => window.dispatchEvent(new Event('afterprint')));
   await expect(page.getByTestId('eksportstatus')).toContainText('Ferdig');

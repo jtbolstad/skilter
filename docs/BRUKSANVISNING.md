@@ -136,12 +136,22 @@ på skiltet eller i laglista. **Ctrl + A** velger alle kortene. Panelet viser da
 - **Lik avstand:** like mellomrom loddrett eller vannrett (minst tre valgt). Det første og siste står i
   ro.
 
-Dra i ett av de valgte eller bruk piltastene for å flytte alle, og **Delete** sletter valgte kort og
-dekor. Hver justering er ett angresteg.
+Knappene har ikoner; hold musa over en knapp for å se hva den gjør. Dra i ett av de valgte eller bruk
+piltastene for å flytte alle, og **Delete** sletter valgte kort, dekor, tekster og bilder. Hver justering er ett angresteg.
 
 Har du endret tekstfila etter at du startet? Velg **🪧 Skilt**, velg fil og format (vanligvis
 **Automatisk**) og trykk **↻ Les inn tekst på nytt**. Titler og tekster oppdateres, mens oppsett og
 bilder beholdes.
+
+**Egen tekst og eget bilde (logo, nettadresse):** nederst i laglista legger **+ Tekst** en tekstboks
+midt på skiltet, og **+ Bilde (logo)…** legger inn en bildefil (kopiert til mappa «Logo og bilder» i
+prosjektet). Begge flyttes og skaleres med hjørnene.
+
+- **Bilde:** zoom, beskjær (dobbeltklikk), roter og speilvend som i et kort.
+- **Tekst:** skriv teksten i panelet (`*kursiv*` og `**fet**` virker). Velg font, størrelse, fet/kursiv,
+  farge og justering.
+- **Legg bak / Legg foran** flytter elementet bak eller foran banner, kart og kort.
+- Elementene kan velges sammen med andre og rettes inn med justeringsknappene.
 
 ## 5. Bilder: bytte, beskjære og justere
 
@@ -326,9 +336,15 @@ Trykk **⬇ Eksporter**.
 3. **Utkast (valgfritt):** huk av **Merk som utkast** for å legge et halvgjennomsiktig «UTKAST» på skrå
    over hele skiltet, i både PDF og PNG. Filnavnet får «-utkast» på slutten. Valget gjelder bare den
    ene eksporten, så husk å ta det av når du eksporterer den endelige fila.
-4. **Velg format:**
+4. **Trykkmerker (valgfritt, bare PDF):** huk av **Trykkmerker i PDF** for å få beskjæringsmerker i
+   hjørnene, midtmerker midt på hver side og 3 mm utfall (bakgrunnsfargen fortsetter utenfor skiltet).
+   Under skiltet står en liten tekstlinje med tittel, format og dato. Siden blir 20 mm større enn
+   skiltet (10 mm slugg på hver side), og filnavnet får «-trykkmerker». Merkene er svarte linjer –
+   ikke registreringsfarge, siden PDF-en lages i RGB.
+5. **Velg format:**
    - **📄 PDF (anbefalt for trykk):** utskriftsvinduet åpnes. Velg **Lagre som PDF** som skriver og
-     trykk **Lagre**. Sidestørrelsen settes automatisk til skiltets størrelse uten marger. Tekst og
+     trykk **Lagre**. Filnavnet foreslås med dato og klokkeslett bakerst (f.eks.
+     `…-841x594mm-2026-10-01-1432.pdf`), så eksportene ikke overskriver hverandre. Sidestørrelsen settes automatisk til skiltets størrelse uten marger. Tekst og
      streker blir skarpe i alle størrelser.
    - **🖼️ PNG:** bildet lagres i mappa `eksport/` i prosjektmappa. PNG er sperret for A0 i 300 DPI
      fordi bildet blir for stort for nettleseren; bruk PDF der.
@@ -337,8 +353,9 @@ Trykk **⬇ Eksporter**.
 
 Håndtak, markeringer og varsler som «Tekst kuttet» kommer ikke med i eksporten.
 
-> **Tips til trykkeriet:** Send PDF-en. Oppgi format (f.eks. A1, 841 × 594 mm) og at fila er uten
-> skjæremerker og utfallende bakgrunn.
+> **Tips til trykkeriet:** Send PDF-en. Oppgi format (f.eks. A1, 841 × 594 mm). Uten **Trykkmerker i
+> PDF** er fila uten skjæremerker og utfallende bakgrunn. Med merker er trimformatet fortsatt
+> skiltets størrelse, og utfallet er 3 mm.
 
 ## 14. Tastatursnarveier
 

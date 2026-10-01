@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { domToBlob } from 'modern-screenshot';
 import { bildeRammeForCard, cardstil } from '../geometri/card';
@@ -9,13 +9,22 @@ import { Lerret } from '../komponenter/Lerret';
 import { Eksportvisning } from '../komponenter/visning';
 import { useForhandsvisning } from '../komponenter/useForhandsvisning';
 import { Seksjon, knapp } from '../komponenter/Skjema';
-import { eksportmal, filnavn, lagreEksport, MAKS_MEGAPIKSLER, ventPaBilder } from './eksport';
+import {
+  eksportmal,
+  filnavn,
+  lagreEksport,
+  MAKS_MEGAPIKSLER,
+  SLUGG_MM,
+  trykkside,
+  UTFALL_MM,
+  ventPaBilder,
+} from './eksport';
 import { settPngDpi } from './png';
 
 /** CSS-piksler per mm – ved utskrift blir 1 mm på lerretet 1 mm på papiret */
 const UTSKRIFT_SKALA = 96 / 25.4;
 
-type Jobb = { type: 'png' | 'pdf'; dpi: 150 | 300; utkast: boolean };
+type Jobb = { type: 'png' | 'pdf'; dpi: 150 | 300; utkast: boolean; merker: boolean };
 type Status =
   | { type: 'klar' }
   | { type: 'arbeider'; tekst: string }
@@ -30,6 +39,7 @@ export function EksportPanel({ onLukk }: { onLukk(): void }) {
   const overflyt = useSkilt((t) => Object.values(t.tekstOverflyt).filter(Boolean).length);
   const [dpi, settDpi] = useState<150 | 300>(skilt.format.dpi);
   const [utkast, settUtkast] = useState(false);
+  const [merker, settMerker] = useState(false);
   const [jobb, settJobb] = useState<Jobb>();
   const [status, settStatus] = useState<Status>({ type: 'klar' });
   const mal = eksportmal(skilt, dpi);
@@ -41,7 +51,7 @@ export function EksportPanel({ onLukk }: { onLukk(): void }) {
       type: 'arbeider',
       tekst: type === 'pdf' ? 'Forbereder utskrift …' : `Lager PNG i ${dpi} DPI …`,
     });
-    settJobb({ type, dpi, utkast });
+    settJobb({ type, dpi, utkast, merker });
   };
   const ferdig = (s: Status) => {
     settJobb(undefined);
@@ -82,6 +92,21 @@ export function EksportPanel({ onLukk }: { onLukk(): void }) {
         <input type="checkbox" checked={utkast} onChange={(e) => settUtkast(e.target.checked)} />
         Merk som utkast
         <span className="text-stone-500">(«UTKAST» på skrå over skiltet)</span>
+      </label>
+      <label className="flex items-start gap-2">
+        <input
+          type="checkbox"
+          className="mt-1"
+          checked={merker}
+          onChange={(e) => settMerker(e.target.checked)}
+        />
+        <span>
+          Trykkmerker i PDF
+          <span className="block text-stone-500">
+            Beskjæringsmerker, midtmerker og {UTFALL_MM} mm utfall. Siden blir {2 * SLUGG_MM} mm større enn
+            skiltet.
+          </span>
+        </span>
       </label>
 
       <div className="flex flex-col gap-2">
@@ -193,12 +218,15 @@ function Eksportflate({
   skala,
   dpi,
   utkast,
+  merker = false,
   onKlar,
 }: {
   skilt: Skilt;
   skala: number;
   dpi: number;
   utkast: boolean;
+  /** Legg skiltet på en større side med beskjæringsmerker og utfall (bare for PDF) */
+  merker?: boolean;
   onKlar(el: HTMLElement): void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -212,8 +240,67 @@ function Eksportflate({
   return (
     <div ref={ref} data-eksportflate style={{ position: 'fixed', left: -200_000, top: 0 }}>
       <Eksportvisning skala={skala} dpi={dpi} utkast={utkast}>
-        <Lerret skilt={skilt} />
+        {merker ? (
+          <Trykkside skilt={skilt}>
+            <Lerret skilt={skilt} />
+          </Trykkside>
+        ) : (
+          <Lerret skilt={skilt} />
+        )}
       </Eksportvisning>
+    </div>
+  );
+}
+
+/** Skiltet midt på en hvit side med utfall i skiltets bakgrunnsfarge og beskjæringsmerker rundt. */
+function Trykkside({ skilt, children }: { skilt: Skilt; children: ReactNode }) {
+  const { bredde_mm: B, hoyde_mm: H } = skilt.format;
+  const side = trykkside(B, H);
+  const mm = (v: number) => `${v}mm`;
+  const dato = new Date().toLocaleDateString('nb-NO');
+  return (
+    <div
+      data-trykkside
+      style={{
+        position: 'relative',
+        width: mm(side.bredde),
+        height: mm(side.hoyde),
+        overflow: 'hidden',
+        background: '#fff',
+      }}
+    >
+      <div
+        data-utfall
+        style={{
+          position: 'absolute',
+          left: mm(side.skilt.x - UTFALL_MM),
+          top: mm(side.skilt.y - UTFALL_MM),
+          width: mm(B + 2 * UTFALL_MM),
+          height: mm(H + 2 * UTFALL_MM),
+          background: skilt.tema.bakgrunn,
+        }}
+      />
+      <div style={{ position: 'absolute', left: mm(side.skilt.x), top: mm(side.skilt.y) }}>{children}</div>
+      <svg
+        data-trykkmerker
+        width={mm(side.bredde)}
+        height={mm(side.hoyde)}
+        viewBox={`0 0 ${side.bredde} ${side.hoyde}`}
+        style={{ position: 'absolute', left: 0, top: 0 }}
+      >
+        {side.linjer.map((l, i) => (
+          <line key={i} {...l} stroke="#000" strokeWidth={0.25} />
+        ))}
+        <text
+          x={side.skilt.x + 10}
+          y={side.skilt.y + H + UTFALL_MM + 3}
+          fontSize={2.4}
+          fontFamily="'Source Sans 3', 'Noto Sans', system-ui, sans-serif"
+          fill="#000"
+        >
+          {`${skilt.banner.tittel || skilt.navn} · ${Math.round(B)} × ${Math.round(H)} mm · utfall ${UTFALL_MM} mm · ${dato}`}
+        </text>
+      </svg>
     </div>
   );
 }
@@ -251,12 +338,13 @@ function PngJobb({ skilt, jobb, onFerdig }: { skilt: Skilt; jobb: Jobb; onFerdig
  * lik skiltet og ingen marger. Nettleserens «Lagre som PDF» gir vektortekst og fulle bilder.
  */
 function PdfJobb({ skilt, jobb, onFerdig }: { skilt: Skilt; jobb: Jobb; onFerdig(s: Status): void }) {
-  const { dpi, utkast } = jobb;
+  const { dpi, utkast, merker } = jobb;
   const { bredde_mm: B, hoyde_mm: H } = skilt.format;
+  const side = merker ? trykkside(B, H) : { bredde: B, hoyde: H };
   return createPortal(
     <div id="utskrift">
       <style>{`
-        @page { size: ${B}mm ${H}mm; margin: 0; }
+        @page { size: ${side.bredde}mm ${side.hoyde}mm; margin: 0; }
         @media print {
           html, body { margin: 0; padding: 0; background: none; }
           body > *:not(#utskrift) { display: none !important; }
@@ -269,11 +357,12 @@ function PdfJobb({ skilt, jobb, onFerdig }: { skilt: Skilt; jobb: Jobb; onFerdig
         skala={UTSKRIFT_SKALA}
         dpi={dpi}
         utkast={utkast}
+        merker={merker}
         onKlar={async (el) => {
           try {
             await ventPaBilder(el);
             const tittel = document.title;
-            document.title = filnavn(skilt, dpi, 'pdf', utkast).replace(/\.pdf$/, '');
+            document.title = filnavn(skilt, dpi, 'pdf', utkast, merker, new Date()).replace(/\.pdf$/, '');
             window.addEventListener(
               'afterprint',
               () => {
