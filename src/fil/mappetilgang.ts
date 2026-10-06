@@ -3,7 +3,7 @@ import type { Prosjektmappe } from '../modell/importerMappe';
 
 const HANDLE_NOKKEL = 'sist-apnet-mappe';
 /** Mapper som ikke er prosjektinnhold */
-const HOPP_OVER = new Set(['app', 'node_modules', '.git', 'dist', 'eksport']);
+const HOPP_OVER = new Set(['app', 'node_modules', '.git', 'dist', 'eksport', 'versjoner']);
 
 export interface Filmappe extends Prosjektmappe {
   /** Mangler for demomappene */

@@ -17,11 +17,25 @@ import { useForhandsvisning } from './useForhandsvisning';
 
 export function Sidepanel({ skilt }: { skilt: Skilt }) {
   const valg = useSkilt((t) => t.valg);
+  const gammel = useSkilt((t) => t.versjonsvisning);
   const card = valg.type === 'card' ? skilt.cards.find((c) => c.id === valg.id) : undefined;
   const rute = valg.type === 'rute' ? skilt.ruter.find((r) => r.id === valg.id) : undefined;
   const sted = valg.type === 'stedsnavn' ? skilt.stedsnavn.find((s) => s.id === valg.id) : undefined;
   const dekor = valg.type === 'dekor' ? skilt.dekor.find((d) => d.id === valg.id) : undefined;
   const fri = valg.type === 'fri' ? skilt.fri.find((f) => f.id === valg.id) : undefined;
+
+  if (gammel) {
+    return (
+      <aside className="flex w-80 shrink-0 flex-col gap-3 overflow-y-auto border-l border-stone-200 bg-white p-4 text-sm">
+        <Seksjon tittel="Gammel versjon">
+          <p className="text-stone-600">
+            Du ser en tidligere versjon av skiltet. Den kan ikke redigeres. Velg <b>Bruk denne versjonen</b> i
+            stripen over skiltet for å gjøre den til dagens skilt, eller <b>Tilbake til nåværende</b>.
+          </p>
+        </Seksjon>
+      </aside>
+    );
+  }
 
   return (
     <aside className="flex w-80 shrink-0 flex-col gap-5 overflow-y-auto border-l border-stone-200 bg-white p-4 text-sm">

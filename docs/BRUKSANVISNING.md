@@ -364,6 +364,25 @@ Trykk **⬇ Eksporter**.
 
 Håndtak, markeringer og varsler som «Tekst kuttet» kommer ikke med i eksporten.
 
+### Versjoner
+
+Hver gang du eksporterer (PDF eller PNG), lagres skiltet slik det var som en **versjon**. Versjonene
+ligger i mappa `versjoner/` i prosjektmappa, én fil per eksport (`2026-10-06-143212.json`). I demoen
+ligger de i nettleseren.
+
+Trykk **🕘 Versjoner** øverst for å se lista:
+
+- **Nåværende versjon** er skiltet du jobber med. Det kan redigeres og lagres automatisk.
+- **Tidligere versjoner** er en for hver eksport, med dato, klokkeslett, PDF/PNG og filnavn. Trykk på en
+  for å se den. En gammel versjon **kan ikke redigeres**, og en gul stripe over skiltet viser at du ser på
+  en gammel versjon. Eksport og angre er slått av mens du ser på den.
+- **Bruk denne versjonen** gjør den gamle versjonen til dagens skilt. Dagens skilt lagres først som en egen
+  versjon («Sikkerhetskopi før bytte»), så ingenting går tapt, og byttet kan angres med Ctrl+Z.
+- **Tilbake til nåværende** går tilbake til skiltet du jobbet med.
+
+Versjonene lagrer skiltet, ikke bildefilene. Bilder, kart og tekstfil hentes fra prosjektmappa som de er
+nå, så slett eller bytt ikke navn på bildefiler du vil kunne gå tilbake til.
+
 > **Tips til trykkeriet:** Send PDF-en. Oppgi format (f.eks. A1, 841 × 594 mm). Uten **Trykkmerker i
 > PDF** er fila uten skjæremerker og utfallende bakgrunn. Med merker er trimformatet fortsatt
 > skiltets størrelse, og utfallet er 3 mm.
