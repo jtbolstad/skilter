@@ -5,6 +5,8 @@ og versjonsnumrene følger [semantisk versjonering](https://semver.org/lang/no/)
 
 ## [Ikke utgitt]
 
+## [0.6.0] – 2026-10-06
+
 ### Lagt til
 
 - **Versjonshistorikk**: hver eksport (PDF og PNG) lagrer skiltet som en versjon i mappa `versjoner/`.
@@ -121,7 +123,8 @@ Første utgivelse, med Windows-installer.
 - Eksport til PDF (vektortekst, innebygde fonter) og PNG i 150 eller 300 DPI.
 - Skrivebordsapp for Windows (Tauri).
 
-[Ikke utgitt]: https://github.com/jtbolstad/skilter/compare/v0.5.0...HEAD
+[Ikke utgitt]: https://github.com/jtbolstad/skilter/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/jtbolstad/skilter/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/jtbolstad/skilter/compare/v0.4.1...v0.5.0
 [0.4.1]: https://github.com/jtbolstad/skilter/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/jtbolstad/skilter/compare/v0.3.0...v0.4.0
