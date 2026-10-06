@@ -31,6 +31,12 @@ function Strok({ d, lag }: { d: string; lag: Streklag[] }) {
   ));
 }
 
+/** Størrelse på treffflaten langs linja og på punkthåndtakene (rammens mm) */
+const ruteMal = (rute: Rute) => ({
+  treffbredde: Math.max(3, rute.stil.bredde * 3),
+  nodeR: Math.max(1, rute.stil.bredde * 0.8),
+});
+
 export function ruteSti(rute: Rute, p: Plassering): { d: string; punkter: Punkt[] } {
   const punkter = rute.punkter.map((pt) => bildepunktTilRamme(pt, p));
   return { d: rute.glattet ? glattSti(punkter) : rettSti(punkter), punkter };
@@ -72,8 +78,7 @@ function RuteGrafikk({
   const skala = useSkala();
   const { d, punkter } = ruteSti(rute, p);
   const dra = useRef<{ indeks: number; flate: Element }>(undefined);
-  const treffbredde = Math.max(3, rute.stil.bredde * 3);
-  const nodeR = Math.max(1, rute.stil.bredde * 0.8);
+  const { treffbredde, nodeR } = ruteMal(rute);
 
   const flyttNode = (e: PointerEvent) => {
     const s = dra.current;
@@ -123,35 +128,136 @@ function RuteGrafikk({
           }}
         />
       )}
-      {(valgt || tegner) &&
+      {/* Under tegning ligger punktene her; ellers i RuteHandtak, som ikke klippes av kartrammen */}
+      {tegner &&
         punkter.map((pt, i) => (
-          <circle
-            key={i}
-            data-testid="rutenode"
-            cx={pt.x}
-            cy={pt.y}
-            r={nodeR}
-            fill="white"
-            stroke="#0284c7"
-            strokeWidth={nodeR * 0.4}
-            style={{ pointerEvents: 'all', cursor: 'move' }}
-            onPointerDown={(e) => {
-              if (e.button !== 0) return;
-              e.stopPropagation();
-              startDra(e, i);
-            }}
-            onDoubleClick={(e) => {
-              e.stopPropagation();
-              if (rute.punkter.length > 2) {
-                useSkilt.getState().settRutepunkter(
-                  rute.id,
-                  rute.punkter.filter((_, j) => j !== i),
-                );
-              }
-            }}
-          />
+          <Node key={i} rute={rute} punkt={pt} indeks={i} nodeR={nodeR} onStart={(e) => startDra(e, i)} />
         ))}
     </g>
+  );
+}
+
+function Node({
+  rute,
+  punkt,
+  indeks,
+  nodeR,
+  onStart,
+}: {
+  rute: Rute;
+  punkt: Punkt;
+  indeks: number;
+  nodeR: number;
+  onStart(e: PointerEvent): void;
+}) {
+  return (
+    <circle
+      data-testid="rutenode"
+      cx={punkt.x}
+      cy={punkt.y}
+      r={nodeR}
+      fill="white"
+      stroke="#0284c7"
+      strokeWidth={nodeR * 0.4}
+      style={{ pointerEvents: 'all', cursor: 'move' }}
+      onPointerDown={(e) => {
+        if (e.button !== 0) return;
+        e.stopPropagation();
+        onStart(e);
+      }}
+      onDoubleClick={(e) => {
+        e.stopPropagation();
+        if (rute.punkter.length > 2) {
+          useSkilt.getState().settRutepunkter(
+            rute.id,
+            rute.punkter.filter((_, j) => j !== indeks),
+          );
+        }
+      }}
+    />
+  );
+}
+
+/**
+ * Punkthåndtak for valgt vei. Ligger utenfor den klippede kartflaten, så punkter som havner
+ * utenfor kartutsnittet (zoom, panorering, mindre ramme) fortsatt kan ses, dras tilbake og slettes.
+ * Delen av linja utenfor rammen vises svakt, og kan klikkes for å sette inn nye punkter.
+ */
+export function RuteHandtak({ kart, p }: { kart: Kart; p: Plassering }) {
+  const skala = useSkala();
+  const valg = useValg();
+  const modus = useModus();
+  const rute = useSkilt((t) =>
+    valg.type === 'rute' ? t.skilt?.ruter.find((r) => r.id === valg.id) : undefined,
+  );
+  const dra = useRef<{ indeks: number; flate: Element }>(undefined);
+  if (!rute || modus.type === 'tegn-rute') return null;
+
+  const { b, h } = kart.ramme;
+  const { d, punkter } = ruteSti(rute, p);
+  const { treffbredde, nodeR } = ruteMal(rute);
+  const klipp = `rutehandtak-${rute.id}`;
+  // Alt unntatt kartrammen
+  const utenforRamma = `M-100000 -100000H100000V100000H-100000ZM0 0V${h}H${b}V0Z`;
+
+  const startDra = (e: PointerEvent, indeks: number) => {
+    const el = e.currentTarget as SVGElement;
+    el.setPointerCapture(e.pointerId);
+    dra.current = { indeks, flate: el.ownerSVGElement! };
+  };
+  const flyttNode = (e: PointerEvent) => {
+    const s = dra.current;
+    if (!s) return;
+    const r = iRamme(e, s.flate, skala);
+    const nye = [...rute.punkter];
+    nye[s.indeks] = rammeTilBildepunkt(r.x, r.y, p);
+    useSkilt.getState().settRutepunkter(rute.id, nye);
+  };
+
+  return (
+    <svg
+      data-testid="rutehandtak"
+      className="pointer-events-none absolute inset-0 z-30 overflow-visible"
+      width={b * skala}
+      height={h * skala}
+      viewBox={`0 0 ${b} ${h}`}
+      onPointerMove={flyttNode}
+      onPointerUp={() => (dra.current = undefined)}
+    >
+      <defs>
+        <clipPath id={klipp}>
+          <path d={utenforRamma} clipRule="evenodd" />
+        </clipPath>
+      </defs>
+      <g clipPath={`url(#${klipp})`}>
+        <path d={d} fill="none" stroke="#38bdf8" strokeOpacity={0.3} strokeWidth={rute.stil.bredde * 2.6} />
+        <g opacity={0.55}>
+          <Strok d={d} lag={strekLag(rute.stil)} />
+        </g>
+        <path
+          d={d}
+          fill="none"
+          stroke="transparent"
+          strokeWidth={treffbredde}
+          style={{ pointerEvents: 'stroke', cursor: 'copy' }}
+          onPointerDown={(e) => {
+            if (e.button !== 0) return;
+            e.stopPropagation();
+            // Klikk på linja utenfor kartet setter inn et nytt punkt og begynner å dra det
+            const flate = (e.currentTarget as SVGElement).ownerSVGElement!;
+            const r = iRamme(e, flate, skala);
+            const indeks = naermesteSegment(punkter, r) + 1;
+            const nye = [...rute.punkter];
+            nye.splice(indeks, 0, rammeTilBildepunkt(r.x, r.y, p));
+            useSkilt.getState().settRutepunkter(rute.id, nye);
+            startDra(e, indeks);
+          }}
+        />
+      </g>
+      {punkter.map((pt, i) => (
+        <Node key={i} rute={rute} punkt={pt} indeks={i} nodeR={nodeR} onStart={(e) => startDra(e, i)} />
+      ))}
+    </svg>
   );
 }
 

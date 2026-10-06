@@ -2,6 +2,7 @@ import { type MouseEvent, useState } from 'react';
 import { DEKORTYPER } from '../geometri/dekor';
 import { parseTekst, TEKSTFORMATER, tekstfiler, type Tekstformat } from '../modell/tekstParser';
 import { formaterAvstand, meterPerPiksel } from '../geometri/malestokk';
+import { cmTilMm, formaterCm, lesCm, MAKS_FORMAT_CM, MIN_FORMAT_CM } from '../geometri/format';
 import { FORMATER, type Formatnavn } from '../modell/oppsett';
 import type { Kart, Skilt } from '../modell/typer';
 import { type Rammeref, sammeRef, useSkilt, valgteRammer } from '../store';
@@ -189,6 +190,56 @@ function Lagliste({ skilt }: { skilt: Skilt }) {
   );
 }
 
+/** Fritt mål i cm (komma eller punktum som desimalskille). Gjelder når du forlater feltet eller trykker Enter. */
+function EgetFormat({ bredde_mm, hoyde_mm }: { bredde_mm: number; hoyde_mm: number }) {
+  const [hoyde, settHoyde] = useState(formaterCm(hoyde_mm));
+  const [bredde, settBredde] = useState(formaterCm(bredde_mm));
+  // Når formatet endres utenfra (f.eks. «Liggende» eller et standardformat), vis det nye målet.
+  // Bare feltet som endret seg nullstilles, så det du holder på å skrive i det andre blir stående.
+  const [forrige, settForrige] = useState({ b: bredde_mm, h: hoyde_mm });
+  if (forrige.b !== bredde_mm || forrige.h !== hoyde_mm) {
+    settForrige({ b: bredde_mm, h: hoyde_mm });
+    if (forrige.h !== hoyde_mm) settHoyde(formaterCm(hoyde_mm));
+    if (forrige.b !== bredde_mm) settBredde(formaterCm(bredde_mm));
+  }
+  const h = lesCm(hoyde);
+  const b = lesCm(bredde);
+  const gyldig = h !== undefined && b !== undefined;
+
+  const bruk = () => {
+    if (!gyldig) return;
+    const ny = { b: cmTilMm(b), h: cmTilMm(h) };
+    if (ny.b !== bredde_mm || ny.h !== hoyde_mm) useSkilt.getState().endreFormat(ny.b, ny.h);
+  };
+  const felt = (etikett: string, verdi: string, sett: (v: string) => void, ugyldig: boolean) => (
+    <Felt etikett={etikett}>
+      <input
+        inputMode="decimal"
+        className={`${input} w-full ${ugyldig ? 'border-rose-500' : ''}`}
+        value={verdi}
+        aria-invalid={ugyldig}
+        onChange={(e) => sett(e.target.value)}
+        onBlur={bruk}
+        onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+      />
+    </Felt>
+  );
+
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="grid grid-cols-2 gap-2">
+        {felt('Høyde (cm)', hoyde, settHoyde, h === undefined)}
+        {felt('Bredde (cm)', bredde, settBredde, b === undefined)}
+      </div>
+      {!gyldig && (
+        <p className="text-xs text-rose-700">
+          Skriv et mål mellom {MIN_FORMAT_CM} og {MAKS_FORMAT_CM} cm, for eksempel 59,4.
+        </p>
+      )}
+    </div>
+  );
+}
+
 function SkiltEgenskaper({ skilt }: { skilt: Skilt }) {
   const { endreSkilt, endreFormat } = useSkilt.getState();
   const { bredde_mm: B, hoyde_mm: H } = skilt.format;
@@ -238,8 +289,9 @@ function SkiltEgenskaper({ skilt }: { skilt: Skilt }) {
             {liggende ? '▭ Liggende' : '▯ Stående'}
           </button>
         </div>
+        <EgetFormat bredde_mm={B} hoyde_mm={H} />
         <p className="text-stone-500">
-          {Math.round(B)} × {Math.round(H)} mm. Rammer skaleres med formatet.
+          Høyde × bredde: {formaterCm(H)} × {formaterCm(B)} cm. Rammer skaleres med formatet.
         </p>
         <Felt etikett="Oppløsning ved eksport">
           <select

@@ -92,7 +92,7 @@ test('rammer festes til rutenettet når det er slått på', async ({ page }) => 
   await expect(page.getByTestId('rutenett')).toBeVisible();
 
   const lerret = (await page.locator('[data-lerret]').boundingBox())!;
-  const bredde = Number((await page.getByText(/× \d+ mm/).textContent())!.match(/(\d+) ×/)![1]);
+  const bredde = Number((await page.getByLabel('Bredde (cm)').inputValue()).replace(',', '.')) * 10;
   const pxPerMm = lerret.width / bredde;
 
   const card = page.getByTestId('card-1');

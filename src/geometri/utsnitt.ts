@@ -163,3 +163,55 @@ export function rammeTilBildepunkt(rx: number, ry: number, p: Plassering): Bilde
 export function effektivDpi(p: Plassering): number {
   return 25.4 / p.skala;
 }
+
+/** Ligger punktet (i rammens mm) utenfor rammen? Punkter på kanten regnes som innenfor. */
+export const erUtenforRamma = (punkt: { x: number; y: number }, ramme: Storrelse): boolean =>
+  punkt.x < 0 || punkt.y < 0 || punkt.x > ramme.b || punkt.y > ramme.h;
+
+/**
+ * Flytter punkter som ligger utenfor ramma inn til nærmeste punkt `marg` mm innenfor kanten.
+ * Punkter som allerede er innenfor beholdes uendret.
+ */
+export function hentInnPunkter(punkter: Bildepunkt[], p: Plassering, marg: number): Bildepunkt[] {
+  const { b, h } = p.ramme;
+  const mx = Math.min(marg, b / 2);
+  const my = Math.min(marg, h / 2);
+  return punkter.map((pt) => {
+    const r = bildepunktTilRamme(pt, p);
+    if (!erUtenforRamma(r, p.ramme)) return pt;
+    return rammeTilBildepunkt(Math.min(b - mx, Math.max(mx, r.x)), Math.min(h - my, Math.max(my, r.y)), p);
+  });
+}
+
+/**
+ * Utsnittet (zoom og sentrum) som viser alle punktene med `marg` mm luft rundt. Zoomer ikke ut
+ * under 1 (bildet fyller alltid ramma), og bevarer rotasjon, speiling og tilpasning.
+ */
+export function tilpassUtsnittTilPunkter(
+  utsnitt: Bildeutsnitt,
+  ramme: Storrelse,
+  bilde: Storrelse,
+  punkter: Bildepunkt[],
+  marg: number,
+): Bildeutsnitt {
+  if (punkter.length === 0) return utsnitt;
+  // Alt regnes ut ved zoom 1 med bildets midte som sentrum. Avstander fra rammens midte vokser
+  // like mye som zoomen, så riktig zoom og forskyvning følger av punktenes omsluttende boks.
+  const grunn: Bildeutsnitt = { ...utsnitt, zoom: 1, sentrumX: 0.5, sentrumY: 0.5 };
+  const p = plasser(grunn, ramme, bilde);
+  const r = punkter.map((pt) => bildepunktTilRamme(pt, p));
+  const minX = Math.min(...r.map((q) => q.x));
+  const maxX = Math.max(...r.map((q) => q.x));
+  const minY = Math.min(...r.map((q) => q.y));
+  const maxY = Math.max(...r.map((q) => q.y));
+  const bredde = maxX - minX;
+  const hoyde = maxY - minY;
+  const ledigB = Math.max(1e-6, ramme.b - 2 * marg);
+  const ledigH = Math.max(1e-6, ramme.h - 2 * marg);
+  const onsket = Math.min(bredde > 0 ? ledigB / bredde : Infinity, hoyde > 0 ? ledigH / hoyde : Infinity);
+  // Ett enkelt punkt (ingen utstrekning) gir ingen grunn til å endre zoomen
+  const z = Number.isFinite(onsket) ? Math.min(MAKS_ZOOM, Math.max(1, onsket)) : utsnitt.zoom;
+  const midtX = (minX + maxX) / 2;
+  const midtY = (minY + maxY) / 2;
+  return panorer({ ...grunn, zoom: z }, -z * (midtX - ramme.b / 2), -z * (midtY - ramme.h / 2), ramme, bilde);
+}
