@@ -96,7 +96,9 @@ Neste gang kan du trykke **Åpne «skilter» igjen**. Da åpnes skiltet slik du 
 
 **Zoom:** knappene − og + i verktøylinja, eller **Ctrl + scroll**. **Tilpass** viser hele skiltet.
 
-**Format:** A0–A3, liggende eller stående. Alt på skiltet skaleres når du bytter format.
+**Format:** A0–A3, liggende eller stående. Under **Høyde (cm)** og **Bredde (cm)** kan du skrive et
+eget mål, også med desimaler (komma eller punktum, f.eks. 59,4). Målet gjelder når du forlater feltet
+eller trykker Enter, og tillatt område er 5–1000 cm. Alt på skiltet skaleres når du bytter format.
 
 ## 4. Kort: tekst og utseende
 
@@ -267,6 +269,15 @@ ikke er nordvendt.
 - **Klikk på linja** for å sette inn et nytt punkt.
 - **Dobbelklikk et punkt** for å slette det.
 - **✏️ Tegn videre** fortsetter fra siste punkt, og **⇄ Snu retning** snur veien.
+
+**Punkter utenfor kartet:** når du zoomer eller flytter kartutsnittet, kan deler av veien havne utenfor
+kartet. Punktene og linja vises da svakt utenfor kartet mens veien er valgt, og du kan dra, slette og sette
+inn punkter der som vanlig. Panelet viser hvor mange punkter som er utenfor, med to knapper:
+
+- **⤶ Hent inn** flytter punktene utenfor inn til kartkanten.
+- **⤢ Vis hele veien** zoomer og flytter kartet så hele veien synes.
+
+Begge kan angres med Ctrl+Z.
 
 ![Linjestil](bilder/14-linjestil.png)
 

@@ -185,3 +185,74 @@ test('festepunktet på cardet kan dras langs kanten, og punktet ligger over linj
   const [, y2] = await start();
   expect(y2).toBeCloseTo(y0!, 1);
 });
+
+test.describe('punkter utenfor kartutsnittet', () => {
+  /** Tegner en vei nær kartkantene og zoomer kartet inn, så punktene havner utenfor utsnittet. */
+  async function veiUtenforUtsnitt(page: Page) {
+    const b = await apneKart(page);
+    await tegnRute(page, b, 'Den Fredrikshaldske kongevei', [
+      [0.1, 0.15],
+      [0.5, 0.5],
+      [0.9, 0.85],
+    ]);
+    await page.locator('aside').getByRole('button', { name: '🗺️ Kart' }).click();
+    await page.mouse.move(...punkt(b, 0.5, 0.5));
+    await page.mouse.wheel(0, -250);
+    await page
+      .locator('aside')
+      .getByRole('button', { name: /Fredrikshaldske/ })
+      .first()
+      .click();
+    return b;
+  }
+
+  const erInnenfor = (boks: Boks, kart: Boks) =>
+    boks.x + boks.width / 2 >= kart.x &&
+    boks.x + boks.width / 2 <= kart.x + kart.width &&
+    boks.y + boks.height / 2 >= kart.y &&
+    boks.y + boks.height / 2 <= kart.y + kart.height;
+
+  test('håndtak utenfor kartet vises og kan dras tilbake', async ({ page }) => {
+    const kart = await veiUtenforUtsnitt(page);
+    const noder = page.getByTestId('rutenode');
+    await expect(noder).toHaveCount(3);
+    await expect(page.getByTestId('punkter-utenfor')).toContainText('2 av 3 punkter');
+
+    // Det første punktet ligger utenfor kartet, men håndtaket er synlig og kan tas
+    const ute = (await noder.nth(0).boundingBox())!;
+    expect(erInnenfor(ute, kart)).toBe(false);
+    await page.mouse.move(ute.x + ute.width / 2, ute.y + ute.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(kart.x + kart.width * 0.3, kart.y + kart.height * 0.3, { steps: 8 });
+    await page.mouse.up();
+
+    expect(erInnenfor((await noder.nth(0).boundingBox())!, kart)).toBe(true);
+    await expect(page.getByTestId('punkter-utenfor')).toContainText('1 av 3 punkter');
+  });
+
+  test('punkt utenfor kartet kan slettes med dobbeltklikk', async ({ page }) => {
+    await veiUtenforUtsnitt(page);
+    const noder = page.getByTestId('rutenode');
+    await noder.nth(0).dblclick();
+    await expect(noder).toHaveCount(2);
+  });
+
+  test('«Hent inn» flytter punktene inn til kartet og kan angres', async ({ page }) => {
+    const kart = await veiUtenforUtsnitt(page);
+    await page.getByRole('button', { name: /Hent inn/ }).click();
+    await expect(page.getByTestId('punkter-utenfor')).toHaveCount(0);
+    const noder = page.getByTestId('rutenode');
+    for (let i = 0; i < 3; i++) expect(erInnenfor((await noder.nth(i).boundingBox())!, kart)).toBe(true);
+
+    await page.keyboard.press('Control+z');
+    await expect(page.getByTestId('punkter-utenfor')).toBeVisible();
+  });
+
+  test('«Vis hele veien» justerer kartutsnittet så alle punktene synes', async ({ page }) => {
+    const kart = await veiUtenforUtsnitt(page);
+    await page.getByRole('button', { name: /Vis hele veien/ }).click();
+    await expect(page.getByTestId('punkter-utenfor')).toHaveCount(0);
+    const noder = page.getByTestId('rutenode');
+    for (let i = 0; i < 3; i++) expect(erInnenfor((await noder.nth(i).boundingBox())!, kart)).toBe(true);
+  });
+});

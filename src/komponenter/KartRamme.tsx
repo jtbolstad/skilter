@@ -1,12 +1,19 @@
 import { formaterAvstand, lagMalestokk, meterPerPiksel } from '../geometri/malestokk';
 import { useRef } from 'react';
-import { bildepunktTilRamme, rammeTilBildepunkt, type Plassering, type Storrelse } from '../geometri/utsnitt';
+import {
+  bildepunktTilRamme,
+  plasser,
+  rammeTilBildepunkt,
+  type Plassering,
+  type Storrelse,
+} from '../geometri/utsnitt';
 import type { Card, Kart, Kartpunkt } from '../modell/typer';
 import { useSkilt } from '../store';
 import { useModus, useSkala, useValg } from './visning';
 import { Bildevisning } from './Bildevisning';
 import { Flyttbar } from './Flyttbar';
-import { kartEnhet, Ruter, Stedsnavnlag, Tegneflate, Tegnforklaring } from './KartLag';
+import { kartEnhet, RuteHandtak, Ruter, Stedsnavnlag, Tegneflate, Tegnforklaring } from './KartLag';
+import { useForhandsvisning } from './useForhandsvisning';
 
 export const markorRadius = (kart: Kart) => 4.5 * kartEnhet(kart);
 
@@ -18,6 +25,11 @@ export function KartRamme({ kart }: { kart: Kart }) {
   const plasserer = modus.type === 'plasser-punkt' || modus.type === 'plasser-stedsnavn';
   const tegner = modus.type === 'tegn-rute';
   const sisteKlikk = useRef(0);
+  const forhandsvisning = useForhandsvisning(kart.bilde?.fil);
+  const plassering =
+    kart.bilde && forhandsvisning
+      ? plasser(kart.bilde, kart.ramme, { b: forhandsvisning.bredde, h: forhandsvisning.hoyde })
+      : undefined;
 
   const klikk = (p: Kartpunkt['posisjon']) => {
     const naa = performance.now();
@@ -68,6 +80,7 @@ export function KartRamme({ kart }: { kart: Kart }) {
           <div className="grid size-full place-items-center text-stone-500">Ingen kartbilde (Kart.png)</div>
         )}
       </div>
+      {plassering && <RuteHandtak kart={kart} p={plassering} />}
     </Flyttbar>
   );
 }

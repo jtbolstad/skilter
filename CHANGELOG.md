@@ -5,6 +5,14 @@ og versjonsnumrene følger [semantisk versjonering](https://semver.org/lang/no/)
 
 ## [Ikke utgitt]
 
+### Lagt til
+
+- **Veipunkter utenfor kartutsnittet** kan nå ses og redigeres: punktene og linja vises svakt utenfor kartet
+  mens veien er valgt, og kan dras, slettes og få nye punkter. Panelet varsler og har knappene «Hent inn»
+  (flytter punktene til kartkanten) og «Vis hele veien» (tilpasser kartutsnittet).
+- **Fritt format**: skriv høyde og bredde i cm, også med desimaler (komma eller punktum), under «Format»
+  når skiltet er valgt. Rammene skaleres med målet, og PDF-en får samme sidestørrelse.
+
 ## [0.4.1] – 2026-10-01
 
 ### Rettet

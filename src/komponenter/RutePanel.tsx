@@ -1,10 +1,18 @@
 import { lazy, Suspense, useState } from 'react';
 import { strekLag } from '../geometri/rute';
+import {
+  bildepunktTilRamme,
+  erUtenforRamma,
+  hentInnPunkter,
+  plasser,
+  tilpassUtsnittTilPunkter,
+} from '../geometri/utsnitt';
 import { RUTEMALER } from '../modell/rutestiler';
 import type { Hjorne, Kart, Rute, Ruteprofil, Rutestil, Stedsnavn, Strektype } from '../modell/typer';
 import { folgSti, RUTEPROFILER } from '../kart/ruting';
 import { useSkilt } from '../store';
 import { Felt, input, knapp, Seksjon } from './Skjema';
+import { useForhandsvisning } from './useForhandsvisning';
 
 // MapLibre og Terra Draw er store; lastes først når dialogen åpnes
 const RuteNettkart = lazy(() => import('../kart/RuteNettkart'));
@@ -146,6 +154,55 @@ function Hjornevelger({ verdi, onEndre }: { verdi: Hjorne; onEndre(h: Hjorne): v
   );
 }
 
+/** Luft mellom veien og kartkanten når punkter hentes inn eller utsnittet tilpasses (mm) */
+const KANTMARG_MM = 4;
+
+/**
+ * Varsler når veipunkter ligger utenfor kartutsnittet, og lar deg hente dem inn til kartkanten eller
+ * justere utsnittet så hele veien synes. Begge deler kan angres.
+ */
+function PunkterUtenforKart({ rute }: { rute: Rute }) {
+  const kart = useSkilt((t) => t.skilt?.kart);
+  const f = useForhandsvisning(kart?.bilde?.fil);
+  if (!kart?.bilde || !f) return null;
+
+  const bilde = { b: f.bredde, h: f.hoyde };
+  const p = plasser(kart.bilde, kart.ramme, bilde);
+  const antallUtenfor = rute.punkter.filter((pt) =>
+    erUtenforRamma(bildepunktTilRamme(pt, p), kart.ramme),
+  ).length;
+  if (antallUtenfor === 0) return null;
+
+  const { settRutepunkter, endreKart } = useSkilt.getState();
+  const hentInn = () => settRutepunkter(rute.id, hentInnPunkter(rute.punkter, p, KANTMARG_MM));
+  const visHele = () => {
+    const utsnitt = tilpassUtsnittTilPunkter(kart.bilde!, kart.ramme, bilde, rute.punkter, KANTMARG_MM);
+    endreKart({ bilde: utsnitt });
+  };
+
+  return (
+    <div
+      data-testid="punkter-utenfor"
+      className="flex flex-col gap-2 rounded border border-amber-300 bg-amber-50 p-3 text-amber-900"
+    >
+      <p>
+        {antallUtenfor === rute.punkter.length
+          ? `Hele veien ligger utenfor kartutsnittet.`
+          : `${antallUtenfor} av ${rute.punkter.length} punkter ligger utenfor kartutsnittet.`}{' '}
+        De vises svakt utenfor kartet og kan dras tilbake.
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <button className={knapp} onClick={hentInn} title="Flytter punktene utenfor inn til kartkanten">
+          ⤶ Hent inn
+        </button>
+        <button className={knapp} onClick={visHele} title="Zoomer og flytter kartet så hele veien synes">
+          ⤢ Vis hele veien
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function RuteEgenskaper({ rute }: { rute: Rute }) {
   const modus = useSkilt((t) => t.modus);
   const { endreRute, settModus, avsluttTegning, slettRute, settRutepunkter, velg } = useSkilt.getState();
@@ -179,6 +236,7 @@ export function RuteEgenskaper({ rute }: { rute: Rute }) {
             <button className={knapp} onClick={() => settModus({ type: 'tegn-rute', ruteId: rute.id })}>
               ✏️ Tegn videre
             </button>
+            <PunkterUtenforKart rute={rute} />
           </>
         )}
         <Felt etikett="Navn (i tegnforklaringen)">
