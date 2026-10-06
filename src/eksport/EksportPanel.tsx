@@ -4,6 +4,7 @@ import { domToBlob } from 'modern-screenshot';
 import { bildeRammeForCard, cardstil } from '../geometri/card';
 import { effektivDpi, plasser, type Storrelse } from '../geometri/utsnitt';
 import type { Skilt } from '../modell/typer';
+import type { EksportInfo } from '../modell/versjon';
 import { useSkilt } from '../store';
 import { Lerret } from '../komponenter/Lerret';
 import { Eksportvisning } from '../komponenter/visning';
@@ -307,6 +308,19 @@ function Trykkside({ skilt, children }: { skilt: Skilt; children: ReactNode }) {
 
 const feilmelding = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
+/**
+ * Lagrer skiltet slik det eksporteres som en ny versjon. Eksporten skal ikke feile fordi versjonen
+ * ikke lot seg lagre, så feilen kommer som en tekst til statuslinja.
+ */
+async function lagreVersjonEtterEksport(info: EksportInfo): Promise<string> {
+  try {
+    await useSkilt.getState().lagreVersjon('eksport', info);
+    return ' Versjonen er lagret under «Versjoner».';
+  } catch (e) {
+    return ` Versjonen ble ikke lagret: ${feilmelding(e)}`;
+  }
+}
+
 function PngJobb({ skilt, jobb, onFerdig }: { skilt: Skilt; jobb: Jobb; onFerdig(s: Status): void }) {
   const mappe = useSkilt((t) => t.mappe);
   const { dpi, utkast } = jobb;
@@ -323,7 +337,17 @@ function PngJobb({ skilt, jobb, onFerdig }: { skilt: Skilt; jobb: Jobb; onFerdig
           const bytes = settPngDpi(new Uint8Array(await blob.arrayBuffer()), dpi);
           const navn = filnavn(skilt, dpi, 'png', utkast);
           const sti = await lagreEksport(mappe, navn, new Blob([bytes as BlobPart], { type: 'image/png' }));
-          onFerdig({ type: 'ferdig', tekst: sti ? `✓ Lagret i ${sti}` : `✓ Lastet ned ${navn}` });
+          const versjon = await lagreVersjonEtterEksport({
+            type: 'png',
+            filnavn: navn,
+            dpi,
+            utkast,
+            merker: false,
+          });
+          onFerdig({
+            type: 'ferdig',
+            tekst: `${sti ? `✓ Lagret i ${sti}` : `✓ Lastet ned ${navn}`}.${versjon}`,
+          });
         } catch (e) {
           onFerdig({ type: 'feil', tekst: `PNG feilet: ${feilmelding(e)}` });
         }
@@ -362,14 +386,23 @@ function PdfJobb({ skilt, jobb, onFerdig }: { skilt: Skilt; jobb: Jobb; onFerdig
           try {
             await ventPaBilder(el);
             const tittel = document.title;
-            document.title = filnavn(skilt, dpi, 'pdf', utkast, merker, new Date()).replace(/\.pdf$/, '');
+            const navn = filnavn(skilt, dpi, 'pdf', utkast, merker, new Date());
+            document.title = navn.replace(/\.pdf$/, '');
+            // Versjonen lagres før utskriftsvinduet åpnes, siden vi ikke får vite om du lagret fila
+            const versjon = await lagreVersjonEtterEksport({
+              type: 'pdf',
+              filnavn: navn,
+              dpi,
+              utkast,
+              merker,
+            });
             window.addEventListener(
               'afterprint',
               () => {
                 document.title = tittel;
                 onFerdig({
                   type: 'ferdig',
-                  tekst: '✓ Ferdig. Valgte du «Lagre som PDF», ligger fila der du lagret den.',
+                  tekst: `✓ Ferdig. Valgte du «Lagre som PDF», ligger fila der du lagret den.${versjon}`,
                 });
               },
               { once: true },

@@ -61,6 +61,8 @@ export function startAutolagring(): () => void {
 
   const stopp = useSkilt.subscribe((t, forrige) => {
     if (t.skilt === forrige.skilt || !t.skilt || t.prosjektId !== forrige.prosjektId) return;
+    // Å se på (eller gå tilbake fra) en gammel versjon endrer ikke det som er lagret
+    if (t.versjonsvisning || forrige.versjonsvisning) return;
     t.settLagring({ type: 'endret' });
     clearTimeout(tidtaker);
     tidtaker = setTimeout(lagreNaa, FORSINKELSE_MS);

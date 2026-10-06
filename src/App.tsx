@@ -11,6 +11,7 @@ import { EksportPanel } from './eksport/EksportPanel';
 import { apneProsjekt, glemDemo } from './fil/prosjekt';
 import { Lerret } from './komponenter/Lerret';
 import { Sidepanel } from './komponenter/Sidepanel';
+import { VersjonerPanel, Versjonsbanner } from './komponenter/VersjonerPanel';
 import { Hurtigtaster } from './komponenter/Hurtigtaster';
 import { PILTASTER } from './geometri/tastatur';
 import { useSkilt } from './store';
@@ -39,6 +40,7 @@ export function App() {
         onGjenapne={() => apne(apneForrigeMappe)}
       />
       {feil && <p className="bg-rose-100 px-4 py-2 text-rose-800">{feil}</p>}
+      {skilt && <Versjonsbanner />}
       {skilt ? (
         <div className="flex min-h-0 flex-1">
           <Arbeidsflate />
@@ -75,6 +77,8 @@ function Verktoylinje({
   const harSkilt = useSkilt((t) => t.skilt !== undefined);
   const knapp = 'rounded px-2 py-1 hover:bg-stone-100';
   const [visEksport, settVisEksport] = useState(false);
+  const [visVersjoner, settVisVersjoner] = useState(false);
+  const gammelVersjon = useSkilt((t) => t.versjonsvisning !== undefined);
 
   return (
     <header className="relative flex h-12 shrink-0 items-center gap-2 border-b border-stone-200 bg-white px-3 text-sm">
@@ -112,14 +116,31 @@ function Verktoylinje({
             ⌨
           </button>
           <button
-            className="ml-3 rounded bg-emerald-700 px-3 py-1 text-white hover:bg-emerald-800"
-            onClick={() => settVisEksport(!visEksport)}
+            className={`ml-2 rounded px-2 py-1 ${gammelVersjon ? 'bg-amber-100 text-amber-950' : 'hover:bg-stone-100'}`}
+            aria-expanded={visVersjoner}
+            onClick={() => {
+              settVisVersjoner(!visVersjoner);
+              settVisEksport(false);
+            }}
+            title="Versjoner: hver eksport lagres, og gamle versjoner kan tas i bruk igjen"
+          >
+            🕘 Versjoner
+          </button>
+          <button
+            className="ml-1 rounded bg-emerald-700 px-3 py-1 text-white hover:bg-emerald-800 disabled:opacity-40"
+            disabled={gammelVersjon}
+            title={gammelVersjon ? 'Gå tilbake til nåværende versjon for å eksportere' : undefined}
+            onClick={() => {
+              settVisEksport(!visEksport);
+              settVisVersjoner(false);
+            }}
           >
             ⬇ Eksporter
           </button>
         </div>
       )}
-      {harSkilt && visEksport && <EksportPanel onLukk={() => settVisEksport(false)} />}
+      {harSkilt && visEksport && !gammelVersjon && <EksportPanel onLukk={() => settVisEksport(false)} />}
+      {harSkilt && visVersjoner && <VersjonerPanel onLukk={() => settVisVersjoner(false)} />}
       <Hurtigtaster />
     </header>
   );
@@ -128,6 +149,7 @@ function Verktoylinje({
 /** Scrollbart område rundt lerretet. Ctrl+scroll zoomer visningen. */
 function Arbeidsflate() {
   const skilt = useSkilt((t) => t.skilt)!;
+  const gammelVersjon = useSkilt((t) => t.versjonsvisning !== undefined);
   const flate = useRef<HTMLDivElement>(null);
   const { bredde_mm: B, hoyde_mm: H } = skilt.format;
 
@@ -163,6 +185,8 @@ function Arbeidsflate() {
     const tast = (e: KeyboardEvent) => {
       const s = useSkilt.getState();
       const iSkjema = e.target instanceof HTMLElement && e.target.closest('input, textarea, select');
+      // En gammel versjon kan bare ses på: ingen markering, flytting eller angring
+      if (s.versjonsvisning) return;
       if (s.modus.type === 'tegn-rute') {
         const ruteId = s.modus.ruteId;
         if (e.key === 'Escape' || e.key === 'Enter') return s.avsluttTegning();
@@ -217,7 +241,10 @@ function Arbeidsflate() {
       className="flex min-w-0 flex-1 overflow-auto p-10"
       onPointerDown={() => useSkilt.getState().velg({ type: 'skilt' })}
     >
-      <div className="m-auto">
+      <div
+        className={`m-auto ${gammelVersjon ? 'pointer-events-none' : ''}`}
+        data-skrivebeskyttet={gammelVersjon}
+      >
         <Lerret skilt={skilt} />
       </div>
     </main>
@@ -283,8 +310,9 @@ function Velkommen({
 }
 
 function Angreknapper() {
-  const kanAngre = useSkilt((t) => t.historikk.fortid.length > 0);
-  const kanGjoreOm = useSkilt((t) => t.historikk.fremtid.length > 0);
+  const lest = useSkilt((t) => t.versjonsvisning !== undefined);
+  const kanAngre = useSkilt((t) => t.historikk.fortid.length > 0) && !lest;
+  const kanGjoreOm = useSkilt((t) => t.historikk.fremtid.length > 0) && !lest;
   const { angre, gjorOm } = useSkilt.getState();
   const knapp = 'rounded px-2 py-1 hover:bg-stone-100 disabled:opacity-30';
   return (

@@ -1,6 +1,17 @@
 import { create } from 'zustand';
 import { leggTilFil, ledigSti, type Filmappe } from './fil/mappetilgang';
+import { lesVersjonsfil, lesVersjonsfiler, skrivVersjonsfil } from './fil/versjoner';
 import { nyttUtsnitt } from './modell/importerMappe';
+import { lesSkilt, serialiser } from './modell/lagring';
+import {
+  type EksportInfo,
+  ledigVersjonsId,
+  lesVersjon,
+  nyesteForst,
+  serialiserVersjon,
+  type Versjon,
+  type Versjonskilde,
+} from './modell/versjon';
 import { angre, gjeldendeGest, gjorOm, registrer, tomHistorikk, type Historikk } from './modell/historikk';
 import { DEKORTYPER } from './geometri/dekor';
 import { festHeleRammen, RUTENETT_MM } from './geometri/rutenett';
@@ -113,6 +124,13 @@ interface Tilstand {
   lagring?: Lagringsstatus;
   mappe?: Filmappe;
   skilt?: Skilt;
+  /** Lagrede versjoner (fra eksport), nyeste først */
+  versjoner: Versjon[];
+  /**
+   * Satt mens en gammel versjon vises. `skilt` er da den gamle versjonen (skrivebeskyttet),
+   * og dagens skilt venter i `naavaerende` til du går tilbake.
+   */
+  versjonsvisning?: { versjon: Versjon; naavaerende: Skilt };
   valg: Valg;
   modus: Modus;
   /** Skjermpiksler per mm i editoren */
@@ -126,6 +144,16 @@ interface Tilstand {
   kartbilde?: Storrelse;
 
   apneProsjekt(mappe: Filmappe, skilt: Skilt): void;
+  /** Leser versjonslista fra prosjektmappa */
+  lastVersjoner(): Promise<void>;
+  /** Lagrer dagens skilt som en ny versjon. Returnerer versjonen, eller undefined uten prosjektmappe. */
+  lagreVersjon(kilde: Versjonskilde, eksport?: EksportInfo): Promise<Versjon | undefined>;
+  /** Viser en gammel versjon. Den kan ikke redigeres. */
+  visVersjon(id: string): Promise<void>;
+  /** Går tilbake til dagens skilt fra en gammel versjon */
+  tilbakeTilNaavaerende(): void;
+  /** Gjør den viste gamle versjonen til dagens skilt. Dagens skilt lagres først som sikkerhetskopi. */
+  brukVersjon(): Promise<void>;
   angre(): void;
   gjorOm(): void;
   settLagring(status: Lagringsstatus): void;
@@ -257,7 +285,40 @@ async function bildeaspekt(fil: File): Promise<number> {
   }
 }
 
-export const useSkilt = create<Tilstand>()((set, get) => {
+export const useSkilt = create<Tilstand>()((rawSet, get) => {
+  /**
+   * Mens en gammel versjon vises er skiltet skrivebeskyttet: alle forsøk på å endre `skilt` ignoreres.
+   * Bare overganger som også setter `versjonsvisning` (åpne prosjekt, bytte versjon) slipper gjennom.
+   */
+  const set: typeof rawSet = (delta, erstatt) => {
+    const neste = typeof delta === 'function' ? delta(get()) : delta;
+    if (get().versjonsvisning && neste && 'skilt' in neste && !('versjonsvisning' in neste)) return;
+    (rawSet as (p: unknown, r?: boolean) => void)(neste, erstatt);
+  };
+  /** Bytter mellom dagens skilt og en gammel versjon uten å lage angresteg */
+  const bytt = (endring: Partial<Tilstand>) => {
+    gjenoppretter = true;
+    rawSet({ valg: { type: 'skilt' }, modus: { type: 'normal' }, tekstOverflyt: {}, ...endring });
+    gjenoppretter = false;
+  };
+  const skrivNyVersjon = async (skilt: Skilt, kilde: Versjonskilde, eksport?: EksportInfo) => {
+    const { mappe, versjoner } = get();
+    if (!mappe) return undefined;
+    const naa = new Date();
+    const versjon: Versjon = {
+      id: ledigVersjonsId(
+        naa,
+        versjoner.map((v) => v.id),
+      ),
+      tid: naa.toISOString(),
+      kilde,
+      eksport,
+    };
+    await skrivVersjonsfil(mappe, versjon.id, serialiserVersjon(skilt, versjon));
+    set({ versjoner: [versjon, ...get().versjoner].sort(nyesteForst) });
+    return versjon;
+  };
+
   const endreCards = (fn: (cards: Card[], s: Skilt) => Partial<Skilt>) =>
     set((t) => (t.skilt ? { skilt: { ...t.skilt, ...fn(t.skilt.cards, t.skilt) } } : {}));
   const endreRuter = (fn: (r: Rute) => Rute) =>
@@ -272,6 +333,7 @@ export const useSkilt = create<Tilstand>()((set, get) => {
     visHurtigtaster: false,
     prosjektId: 0,
     historikk: tomHistorikk(),
+    versjoner: [],
 
     apneProsjekt: (mappe, skilt) =>
       set((t) => ({
@@ -283,7 +345,56 @@ export const useSkilt = create<Tilstand>()((set, get) => {
         prosjektId: t.prosjektId + 1,
         historikk: tomHistorikk(),
         lagring: undefined,
+        versjoner: [],
+        versjonsvisning: undefined,
       })),
+    lastVersjoner: async () => {
+      const { mappe, prosjektId } = get();
+      if (!mappe) return;
+      const filer = await lesVersjonsfiler(mappe);
+      const lest: Versjon[] = [];
+      for (const [id, tekst] of Object.entries(filer)) {
+        try {
+          lest.push(lesVersjon(id, tekst).versjon);
+        } catch {
+          // Ødelagte filer i versjonsmappa hoppes over
+        }
+      }
+      if (get().prosjektId === prosjektId) set({ versjoner: lest.sort(nyesteForst) });
+    },
+    lagreVersjon: (kilde, eksport) => {
+      const { skilt, versjonsvisning } = get();
+      const dagens = versjonsvisning?.naavaerende ?? skilt;
+      return dagens ? skrivNyVersjon(dagens, kilde, eksport) : Promise.resolve(undefined);
+    },
+    visVersjon: async (id) => {
+      const { mappe, skilt, versjonsvisning } = get();
+      if (!mappe || !skilt) return;
+      const { versjon, skilt: gammel } = lesVersjon(id, await lesVersjonsfil(mappe, id));
+      bytt({
+        skilt: gammel,
+        versjonsvisning: { versjon, naavaerende: versjonsvisning?.naavaerende ?? skilt },
+      });
+    },
+    tilbakeTilNaavaerende: () => {
+      const v = get().versjonsvisning;
+      if (v) bytt({ skilt: v.naavaerende, versjonsvisning: undefined });
+    },
+    brukVersjon: async () => {
+      const { versjonsvisning: v, skilt: gammel, versjoner, mappe } = get();
+      if (!v || !gammel || !mappe) return;
+      // Sikkerhetskopi av dagens skilt, med mindre det er likt den siste versjonen
+      const siste = versjoner[0];
+      const sisteSkilt = siste && lesVersjon(siste.id, await lesVersjonsfil(mappe, siste.id)).skilt;
+      // Begge går via lesSkilt, så feltrekkefølge og standardverdier er like før sammenligningen
+      const normalisert = (sk: Skilt) => JSON.stringify(lesSkilt(serialiser(sk)));
+      if (!sisteSkilt || normalisert(sisteSkilt) !== normalisert(v.naavaerende)) {
+        await skrivNyVersjon(v.naavaerende, 'for-bytte');
+      }
+      get().tilbakeTilNaavaerende();
+      // Vanlig endring: kan angres og lagres automatisk
+      get().endreSkilt(() => gammel);
+    },
     angre: () => {
       const { skilt, historikk } = get();
       const r = skilt && angre(historikk, skilt);

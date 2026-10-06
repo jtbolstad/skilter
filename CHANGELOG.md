@@ -5,6 +5,14 @@ og versjonsnumrene følger [semantisk versjonering](https://semver.org/lang/no/)
 
 ## [Ikke utgitt]
 
+### Lagt til
+
+- **Versjonshistorikk**: hver eksport (PDF og PNG) lagrer skiltet som en versjon i mappa `versjoner/`.
+  Under «🕘 Versjoner» kan du se tidligere versjoner (skrivebeskyttet) og velge «Bruk denne versjonen».
+  Dagens skilt lagres da først som en sikkerhetskopi, og byttet kan angres.
+- **Versjonsnummeret** står i en HTML-kommentar øverst i `index.html` (`<!-- Skilter 0.5.0 -->`), så det kan
+  ses i kildekoden til den bygde appen.
+
 ## [0.5.0] – 2026-10-06
 
 ### Lagt til
