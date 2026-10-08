@@ -78,6 +78,24 @@ describe('lagring', () => {
     });
   });
 
+  it('nye kartstiler uten tekst godtas i osm-utsnittet', () => {
+    for (const stil of ['liberty-uten-tekst', 'kv-topo-uten-tekst']) {
+      const tekst = JSON.stringify({
+        app: 'skilter',
+        versjon: 1,
+        skilt: {
+          kart: {
+            ramme: { x: 0, y: 0, b: 1, h: 1 },
+            osm: { stil, senter: [10, 60], zoom: 12, velgerbredde: 800, tekstskala: 1 },
+          },
+        },
+      });
+      const { skilt, info } = lesSkiltMedInfo(tekst);
+      expect(info.ignorert).toEqual([]);
+      expect(skilt.kart.osm?.stil).toBe(stil);
+    }
+  });
+
   it('fil uten appversjon gir ukjent appversjon', () => {
     const { info } = lesSkiltMedInfo(JSON.stringify({ app: 'skilter', versjon: 1, skilt: {} }));
     expect(info.appVersjon).toBeUndefined();

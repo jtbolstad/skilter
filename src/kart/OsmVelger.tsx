@@ -6,9 +6,12 @@ import type { Osmstil } from '../modell/typer';
 import { useSkilt } from '../store';
 import { Gruppe, input, knapp } from '../komponenter/Skjema';
 import {
+  erRaster,
+  harInnbakteTekst,
   kartstil,
-  KARTVERKET_MAKSZOOM,
+  lastKartstil,
   LEVERANDORNAVN,
+  maksZoomFor,
   OSM_STILER,
   rasterzoom,
   type Kartleverandor,
@@ -20,6 +23,9 @@ import {
   tegnKart,
   type Sokeresultat,
 } from './osm';
+
+/** Tom stil mens en tekstfri vektorstil hentes */
+const TOM_STIL = { version: 8 as const, sources: {}, layers: [] };
 
 const valgKnapp = (aktiv: boolean) =>
   `flex-1 rounded border px-2 py-1 ${aktiv ? 'border-sky-500 bg-sky-50 text-sky-900' : 'border-stone-300 hover:bg-stone-100'}`;
@@ -33,7 +39,9 @@ export default function OsmVelger({ onLukk }: { onLukk(melding?: string): void }
   const beholder = useRef<HTMLDivElement>(null);
   const kartRef = useRef<Kart>(undefined);
   const [stil, settStil] = useState<Osmstil>(forrige?.stil ?? 'liberty');
-  const forrigeRaster = !!forrige && !!OSM_STILER[forrige.stil].lag;
+  const stilRef = useRef(stil);
+  stilRef.current = stil;
+  const forrigeRaster = !!forrige && harInnbakteTekst(forrige.stil);
   const [vektorTekst, settVektorTekst] = useState(forrige && !forrigeRaster ? forrige.tekstskala : 1);
   // Rasterkart: tekststørrelse i forhold til forhåndsvisningen (tekst bakt inn i flisene)
   const [rasterTekst, settRasterTekst] = useState(forrige && forrigeRaster ? forrige.tekstskala : 0.5);
@@ -52,9 +60,11 @@ export default function OsmVelger({ onLukk }: { onLukk(melding?: string): void }
     const start = forrige
       ? { center: forrige.senter, zoom: forrige.zoom + Math.log2(storrelse.b / forrige.velgerbredde) }
       : { center: STANDARD_SENTER, zoom: STANDARD_ZOOM };
+    const startstil = forrige?.stil ?? 'liberty';
     const kart = new Kart({
       container: el,
-      style: kartstil(forrige?.stil ?? 'liberty'),
+      // Tekstfrie vektorstiler hentes og renses etterpå (se under)
+      style: OSM_STILER[startstil].tekstfri && !erRaster(startstil) ? TOM_STIL : kartstil(startstil),
       ...start,
       dragRotate: false,
       pitchWithRotate: false,
@@ -75,12 +85,30 @@ export default function OsmVelger({ onLukk }: { onLukk(melding?: string): void }
     settZoom(kart.getZoom());
     kart.on('zoom', () => settZoom(kart.getZoom()));
     kartRef.current = kart;
+    if (OSM_STILER[startstil].tekstfri && !erRaster(startstil)) {
+      lastKartstil(startstil)
+        .then((s) => {
+          if (kartRef.current === kart) kart.setStyle(s);
+        })
+        .catch((e: unknown) =>
+          settStatus({ type: 'feil', melding: e instanceof Error ? e.message : String(e) }),
+        );
+    }
     return () => kart.remove();
   }, []);
 
   const byttStil = (ny: Osmstil) => {
     settStil(ny);
-    kartRef.current?.setStyle(kartstil(ny));
+    const kart = kartRef.current;
+    if (!kart) return;
+    lastKartstil(ny)
+      .then((s) => {
+        // Ignorer svaret hvis du har valgt en annen stil i mellomtiden
+        if (stilRef.current === ny) kart.setStyle(s);
+      })
+      .catch((e: unknown) =>
+        settStatus({ type: 'feil', melding: e instanceof Error ? e.message : String(e) }),
+      );
   };
 
   const utforSok = async () => {
@@ -108,8 +136,10 @@ export default function OsmVelger({ onLukk }: { onLukk(melding?: string): void }
     settTreff(undefined);
   };
 
-  const raster = !!OSM_STILER[stil].lag;
-  const tekstskala = raster ? rasterTekst : vektorTekst;
+  const raster = erRaster(stil);
+  const innbakt = harInnbakteTekst(stil);
+  // Rasterkart uten tekst gjengis alltid i full skarphet (tekstskala nær 0 gir høyest flisforhold)
+  const tekstskala = innbakt ? rasterTekst : raster ? 0.01 : vektorTekst;
   const gjengivelse = kartgjengivelse(
     skiltkart.ramme,
     { bredde: storrelse.b, zoom },
@@ -118,7 +148,7 @@ export default function OsmVelger({ onLukk }: { onLukk(melding?: string): void }
     raster,
   );
   // Rasterfliser over maks zoom skaleres opp: effektiv oppløsning synker med en faktor 2 per nivå
-  const overzoom = raster ? rasterzoom(gjengivelse.zoom, gjengivelse.flisforhold) - KARTVERKET_MAKSZOOM : 0;
+  const overzoom = raster ? rasterzoom(gjengivelse.zoom, gjengivelse.flisforhold) - maksZoomFor(stil) : 0;
   // Flisene har fast oppløsning: tekst større enn «skarp» er flisene skalert opp
   const flisDpi = gjengivelse.dpi * (gjengivelse.flisforhold / gjengivelse.pixelRatio);
 
@@ -231,7 +261,7 @@ export default function OsmVelger({ onLukk }: { onLukk(melding?: string): void }
             </Gruppe>
           ))}
 
-          {raster ? (
+          {innbakt ? (
             <label className="flex flex-col gap-1">
               <span className="text-stone-600">
                 Tekststørrelse på trykk: {Math.round(rasterTekst * 100)} % av forhåndsvisningen
@@ -251,7 +281,7 @@ export default function OsmVelger({ onLukk }: { onLukk(melding?: string): void }
                 skarp tekst i alle størrelser.
               </span>
             </label>
-          ) : (
+          ) : !OSM_STILER[stil].tekstfri ? (
             <label className="flex flex-col gap-1">
               <span className="text-stone-600">
                 Tekst og symboler på trykk: {Math.round(tekstskala * 100)} %
@@ -269,7 +299,7 @@ export default function OsmVelger({ onLukk }: { onLukk(melding?: string): void }
                 vises endres ikke.
               </span>
             </label>
-          )}
+          ) : null}
 
           <Gruppe etikett="Oppløsning">
             <div className="flex gap-2">

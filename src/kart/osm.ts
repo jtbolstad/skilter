@@ -7,6 +7,13 @@ export const OSM_KILDETEKST = '© OpenStreetMap-bidragsytere · OpenFreeMap';
 /** Kartverkets åpne data (CC BY 4.0) */
 export const KARTVERKET_KILDETEKST = '© Kartverket';
 
+/**
+ * Lagene i Kartverkets topografiske WMS som ikke er tekst (stedsnavn, vegnavn, høydetall og dybdetall er
+ * utelatt). Rekkefølgen er tegnerekkefølgen fra tjenesten.
+ */
+const KV_TOPO_UTEN_TEKST =
+  'kd_hoydelag,kd_arealdekkeflate,fkb_arealdekke,fkb_vann,kd_hoydekurver,fkb_hoydekurver,fjellskygge,kd_vannflate,kd_elver,Dybdelag,Dybdekontur,Torrfall,MudretOmrade_Grense,MudretOmrade,grunne,flytedokk_grense,flytedokk,Torrdokk_Grense,Torrdokk,skjaer_punkt,Konstruertkystkontur,Vannkontur,kd_vannkontur,vannkontur,kd_administrative_grenser,adm_grenser,kd_andre_grenser,kd_verneomradegrense,kd_veger,privatveg,kommunalveg,fylkesveg,riksveg,europaveg,bilferjestrekning,passasjerferje,fkb_bygningsmessigeanlegg,fkb_samferdsel,kd_jernbane,kd_ferger,kd_anleggslinjer,fkb_bygning,fkb_ledning,kd_bygninger,kd_spesiell_detalj,kd_jernbanestasjon,kd_anleggspunkt,kd_bygningspunkt,kd_turisthytte,kd_arealdekkepunkt,kd_tettsted';
+
 export type Kartleverandor = 'openstreetmap' | 'kartverket';
 
 interface Stilvalg {
@@ -17,6 +24,12 @@ interface Stilvalg {
   url?: string;
   /** Kartverket-lag i WMTS-cachen */
   lag?: string;
+  /** Rasterfliser fra en annen leverandør (URL-mal med {z}/{x}/{y}) */
+  fliser?: string;
+  /** Høyeste zoom rasterflisene finnes på. Over dette skaleres flisene opp. */
+  maksZoom?: number;
+  /** Kartet har ingen stedsnavn, gatenavn eller symboler */
+  tekstfri?: boolean;
 }
 
 /**
@@ -41,6 +54,36 @@ export const OSM_STILER: Record<Osmstil, Stilvalg> = {
     leverandor: 'openstreetmap',
     kildetekst: OSM_KILDETEKST,
     url: 'https://tiles.openfreemap.org/styles/positron',
+  },
+  'liberty-uten-tekst': {
+    navn: 'Standard, uten tekst',
+    leverandor: 'openstreetmap',
+    kildetekst: OSM_KILDETEKST,
+    url: 'https://tiles.openfreemap.org/styles/liberty',
+    tekstfri: true,
+  },
+  'bright-uten-tekst': {
+    navn: 'Klar, uten tekst',
+    leverandor: 'openstreetmap',
+    kildetekst: OSM_KILDETEKST,
+    url: 'https://tiles.openfreemap.org/styles/bright',
+    tekstfri: true,
+  },
+  'positron-uten-tekst': {
+    navn: 'Lys og dempet, uten tekst',
+    leverandor: 'openstreetmap',
+    kildetekst: OSM_KILDETEKST,
+    url: 'https://tiles.openfreemap.org/styles/positron',
+    tekstfri: true,
+  },
+  'kv-topo-uten-tekst': {
+    navn: 'Topografisk, uten tekst',
+    leverandor: 'kartverket',
+    kildetekst: KARTVERKET_KILDETEKST,
+    // WMS (ikke flisecache), så lagene kan velges. MapLibre setter inn flisens utstrekning i {bbox-epsg-3857}.
+    fliser: `https://wms.geonorge.no/skwms1/wms.topo?service=WMS&version=1.1.1&request=GetMap&layers=${KV_TOPO_UTEN_TEKST}&styles=&format=image/png&transparent=false&srs=EPSG:3857&width=256&height=256&bbox={bbox-epsg-3857}`,
+    maksZoom: 18,
+    tekstfri: true,
   },
   'kv-topo': {
     navn: 'Topografisk',
@@ -67,6 +110,32 @@ export const LEVERANDORNAVN: Record<Kartleverandor, string> = {
   kartverket: 'Kartverket',
 };
 
+/** Rasterkart (fliser) i motsetning til vektorkart. Flisene har fast oppløsning. */
+export const erRaster = (stil: Osmstil): boolean => !!(OSM_STILER[stil].lag || OSM_STILER[stil].fliser);
+
+/** Teksten er bakt inn i kartbildet, så størrelsen følger zoomnivået */
+export const harInnbakteTekst = (stil: Osmstil): boolean => erRaster(stil) && !OSM_STILER[stil].tekstfri;
+
+/** Høyeste zoom rasterflisene finnes på */
+export const maksZoomFor = (stil: Osmstil): number => OSM_STILER[stil].maksZoom ?? KARTVERKET_MAKSZOOM;
+
+/** Fjerner alle symbollag (stedsnavn, gatenavn, husnummer, symboler) fra en vektorstil */
+export function utenTekstlag(stil: StyleSpecification): StyleSpecification {
+  return { ...stil, layers: stil.layers.filter((l) => l.type !== 'symbol') };
+}
+
+/**
+ * Stilen til et kart, klar for MapLibre. Tekstfrie vektorstiler hentes og får symbollagene fjernet,
+ * andre stiler er som `kartstil`.
+ */
+export async function lastKartstil(stil: Osmstil, pixelRatio = 1): Promise<string | StyleSpecification> {
+  const valg = OSM_STILER[stil];
+  if (!valg.url || !valg.tekstfri) return kartstil(stil, pixelRatio);
+  const svar = await fetch(valg.url);
+  if (!svar.ok) throw new Error(`Kunne ikke hente kartstilen (${svar.status})`);
+  return utenTekstlag((await svar.json()) as StyleSpecification);
+}
+
 /** Høyeste zoom Kartverket-cachen har fliser for */
 export const KARTVERKET_MAKSZOOM = 18;
 
@@ -82,10 +151,13 @@ export function kartstil(stil: Osmstil, pixelRatio = 1): string | StyleSpecifica
     sources: {
       kartverket: {
         type: 'raster',
-        tiles: [`https://cache.kartverket.no/v1/wmts/1.0.0/${valg.lag}/default/webmercator/{z}/{y}/{x}.png`],
+        tiles: [
+          valg.fliser ??
+            `https://cache.kartverket.no/v1/wmts/1.0.0/${valg.lag}/default/webmercator/{z}/{y}/{x}.png`,
+        ],
         tileSize: 256 / Math.max(1, pixelRatio),
-        maxzoom: KARTVERKET_MAKSZOOM,
-        attribution: KARTVERKET_KILDETEKST,
+        maxzoom: maksZoomFor(stil),
+        attribution: valg.kildetekst,
       },
     },
     layers: [{ id: 'kartverket', type: 'raster', source: 'kartverket' }],
@@ -124,6 +196,7 @@ export async function tegnKart(
   tidsfrist = 90_000,
 ): Promise<Tegnet> {
   const { Map: Kart } = await lastMaplibre();
+  const stilen = await lastKartstil(stil, g.flisforhold);
   const beholder = document.createElement('div');
   Object.assign(beholder.style, {
     position: 'fixed',
@@ -136,7 +209,7 @@ export async function tegnKart(
 
   const kart = new Kart({
     container: beholder,
-    style: kartstil(stil, g.flisforhold),
+    style: stilen,
     center: senter,
     zoom: g.zoom,
     bearing: 0,

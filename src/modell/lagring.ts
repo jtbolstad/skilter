@@ -149,7 +149,18 @@ const SKILT: Skjema = obj({
     geo: obj({ vest: num, ost: num, nord: num, sor: num }, 'vest', 'ost', 'nord', 'sor'),
     osm: obj(
       {
-        stil: enumav('liberty', 'bright', 'positron', 'kv-topo', 'kv-graatone', 'kv-raster'),
+        stil: enumav(
+          'liberty',
+          'bright',
+          'positron',
+          'liberty-uten-tekst',
+          'bright-uten-tekst',
+          'positron-uten-tekst',
+          'kv-topo-uten-tekst',
+          'kv-topo',
+          'kv-graatone',
+          'kv-raster',
+        ),
         senter: tuppel(num, num),
         zoom: num,
         velgerbredde: num,
