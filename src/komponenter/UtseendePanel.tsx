@@ -169,6 +169,13 @@ export function AlleCards({ skilt }: { skilt: Skilt }) {
         onEndre={(v) => endreAlleCards(() => ({ tekststorrelse: v }))}
       />
       <Prosent
+        etikett="Foto-byline"
+        verdi={tema.bylinestorrelse ?? 1}
+        min={0.5}
+        maks={3}
+        onEndre={(v) => endreTema({ bylinestorrelse: v })}
+      />
+      <Prosent
         etikett="Rammetykkelse"
         verdi={tema.kantbredde}
         min={0}

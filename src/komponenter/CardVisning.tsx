@@ -44,6 +44,7 @@ export function CardVisning({ card }: { card: Card }) {
   const skala = useSkala();
   const stil = useCardstil();
   const avrundet = useSkilt((t) => t.skilt!.tema.avrundedeBilder);
+  const bylinestorrelse = useSkilt((t) => t.skilt!.tema.bylinestorrelse ?? 1);
   const { velg, endreCard, endreBilde, settModus } = useSkilt.getState();
   const [slippMal, settSlippMal] = useState(false);
 
@@ -107,7 +108,8 @@ export function CardVisning({ card }: { card: Card }) {
             <span
               className="pointer-events-none absolute right-0 bottom-0 text-white italic"
               style={{
-                fontSize: px(m.tekst * 0.55),
+                // Byline følger formatet, ikke tekststørrelsen i cardet
+                fontSize: px((m.tekst / card.tekststorrelse) * 0.55 * bylinestorrelse),
                 padding: `0 ${px(m.pad * 0.3)}px`,
                 textShadow: '0 0 3px rgb(0 0 0 / .8)',
               }}

@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { leggTilFil, ledigSti, type Filmappe } from './fil/mappetilgang';
 import { lesVersjonsfil, lesVersjonsfiler, skrivVersjonsfil } from './fil/versjoner';
 import { nyttUtsnitt } from './modell/importerMappe';
-import { lesSkilt, serialiser } from './modell/lagring';
+import { type Lesinfo, lesSkilt, serialiser } from './modell/lagring';
 import {
   type EksportInfo,
   ledigVersjonsId,
@@ -143,7 +143,11 @@ interface Tilstand {
   /** Pikselstørrelsen på kartbildet, når det er lastet – trengs for å flytte punkter i mm */
   kartbilde?: Storrelse;
 
-  apneProsjekt(mappe: Filmappe, skilt: Skilt): void;
+  /** `info` er det som ble lagt merke til da skilt.json ble lest (annen appversjon, ignorerte felt) */
+  apneProsjekt(mappe: Filmappe, skilt: Skilt, info?: Lesinfo): void;
+  prosjektInfo?: Lesinfo;
+  /** Skjuler meldingen om hvilken versjon skiltet er laget med */
+  lukkProsjektInfo(): void;
   /** Leser versjonslista fra prosjektmappa */
   lastVersjoner(): Promise<void>;
   /** Lagrer dagens skilt som en ny versjon. Returnerer versjonen, eller undefined uten prosjektmappe. */
@@ -335,10 +339,12 @@ export const useSkilt = create<Tilstand>()((rawSet, get) => {
     historikk: tomHistorikk(),
     versjoner: [],
 
-    apneProsjekt: (mappe, skilt) =>
+    lukkProsjektInfo: () => set({ prosjektInfo: undefined }),
+    apneProsjekt: (mappe, skilt, info) =>
       set((t) => ({
         mappe,
         skilt,
+        prosjektInfo: info,
         valg: { type: 'skilt' },
         modus: { type: 'normal' },
         tekstOverflyt: {},

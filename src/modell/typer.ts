@@ -229,6 +229,8 @@ export interface Tema {
   lenkebredde: number;
   /** Bildene i cards får samme hjørneradius som cardene */
   avrundedeBilder: boolean;
+  /** Størrelse på foto-bylinen (krediteringen) på alle bilder, uavhengig av tekststørrelsen i cards. Mangler = 1. */
+  bylinestorrelse?: number;
 }
 
 export interface Skilt {

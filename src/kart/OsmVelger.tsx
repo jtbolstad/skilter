@@ -33,7 +33,10 @@ export default function OsmVelger({ onLukk }: { onLukk(melding?: string): void }
   const beholder = useRef<HTMLDivElement>(null);
   const kartRef = useRef<Kart>(undefined);
   const [stil, settStil] = useState<Osmstil>(forrige?.stil ?? 'liberty');
-  const [tekstskala, settTekstskala] = useState(forrige?.tekstskala ?? 1.4);
+  const forrigeRaster = !!forrige && !!OSM_STILER[forrige.stil].lag;
+  const [vektorTekst, settVektorTekst] = useState(forrige && !forrigeRaster ? forrige.tekstskala : 1);
+  // Rasterkart: tekststørrelse i forhold til forhåndsvisningen (tekst bakt inn i flisene)
+  const [rasterTekst, settRasterTekst] = useState(forrige && forrigeRaster ? forrige.tekstskala : 0.5);
   const [dpi, settDpi] = useState<150 | 300>(skilt.format.dpi);
   const [sok, settSok] = useState('');
   const [treff, settTreff] = useState<Sokeresultat[]>();
@@ -105,10 +108,19 @@ export default function OsmVelger({ onLukk }: { onLukk(melding?: string): void }
     settTreff(undefined);
   };
 
-  const gjengivelse = kartgjengivelse(skiltkart.ramme, { bredde: storrelse.b, zoom }, dpi, tekstskala);
   const raster = !!OSM_STILER[stil].lag;
+  const tekstskala = raster ? rasterTekst : vektorTekst;
+  const gjengivelse = kartgjengivelse(
+    skiltkart.ramme,
+    { bredde: storrelse.b, zoom },
+    dpi,
+    tekstskala,
+    raster,
+  );
   // Rasterfliser over maks zoom skaleres opp: effektiv oppløsning synker med en faktor 2 per nivå
-  const overzoom = raster ? rasterzoom(gjengivelse.zoom, gjengivelse.pixelRatio) - KARTVERKET_MAKSZOOM : 0;
+  const overzoom = raster ? rasterzoom(gjengivelse.zoom, gjengivelse.flisforhold) - KARTVERKET_MAKSZOOM : 0;
+  // Flisene har fast oppløsning: tekst større enn «skarp» er flisene skalert opp
+  const flisDpi = gjengivelse.dpi * (gjengivelse.flisforhold / gjengivelse.pixelRatio);
 
   const bruk = async () => {
     const kart = kartRef.current;
@@ -117,7 +129,7 @@ export default function OsmVelger({ onLukk }: { onLukk(melding?: string): void }
     try {
       const velger = { bredde: storrelse.b, zoom: kart.getZoom() };
       const senter = kart.getCenter().toArray() as [number, number];
-      const g = kartgjengivelse(skiltkart.ramme, velger, dpi, tekstskala);
+      const g = kartgjengivelse(skiltkart.ramme, velger, dpi, tekstskala, raster);
       const tegnet = await tegnKart(stil, senter, g);
       const sti = osmFilnavn(stil);
       const { lagreFil, byttKartbilde } = useSkilt.getState();
@@ -220,9 +232,25 @@ export default function OsmVelger({ onLukk }: { onLukk(melding?: string): void }
           ))}
 
           {raster ? (
-            <p className="text-xs text-stone-500">
-              Kartverket-kart er ferdigtegnede bilder: tekststørrelsen følger zoomnivået.
-            </p>
+            <label className="flex flex-col gap-1">
+              <span className="text-stone-600">
+                Tekststørrelse på trykk: {Math.round(rasterTekst * 100)} % av forhåndsvisningen
+              </span>
+              <input
+                type="range"
+                aria-label="Tekststørrelse på trykk"
+                min={0.2}
+                max={1}
+                step={0.05}
+                value={rasterTekst}
+                onChange={(e) => settRasterTekst(Number(e.target.value))}
+              />
+              <span className="text-xs text-stone-500">
+                Teksten i Kartverket-kart er en del av kartbildet. Større tekst betyr at kartbildet forstørres
+                og blir uskarpere (ca. {Math.round(flisDpi)} DPI på detaljene). OpenStreetMap-stilene har
+                skarp tekst i alle størrelser.
+              </span>
+            </label>
           ) : (
             <label className="flex flex-col gap-1">
               <span className="text-stone-600">
@@ -234,10 +262,11 @@ export default function OsmVelger({ onLukk }: { onLukk(melding?: string): void }
                 max={2.5}
                 step={0.1}
                 value={tekstskala}
-                onChange={(e) => settTekstskala(Number(e.target.value))}
+                onChange={(e) => settVektorTekst(Number(e.target.value))}
               />
               <span className="text-xs text-stone-500">
-                Større verdi gir større navn og veier på skiltet. Området som vises endres ikke.
+                100 % gir samme tekststørrelse i forhold til kartet som her i forhåndsvisningen. Området som
+                vises endres ikke.
               </span>
             </label>
           )}

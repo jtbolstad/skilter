@@ -81,9 +81,10 @@ describe('kartgjengivelse', () => {
 
   it('justerer zoom så beholderen viser samme område som velgeren', () => {
     const g = kartgjengivelse(ramme, { bredde: 600, zoom: 14 }, 150, 1);
-    // Beholderen er 310 mm × 96/25,4 ≈ 1172 px, altså ca. 2 × velgeren → én zoom opp
-    expect(g.zoom).toBeCloseTo(14 + Math.log2(g.beholderB / 600));
-    expect(g.zoom).toBeGreaterThan(14.9);
+    // Ved tekstskala 1 er beholderen like bred som velgeren: samme zoom og samme tekststørrelse
+    expect(g.beholderB).toBeCloseTo(600);
+    expect(g.beholderH / g.beholderB).toBeCloseTo(480 / 310);
+    expect(g.zoom).toBeCloseTo(14);
   });
 
   it('større tekstskala gir mindre beholder og større tekst', () => {
@@ -92,6 +93,16 @@ describe('kartgjengivelse', () => {
     expect(stor.beholderB).toBeCloseTo(vanlig.beholderB / 2);
     expect(stor.pixelRatio).toBeCloseTo(vanlig.pixelRatio * 2);
     expect(stor.zoom).toBeCloseTo(vanlig.zoom - 1);
+  });
+
+  it('rasterkart: tekstskala styrer flisforholdet, ikke beholderen', () => {
+    const lav = kartgjengivelse(ramme, { bredde: 600, zoom: 14 }, 300, 0.25, true);
+    const hel = kartgjengivelse(ramme, { bredde: 600, zoom: 14 }, 300, 1, true);
+    expect(lav.beholderB).toBeCloseTo(600);
+    expect(hel.beholderB).toBeCloseTo(600);
+    expect(hel.flisforhold).toBe(1);
+    expect(lav.flisforhold).toBeCloseTo(4);
+    expect(lav.zoom).toBeCloseTo(14);
   });
 
   it('begrenser store kart og oppgir faktisk DPI', () => {

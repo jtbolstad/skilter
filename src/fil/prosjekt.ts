@@ -1,6 +1,6 @@
 import { del, get, set } from 'idb-keyval';
 import { importerMappe } from '../modell/importerMappe';
-import { lesSkilt, PROSJEKTFIL, serialiser } from '../modell/lagring';
+import { type Lesinfo, lesSkiltMedInfo, PROSJEKTFIL, serialiser } from '../modell/lagring';
 import type { Skilt } from '../modell/typer';
 import { useSkilt } from '../store';
 import { skrivFil, type Filmappe } from './mappetilgang';
@@ -11,18 +11,19 @@ const demoNokkel = (mappe: Filmappe) =>
 const FORSINKELSE_MS = 800;
 
 /** Åpner mappa: bruker skilt.json hvis den finnes, ellers lages skiltet fra tekst.txt og bildemappene. */
-export async function lesProsjekt(mappe: Filmappe): Promise<Skilt> {
+export async function lesProsjekt(mappe: Filmappe): Promise<{ skilt: Skilt; info?: Lesinfo }> {
   if (!mappe.handle) {
     const lagret = await get<string>(demoNokkel(mappe));
-    if (lagret) return lesSkilt(lagret);
+    if (lagret) return lesSkiltMedInfo(lagret);
   } else if (mappe.filer.includes(PROSJEKTFIL)) {
-    return lesSkilt(await mappe.lesTekst(PROSJEKTFIL));
+    return lesSkiltMedInfo(await mappe.lesTekst(PROSJEKTFIL));
   }
-  return importerMappe(mappe);
+  return { skilt: await importerMappe(mappe) };
 }
 
 export async function apneProsjekt(mappe: Filmappe): Promise<void> {
-  useSkilt.getState().apneProsjekt(mappe, await lesProsjekt(mappe));
+  const { skilt, info } = await lesProsjekt(mappe);
+  useSkilt.getState().apneProsjekt(mappe, skilt, info);
 }
 
 /** Demomappene lagrer i IndexedDB i stedet for på disk. Dette glemmer det lagrede skiltet. */

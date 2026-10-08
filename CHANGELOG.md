@@ -5,6 +5,24 @@ og versjonsnumrene følger [semantisk versjonering](https://semver.org/lang/no/)
 
 ## [Ikke utgitt]
 
+## [0.7.0] – 2026-10-09
+
+### Lagt til
+
+- **Tåler endringer i skilt.json**: felt som ikke finnes i denne versjonen, eller som har feil type eller
+  verdi, ignoreres i stedet for å krasje appen. Fila åpnes også når den er lagret i et nyere filformat.
+- **Appversjon i skilt.json** (`app_versjon`, ved siden av filformatets `versjon`). Når skiltet er laget med
+  en annen versjon enn den du bruker, vises en melding om det, og om noe ble ignorert.
+- **Foto-byline**: glidebryter under «Alle cards» som styrer størrelsen på krediteringen på alle bilder,
+  uavhengig av tekststørrelsen i cardene.
+
+### Endret
+
+- **Tekst i nettkart** får nå samme størrelse i forhold til kartutsnittet som i forhåndsvisningen (100 %).
+  Før ble gatenavn og stedsnavn mye mindre på skiltet enn i forhåndsvisningen.
+- **Kartverket-kart** har en egen glidebryter for tekststørrelsen (standard 50 % av forhåndsvisningen, mot
+  rundt 20–25 % før). Teksten er en del av kartbildet, så større tekst gir et uskarpere kart.
+
 ## [0.6.0] – 2026-10-06
 
 ### Lagt til
@@ -124,6 +142,7 @@ Første utgivelse, med Windows-installer.
 - Skrivebordsapp for Windows (Tauri).
 
 [Ikke utgitt]: https://github.com/jtbolstad/skilter/compare/v0.6.0...HEAD
+[0.7.0]: https://github.com/jtbolstad/skilter/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/jtbolstad/skilter/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/jtbolstad/skilter/compare/v0.4.1...v0.5.0
 [0.4.1]: https://github.com/jtbolstad/skilter/compare/v0.4.0...v0.4.1

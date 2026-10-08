@@ -187,7 +187,7 @@ Originalfila endres aldri. Du kan alltid endre utsnittet eller trykke **Tilbakes
 - **Zoom** med glidebryteren.
 - **Fyll ramma** eller **Vis hele** bildet.
 - **⟲ 90° / ⟳ 90°** roterer, **⇋ Speilvend** snur bildet, **Rett opp** retter skjev horisont (±10°).
-- **Kreditering** («Foto: …») vises i hjørnet av bildet på skiltet.
+- **Kreditering** («Foto: …») vises i hjørnet av bildet på skiltet. Størrelsen styres for alle bilder samtidig med **Foto-byline** under «Alle cards», uavhengig av tekststørrelsen i cardene.
 
 **Effektiv oppløsning** viser hvor skarpt bildet blir på trykk: grønt er bra, gult kan bli uskarpt
 (under 200 DPI) og rødt blir tydelig uskarpt (under 120 DPI). Zoomer du mye inn i et lite bilde, faller
@@ -332,6 +332,11 @@ Ny dekor legges foran kort, kart og banner, og den du la til sist, ligger øvers
 **Alt lagres automatisk** i `skilt.json` i prosjektmappa, rett etter hver endring. Verktøylinja viser
 «✓ Lagret» med klokkeslett. Nettleseren advarer hvis du lukker før lagringen er ferdig. Ligger mappa i
 Dropbox eller OneDrive, får du sikkerhetskopi automatisk.
+
+**Skilt fra en annen versjon av Skilter:** `skilt.json` husker hvilken appversjon som lagret den. Er den
+laget med en annen versjon enn den du bruker, vises en melding øverst. Felt som ikke passer med denne
+versjonen ignoreres i stedet for å stoppe appen, og meldingen sier hvor mange. Ignorerte felt fjernes fra
+fila neste gang den lagres, så åpne ikke et nyere skilt i en eldre versjon hvis du vil beholde alt.
 
 **Angre og gjør om:** ↶ og ↷ i verktøylinja, eller **Ctrl + Z** og **Ctrl + Y**. En hel dra-bevegelse
 er ett steg, og hvert klikk er et eget steg. I tekstfelt angrer Ctrl + Z skrivingen i feltet.

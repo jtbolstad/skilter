@@ -59,8 +59,6 @@ export function kalibreringFraGeo(geo: Georeferanse): Kalibrering {
 
 /** Største side MapLibre får tegne. Større lerret feiler på mange skjermkort. */
 export const MAKS_KARTPIKSLER = 8192;
-/** CSS-piksler per mm når tekst i kartet skal ha «vanlig» skjermstørrelse på trykk (96 DPI). */
-const PX_PER_MM = 96 / 25.4;
 
 export interface Kartgjengivelse {
   /** Størrelsen på kartets beholder i CSS-piksler */
@@ -69,6 +67,11 @@ export interface Kartgjengivelse {
   /** Zoomnivå for beholderen, slik at den viser samme område som velgeren */
   zoom: number;
   pixelRatio: number;
+  /**
+   * Hvor mange ganger mindre rasterflisene tegnes enn i velgeren (1 = samme zoom som velgeren, og
+   * dermed samme tekststørrelse). Høyere verdi gir mindre tekst og skarpere kart.
+   */
+  flisforhold: number;
   breddePx: number;
   hoydePx: number;
   /** Faktisk oppløsning på trykk */
@@ -81,16 +84,21 @@ export interface Kartgjengivelse {
  * Hvordan kartet tegnes i trykkoppløsning.
  * @param ramme kartrammen på skiltet (mm)
  * @param velger størrelse (CSS px) og zoom på kartet brukeren valgte utsnitt i
- * @param tekstskala 1 = tekst i kartet får samme størrelse som på en vanlig skjerm; 2 = dobbelt så stor
+ * @param tekstskala 1 = teksten får samme størrelse i forhold til kartutsnittet som i velgeren; 2 = dobbelt så stor.
+ *   For rasterkart (teksten er en del av flisene) er det i stedet tekststørrelsen i forhold til velgeren,
+ *   fra 0 til 1: lavere verdi gir mindre tekst, men skarpere kart.
  */
 export function kartgjengivelse(
   ramme: { b: number; h: number },
   velger: { bredde: number; zoom: number },
   dpi: number,
   tekstskala: number,
+  raster = false,
 ): Kartgjengivelse {
-  const beholderB = (ramme.b * PX_PER_MM) / tekstskala;
-  const beholderH = (ramme.h * PX_PER_MM) / tekstskala;
+  // Beholderen er like bred som velgeren (delt på tekstskala), så teksten ser like stor ut som i forhåndsvisningen.
+  // Rasterkart har teksten i flisene og skaleres via flisforholdet i stedet.
+  const beholderB = raster ? velger.bredde : velger.bredde / tekstskala;
+  const beholderH = (beholderB * ramme.h) / ramme.b;
   const onsketB = (ramme.b / 25.4) * dpi;
   const onsketH = (ramme.h / 25.4) * dpi;
   const faktor = Math.min(1, MAKS_KARTPIKSLER / Math.max(onsketB, onsketH));
@@ -101,6 +109,7 @@ export function kartgjengivelse(
     beholderH,
     zoom: velger.zoom + Math.log2(beholderB / velger.bredde),
     pixelRatio: breddePx / beholderB,
+    flisforhold: raster ? Math.min(breddePx / beholderB, Math.max(1, 1 / tekstskala)) : breddePx / beholderB,
     breddePx,
     hoydePx,
     dpi: dpi * faktor,
