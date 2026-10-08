@@ -1,5 +1,19 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { kartstil, KARTVERKET_MAKSZOOM, OSM_STILER, osmFilnavn, rasterzoom, sokSted } from './osm';
+import type { StyleSpecification } from 'maplibre-gl';
+import {
+  erRaster,
+  harInnbakteTekst,
+  kartstil,
+  KARTVERKET_MAKSZOOM,
+  lastKartstil,
+  maksZoomFor,
+  OSM_STILER,
+  osmFilnavn,
+  rasterzoom,
+  sokSted,
+  utenTekstlag,
+} from './osm';
+import type { Osmstil } from '../modell/typer';
 
 describe('osmFilnavn', () => {
   it('legger kartet i kart/ med stil og tidsstempel', () => {
@@ -87,5 +101,75 @@ describe('Kartverket', () => {
   it('kildetekst følger leverandøren', () => {
     expect(OSM_STILER['kv-topo'].kildetekst).toBe('© Kartverket');
     expect(OSM_STILER.positron.kildetekst).toContain('OpenStreetMap');
+  });
+});
+
+describe('kart uten tekst', () => {
+  const stil = {
+    version: 8,
+    sources: {},
+    layers: [
+      { id: 'vann', type: 'fill', source: 'x' },
+      { id: 'veinavn', type: 'symbol', source: 'x' },
+      { id: 'vei', type: 'line', source: 'x' },
+      { id: 'poi', type: 'symbol', source: 'x' },
+    ],
+  } as unknown as StyleSpecification;
+
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('utenTekstlag fjerner alle symbollag og beholder resten', () => {
+    expect(utenTekstlag(stil).layers.map((l) => l.id)).toEqual(['vann', 'vei']);
+  });
+
+  it('tekstfrie vektorstiler hentes og renses; vanlige stiler returneres som URL', async () => {
+    const hent = vi.fn(async () => Response.json(stil));
+    vi.stubGlobal('fetch', hent);
+    const ren = (await lastKartstil('liberty-uten-tekst')) as StyleSpecification;
+    expect(ren.layers.map((l) => l.id)).toEqual(['vann', 'vei']);
+    expect(String((hent.mock.calls[0] as unknown[])[0])).toBe('https://tiles.openfreemap.org/styles/liberty');
+    expect(await lastKartstil('liberty')).toBe('https://tiles.openfreemap.org/styles/liberty');
+    expect(hent).toHaveBeenCalledTimes(1);
+  });
+
+  it('feil ved henting av stilen gir forståelig melding', async () => {
+    vi.stubGlobal('fetch', async () => new Response('', { status: 500 }));
+    await expect(lastKartstil('bright-uten-tekst')).rejects.toThrow('(500)');
+  });
+
+  it('Kartverket WMS uten tekst er et rasterkart med egne fliser og full skarphet', () => {
+    const kilde = (kartstil('kv-topo-uten-tekst', 2) as StyleSpecification).sources.kartverket as {
+      tiles: string[];
+      tileSize: number;
+      maxzoom: number;
+    };
+    expect(kilde.tiles[0]).toContain('https://wms.geonorge.no/skwms1/wms.topo?');
+    expect(kilde.tileSize).toBe(128);
+    expect(kilde.maxzoom).toBe(maksZoomFor('kv-topo-uten-tekst'));
+    expect(maksZoomFor('kv-topo')).toBe(KARTVERKET_MAKSZOOM);
+  });
+
+  it('Kartverket WMS uten tekst har ingen navnelag', () => {
+    const url = OSM_STILER['kv-topo-uten-tekst'].fliser!;
+    expect(url).toContain('{bbox-epsg-3857}');
+    const lag = new URL(url.replace('{bbox-epsg-3857}', '0,0,1,1')).searchParams.get('layers')!.split(',');
+    expect(lag.length).toBeGreaterThan(20);
+    for (const l of lag) expect(l).not.toMatch(/stedsnavn|vegnavn|presentasjon/i);
+  });
+
+  it('skiller raster med innbakt tekst fra tekstfrie kart', () => {
+    const alle = Object.keys(OSM_STILER) as Osmstil[];
+    expect(alle.filter((s) => harInnbakteTekst(s)).sort()).toEqual(['kv-graatone', 'kv-raster', 'kv-topo']);
+    expect(erRaster('kv-topo-uten-tekst')).toBe(true);
+    expect(erRaster('liberty-uten-tekst')).toBe(false);
+    // Alle tekstfrie stiler er merket slik
+    for (const s of [
+      'liberty-uten-tekst',
+      'bright-uten-tekst',
+      'positron-uten-tekst',
+      'kv-topo-uten-tekst',
+    ] as const) {
+      expect(OSM_STILER[s].tekstfri).toBe(true);
+    }
   });
 });

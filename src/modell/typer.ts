@@ -80,8 +80,21 @@ export interface Georeferanse {
   sor: number;
 }
 
-/** Nettkartstil: OpenFreeMap (vektor, OpenStreetMap-data) eller Kartverket (raster). */
-export type Osmstil = 'liberty' | 'bright' | 'positron' | 'kv-topo' | 'kv-graatone' | 'kv-raster';
+/**
+ * Nettkartstil: OpenFreeMap (vektor, OpenStreetMap-data) eller Kartverket (raster).
+ * Stilene med «-uten-tekst» har ingen stedsnavn, gatenavn eller symboler.
+ */
+export type Osmstil =
+  | 'liberty'
+  | 'bright'
+  | 'positron'
+  | 'liberty-uten-tekst'
+  | 'bright-uten-tekst'
+  | 'positron-uten-tekst'
+  | 'kv-topo-uten-tekst'
+  | 'kv-topo'
+  | 'kv-graatone'
+  | 'kv-raster';
 
 /** Innstillingene et nettkart ble laget med, så utsnittet kan åpnes og endres igjen. */
 export interface Osmutsnitt {

@@ -5,6 +5,12 @@ og versjonsnumrene følger [semantisk versjonering](https://semver.org/lang/no/)
 
 ## [Ikke utgitt]
 
+### Lagt til
+
+- **Nettkart uten tekst**: «Standard», «Klar» og «Lys og dempet, uten tekst» (OpenStreetMap) og
+  «Topografisk, uten tekst» (Kartverket). Kartene har ingen stedsnavn, gatenavn eller symboler, så du kan
+  sette inn egne stedsnavn i Skilter. De tegnes skarpt i alle oppløsninger.
+
 ## [0.7.0] – 2026-10-09
 
 ### Lagt til
