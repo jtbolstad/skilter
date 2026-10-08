@@ -36,6 +36,7 @@ export default defineConfig({
     versjonskommentar(),
     devProsjekt(fileURLToPath(new URL('..', import.meta.url))),
   ],
+  define: { __APP_VERSJON__: JSON.stringify(versjon) },
   // Cache utenfor Dropbox: synkronisering låser mappa når Vite bytter den ut (EBUSY)
   cacheDir: path.join(tmpdir(), 'skilter-vite'),
   server: { port: 5330 },

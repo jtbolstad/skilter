@@ -71,8 +71,8 @@ export const LEVERANDORNAVN: Record<Kartleverandor, string> = {
 export const KARTVERKET_MAKSZOOM = 18;
 
 /**
- * MapLibre-stil for et stilvalg. For raster settes flisstørrelsen ned med pixelRatio, så
- * MapLibre henter fliser på høyere zoom i stedet for å skalere opp (skarpt på trykk).
+ * MapLibre-stil for et stilvalg. For raster settes flisstørrelsen ned med `pixelRatio`, så
+ * MapLibre henter fliser på høyere zoom i stedet for å skalere opp (skarpt på trykk, men mindre tekst).
  */
 export function kartstil(stil: Osmstil, pixelRatio = 1): string | StyleSpecification {
   const valg = OSM_STILER[stil];
@@ -136,7 +136,7 @@ export async function tegnKart(
 
   const kart = new Kart({
     container: beholder,
-    style: kartstil(stil, g.pixelRatio),
+    style: kartstil(stil, g.flisforhold),
     center: senter,
     zoom: g.zoom,
     bearing: 0,

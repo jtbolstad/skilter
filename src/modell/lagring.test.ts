@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { angre, gjorOm, PAUSE_MS, registrer, tomHistorikk } from './historikk';
 import { importerMappe } from './importerMappe';
-import { lesSkilt, serialiser } from './lagring';
+import { APP_VERSJON } from './appversjon';
+import { lesSkilt, lesSkiltMedInfo, serialiser, VERSJON } from './lagring';
 
 const mappe = {
   navn: 'p',
@@ -59,9 +60,87 @@ describe('lagring', () => {
 
   it('avviser filer som ikke er skilt', () => {
     expect(() => lesSkilt('{"hei":1}')).toThrow('ikke et Skilter-prosjekt');
-    expect(() => lesSkilt(JSON.stringify({ app: 'skilter', versjon: 99, skilt: {} }))).toThrow(
-      'nyere versjon',
+    expect(() => lesSkilt('ikke json')).toThrow('ikke et Skilter-prosjekt');
+    expect(() => lesSkilt(JSON.stringify({ app: 'skilter', skilt: 5 }))).toThrow('ikke et Skilter-prosjekt');
+  });
+
+  it('lagrer appversjon og filformat, og leser dem tilbake', async () => {
+    const skilt = await importerMappe(mappe);
+    const data = JSON.parse(serialiser(skilt)) as { versjon: number; app_versjon: string };
+    expect(data.versjon).toBe(VERSJON);
+    expect(data.app_versjon).toBe(APP_VERSJON);
+    const { info } = lesSkiltMedInfo(serialiser(skilt));
+    expect(info).toEqual({
+      appVersjon: APP_VERSJON,
+      skjemaVersjon: VERSJON,
+      nyereFormat: false,
+      ignorert: [],
+    });
+  });
+
+  it('fil uten appversjon gir ukjent appversjon', () => {
+    const { info } = lesSkiltMedInfo(JSON.stringify({ app: 'skilter', versjon: 1, skilt: {} }));
+    expect(info.appVersjon).toBeUndefined();
+  });
+
+  it('en tom eller ødelagt skilt-del gir standardverdier, ikke krasj', () => {
+    const { skilt } = lesSkiltMedInfo(JSON.stringify({ app: 'skilter', versjon: 1, skilt: {} }));
+    expect(skilt.cards).toEqual([]);
+    expect(skilt.format.bredde_mm).toBeGreaterThan(0);
+    expect(skilt.kart.ramme.b).toBeGreaterThan(0);
+  });
+
+  it('nyere filformat åpnes, med ukjente felt ignorert og meldt', () => {
+    const tekst = JSON.stringify({
+      app: 'skilter',
+      versjon: 99,
+      app_versjon: '9.9.9',
+      skilt: {
+        navn: 'Nytt',
+        framtid: { noe: 1 },
+        cards: [
+          {
+            id: 'c',
+            ramme: { x: 1, y: 2, b: 3, h: 4 },
+            tittel: 'T',
+            nyttFelt: true,
+            farge: 7,
+            layout: 'bilde-diagonalt',
+          },
+          { id: 'uten-ramme' },
+          'tull',
+        ],
+        dekor: [{ id: 'd', type: 'fremtidsdekor', ramme: { x: 0, y: 0, b: 1, h: 1 } }],
+        tema: { bakgrunn: '#fff', font: 'comic-sans', nyttTema: 1 },
+        kart: { ramme: { x: 0, y: 0, b: 5, h: 5 }, osm: { stil: 'ny-stil' } },
+      },
+    });
+    const { skilt, info } = lesSkiltMedInfo(tekst);
+    expect(info).toMatchObject({ appVersjon: '9.9.9', skjemaVersjon: 99, nyereFormat: true });
+    expect(info.ignorert).toEqual(
+      expect.arrayContaining([
+        'skilt.framtid',
+        'skilt.cards[0].nyttFelt',
+        'skilt.cards[0].farge',
+        'skilt.cards[0].layout',
+        'skilt.cards[1]',
+        'skilt.cards[2]',
+        'skilt.dekor[0]',
+        'skilt.tema.font',
+        'skilt.tema.nyttTema',
+        'skilt.kart.osm',
+      ]),
     );
+    expect(skilt.navn).toBe('Nytt');
+    expect(skilt.cards).toHaveLength(1);
+    // Ugyldige verdier erstattes av standardverdier
+    expect(skilt.cards[0]).toMatchObject({ tittel: 'T', layout: 'bilde-over', farge: '#1f4ea3' });
+    expect(skilt.cards[0]).not.toHaveProperty('nyttFelt');
+    expect(skilt.tema.font).toBe('serif');
+    expect(skilt.dekor).toEqual([]);
+    expect(skilt.kart.osm).toBeUndefined();
+    // Ukjente felt kommer ikke med når skiltet lagres igjen
+    expect(serialiser(skilt)).not.toContain('framtid');
   });
 });
 

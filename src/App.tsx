@@ -14,7 +14,50 @@ import { Sidepanel } from './komponenter/Sidepanel';
 import { VersjonerPanel, Versjonsbanner } from './komponenter/VersjonerPanel';
 import { Hurtigtaster } from './komponenter/Hurtigtaster';
 import { PILTASTER } from './geometri/tastatur';
+import { APP_VERSJON } from './modell/appversjon';
 import { useSkilt } from './store';
+
+/** Melding om hvilken versjon av Skilter skiltet er laget med, og hva som ikke kunne leses */
+function Prosjektinfo() {
+  const info = useSkilt((t) => t.prosjektInfo);
+  if (!info) return null;
+  const annen = info.appVersjon !== APP_VERSJON;
+  if (!annen && !info.nyereFormat && info.ignorert.length === 0) return null;
+  const problem = info.nyereFormat || info.ignorert.length > 0;
+  return (
+    <div
+      data-testid="prosjektinfo"
+      role="status"
+      className={`flex shrink-0 items-start gap-3 border-b px-4 py-2 text-sm ${
+        problem ? 'border-amber-300 bg-amber-100 text-amber-950' : 'border-sky-200 bg-sky-50 text-sky-900'
+      }`}
+    >
+      <div className="flex-1">
+        <p>
+          {info.appVersjon
+            ? `Skiltet er laget med Skilter ${info.appVersjon}. Du bruker ${APP_VERSJON}.`
+            : `Skiltet er laget med en eldre versjon av Skilter (før versjonsnummer ble lagret). Du bruker ${APP_VERSJON}.`}
+        </p>
+        {info.nyereFormat && (
+          <p>Fila er lagret i et nyere format enn denne appen kjenner. Oppdater Skilter for å få med alt.</p>
+        )}
+        {info.ignorert.length > 0 && (
+          <p title={info.ignorert.join('\n')}>
+            {info.ignorert.length} felt eller elementer passet ikke med denne versjonen og ble ignorert. De
+            fjernes fra fila neste gang den lagres.
+          </p>
+        )}
+      </div>
+      <button
+        className="px-2 text-lg"
+        aria-label="Lukk melding"
+        onClick={() => useSkilt.getState().lukkProsjektInfo()}
+      >
+        ×
+      </button>
+    </div>
+  );
+}
 
 export function App() {
   const skilt = useSkilt((t) => t.skilt);
@@ -40,6 +83,7 @@ export function App() {
         onGjenapne={() => apne(apneForrigeMappe)}
       />
       {feil && <p className="bg-rose-100 px-4 py-2 text-rose-800">{feil}</p>}
+      {skilt && <Prosjektinfo />}
       {skilt && <Versjonsbanner />}
       {skilt ? (
         <div className="flex min-h-0 flex-1">
