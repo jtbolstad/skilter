@@ -5,6 +5,8 @@ og versjonsnumrene følger [semantisk versjonering](https://semver.org/lang/no/)
 
 ## [Ikke utgitt]
 
+## [0.8.0] – 2026-10-09
+
 ### Lagt til
 
 - **Nettkart uten tekst**: «Standard», «Klar» og «Lys og dempet, uten tekst» (OpenStreetMap) og
@@ -147,7 +149,8 @@ Første utgivelse, med Windows-installer.
 - Eksport til PDF (vektortekst, innebygde fonter) og PNG i 150 eller 300 DPI.
 - Skrivebordsapp for Windows (Tauri).
 
-[Ikke utgitt]: https://github.com/jtbolstad/skilter/compare/v0.6.0...HEAD
+[Ikke utgitt]: https://github.com/jtbolstad/skilter/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/jtbolstad/skilter/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/jtbolstad/skilter/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/jtbolstad/skilter/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/jtbolstad/skilter/compare/v0.4.1...v0.5.0
