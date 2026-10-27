@@ -9,13 +9,13 @@ import {
   tittelplass,
 } from '../geometri/card';
 import { delRotasjon } from '../geometri/utsnitt';
-import { nyttUtsnitt } from '../modell/importerMappe';
-import { delAvsnitt, parseAvsnitt } from '../modell/riktekst';
+import { byttBildefil } from '../modell/importerMappe';
 import type { Card } from '../modell/typer';
 import { useSkilt } from '../store';
 import { useEksport, useSkala } from './visning';
 import { Bildevisning } from './Bildevisning';
 import { Flyttbar } from './Flyttbar';
+import { Avsnitt, Byline } from './Tekst';
 import { useForhandsvisning } from './useForhandsvisning';
 
 /** Bildets bredde/høyde slik det vises (kvarte rotasjoner bytter om sidene). */
@@ -44,7 +44,6 @@ export function CardVisning({ card }: { card: Card }) {
   const skala = useSkala();
   const stil = useCardstil();
   const avrundet = useSkilt((t) => t.skilt!.tema.avrundedeBilder);
-  const bylinestorrelse = useSkilt((t) => t.skilt!.tema.bylinestorrelse ?? 1);
   const { velg, endreCard, endreBilde, settModus } = useSkilt.getState();
   const [slippMal, settSlippMal] = useState(false);
 
@@ -61,7 +60,7 @@ export function CardVisning({ card }: { card: Card }) {
     e.preventDefault();
     settSlippMal(false);
     const sti = e.dataTransfer.getData(BILDE_DRA_TYPE);
-    if (sti) endreCard(card.id, { bilde: { ...nyttUtsnitt(sti), kreditering: card.bilde?.kreditering } });
+    if (sti) endreCard(card.id, { bilde: byttBildefil(sti, card.bilde) });
     else {
       const fil = [...e.dataTransfer.files].find((f) => f.type.startsWith('image/'));
       if (fil) void useSkilt.getState().leggTilBilde(card.id, fil);
@@ -104,19 +103,7 @@ export function CardVisning({ card }: { card: Card }) {
               Dra et bilde hit
             </div>
           )}
-          {card.bilde?.kreditering && (
-            <span
-              className="pointer-events-none absolute right-0 bottom-0 text-white italic"
-              style={{
-                // Byline følger formatet, ikke tekststørrelsen i cardet
-                fontSize: px((m.tekst / card.tekststorrelse) * 0.55 * bylinestorrelse),
-                padding: `0 ${px(m.pad * 0.3)}px`,
-                textShadow: '0 0 3px rgb(0 0 0 / .8)',
-              }}
-            >
-              {card.bilde.kreditering}
-            </span>
-          )}
+          <Byline bilde={card.bilde} kant={m.pad * 0.3} />
         </div>
         {plass === 'pa-bilde' && <Tittel card={card} paBilde />}
       </div>
@@ -243,19 +230,7 @@ function Brodtekst({ card }: { card: Card }) {
 
   return (
     <div ref={ref} className="min-h-0 flex-1 overflow-hidden leading-snug" style={{ fontSize: storrelse }}>
-      {delAvsnitt(card.tekst).map((avsnitt, i) => (
-        <p key={i} style={{ marginTop: i ? storrelse * 0.5 : 0 }}>
-          {parseAvsnitt(avsnitt).map((bit, j) =>
-            bit.fet ? (
-              <strong key={j}>{bit.tekst}</strong>
-            ) : bit.kursiv ? (
-              <em key={j}>{bit.tekst}</em>
-            ) : (
-              <span key={j}>{bit.tekst}</span>
-            ),
-          )}
-        </p>
-      ))}
+      <Avsnitt tekst={card.tekst} storrelse={storrelse} />
     </div>
   );
 }

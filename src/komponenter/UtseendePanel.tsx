@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { DEKORTYPER } from '../geometri/dekor';
 import { FONTER, type Fontnavn, fontfamilie } from '../modell/fonter';
 import { OPPSETTMALER } from '../modell/oppsett';
+import { bylinestil, enhet } from '../modell/tekststil';
 import type { Banner, Bannerstil, Dekor, Skilt, Tema } from '../modell/typer';
 import { useSkilt } from '../store';
 import { tilpass } from './tilpass';
 import { LENKESTILER } from './CardPanel';
 import { Felt, Gruppe, input, knapp, Seksjon } from './Skjema';
+import { TekstKontroller } from './TekstKontroller';
 
 const valgKnapp = (aktiv: boolean) =>
   `flex-1 rounded border px-2 py-1 ${aktiv ? 'border-sky-500 bg-sky-50 text-sky-900' : 'border-stone-300 hover:bg-stone-100'}`;
@@ -169,13 +171,6 @@ export function AlleCards({ skilt }: { skilt: Skilt }) {
         onEndre={(v) => endreAlleCards(() => ({ tekststorrelse: v }))}
       />
       <Prosent
-        etikett="Foto-byline"
-        verdi={tema.bylinestorrelse ?? 1}
-        min={0.5}
-        maks={3}
-        onEndre={(v) => endreTema({ bylinestorrelse: v })}
-      />
-      <Prosent
         etikett="Rammetykkelse"
         verdi={tema.kantbredde}
         min={0}
@@ -218,6 +213,26 @@ export function AlleCards({ skilt }: { skilt: Skilt }) {
           ))}
         </div>
       </Gruppe>
+    </Seksjon>
+  );
+}
+
+/** Skriften i krediteringen på alle bilder */
+export function FotoByline({ skilt }: { skilt: Skilt }) {
+  const endreTema = useSkilt((t) => t.endreTema);
+  const stil = bylinestil(skilt.tema, skilt.format);
+  return (
+    <Seksjon tittel="Foto-byline">
+      <TekstKontroller
+        stil={stil}
+        u={enhet(skilt.format)}
+        min={1}
+        maks={15}
+        onEndre={(patch) => endreTema({ byline: { ...stil, ...patch } })}
+      />
+      <p className="text-stone-500">
+        Gjelder krediteringen på alle bilder. Teksten skrives inn under hvert bilde.
+      </p>
     </Seksjon>
   );
 }

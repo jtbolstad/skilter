@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { leggTilFil, ledigSti, type Filmappe } from './fil/mappetilgang';
 import { lesVersjonsfil, lesVersjonsfiler, skrivVersjonsfil } from './fil/versjoner';
-import { nyttUtsnitt } from './modell/importerMappe';
+import { byttBildefil, nyttUtsnitt } from './modell/importerMappe';
 import { type Lesinfo, lesSkilt, serialiser } from './modell/lagring';
 import {
   type EksportInfo,
@@ -645,7 +645,7 @@ export const useSkilt = create<Tilstand>()((rawSet, get) => {
       set({ mappe: await leggTilFil(mappe, sti, fil) });
       get().endreCard(cardId, {
         kildemappe,
-        bilde: { ...nyttUtsnitt(sti), kreditering: card.bilde?.kreditering },
+        bilde: byttBildefil(sti, card.bilde),
       });
     },
 
@@ -845,7 +845,7 @@ export const useSkilt = create<Tilstand>()((rawSet, get) => {
       if (!mappe || element?.type !== 'bilde' || !erBildefil(fil)) return;
       const sti = ledigSti(mappe.filer, FRI_BILDEMAPPE, fil.name);
       set({ mappe: await leggTilFil(mappe, sti, fil) });
-      get().endreFri(id, { bilde: { ...nyttUtsnitt(sti), kreditering: element.bilde?.kreditering } });
+      get().endreFri(id, { bilde: byttBildefil(sti, element.bilde) });
     },
     leggTilUtkastDekor: () =>
       get().endreSkilt((sk) => {

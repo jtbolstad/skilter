@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { bildeRammeForCard, bildeTilSiden, cardstil, tittelplass } from '../geometri/card';
-import { bilderIMappe, erBilde, nyttUtsnitt } from '../modell/importerMappe';
+import { bilderIMappe, byttBildefil, erBilde } from '../modell/importerMappe';
 import { CARD_FARGER } from '../modell/oppsett';
 import type { Bildeaspekt, Card, Cardlayout, Lenkestil, Tittelplassering } from '../modell/typer';
 import { useSkilt } from '../store';
@@ -233,8 +233,7 @@ function Bildevelger({ card }: { card: Card }) {
     grupper.set(mappe, [...(grupper.get(mappe) ?? []), f]);
   }
 
-  const velg = (sti: string) =>
-    endreCard(card.id, { bilde: { ...nyttUtsnitt(sti), kreditering: card.bilde?.kreditering } });
+  const velg = (sti: string) => endreCard(card.id, { bilde: byttBildefil(sti, card.bilde) });
 
   const rutenett = (stier: string[]) => (
     <div className="grid grid-cols-3 gap-1.5">

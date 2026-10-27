@@ -57,6 +57,13 @@ const fontIder = FONTER.map((f) => f.id);
 
 const punkt = obj({ type: enumav('bilde'), x: num, y: num }, 'x', 'y');
 const ramme = obj({ x: num, y: num, b: num, h: num }, 'x', 'y', 'b', 'h');
+const kontur = obj({ farge: str, bredde: num, uskarphet: num }, 'farge', 'bredde', 'uskarphet');
+const justering = enumav('venstre', 'midt', 'hoyre');
+const tekststil = (...pakrevd: string[]) =>
+  obj(
+    { font: enumav(...fontIder), storrelse: num, fet: bool, kursiv: bool, farge: str, justering, kontur },
+    ...pakrevd,
+  );
 const bilde = obj(
   {
     fil: str,
@@ -68,6 +75,7 @@ const bilde = obj(
     tilpass: enumav('fyll', 'vis-hele'),
     kreditering: str,
     krediteringStorrelse: num,
+    byline: tekststil('font', 'storrelse', 'fet', 'kursiv', 'farge', 'justering'),
   },
   'fil',
 );
@@ -88,6 +96,7 @@ const SKILT: Skjema = obj({
     lenkebredde: num,
     avrundedeBilder: bool,
     bylinestorrelse: num,
+    byline: tekststil(),
   }),
   banner: obj({
     ramme,
@@ -130,7 +139,8 @@ const SKILT: Skjema = obj({
         fet: bool,
         kursiv: bool,
         farge: str,
-        justering: enumav('venstre', 'midt', 'hoyre'),
+        justering,
+        kontur,
       },
       'id',
       'type',

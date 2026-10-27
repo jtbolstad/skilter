@@ -1,11 +1,12 @@
-import { AlignCenter, AlignLeft, AlignRight, Bold, Italic } from 'lucide-react';
-import { erBilde, nyttUtsnitt } from '../modell/importerMappe';
-import { FONTER, fontfamilie, type Fontnavn } from '../modell/fonter';
-import type { FriBilde, FriElement, FriTekst, Tekstjustering } from '../modell/typer';
-import { useSkilt } from '../store';
+import { byttBildefil, erBilde } from '../modell/importerMappe';
+import { enhet, nyTekstramme } from '../modell/tekststil';
+import type { FriBilde, FriElement, FriTekst } from '../modell/typer';
+import { MIN_FRI_MM, useSkilt } from '../store';
 import { BildeInnstillinger } from './BildeInnstillinger';
 import { Miniatyr } from './CardPanel';
-import { Felt, Gruppe, IkonKnapp, input, knapp, Seksjon } from './Skjema';
+import { Felt, input, knapp, Seksjon } from './Skjema';
+import { lastFont, maalTekstHoyde } from './Tekst';
+import { TekstKontroller } from './TekstKontroller';
 
 /** Egenskaper for et fritt bilde eller en fri tekst. */
 export function FriEgenskaper({ fri }: { fri: FriElement }) {
@@ -75,9 +76,7 @@ function BildeEgenskaper({ fri }: { fri: FriBilde }) {
                 key={sti}
                 sti={sti}
                 valgt={fri.bilde?.fil === sti}
-                onVelg={() =>
-                  endreFri(fri.id, { bilde: { ...nyttUtsnitt(sti), kreditering: fri.bilde?.kreditering } })
-                }
+                onVelg={() => endreFri(fri.id, { bilde: byttBildefil(sti, fri.bilde) })}
               />
             ))}
           </div>
@@ -87,18 +86,35 @@ function BildeEgenskaper({ fri }: { fri: FriBilde }) {
   );
 }
 
-const JUSTERINGER: { verdi: Tekstjustering; ikon: typeof AlignLeft; navn: string }[] = [
-  { verdi: 'venstre', ikon: AlignLeft, navn: 'Venstrejustert' },
-  { verdi: 'midt', ikon: AlignCenter, navn: 'Midtstilt' },
-  { verdi: 'hoyre', ikon: AlignRight, navn: 'Høyrejustert' },
-];
+/** Felt som endrer hvor mye plass teksten trenger */
+const PLASSFELT = ['tekst', 'font', 'storrelse', 'fet', 'kursiv', 'kontur'] as const;
+
+/**
+ * Gjør tekstboksen like høy som teksten. `forhold` er hvor mye skriften ble forstørret; boksen blir
+ * bredere i samme forhold. Kjøres etter endringen, så den havner i samme angresteg.
+ */
+async function tilpassTekstboks(id: string, forhold: number) {
+  const finn = () =>
+    useSkilt.getState().skilt?.fri.find((f): f is FriTekst => f.id === id && f.type === 'tekst');
+  const forst = finn();
+  if (!forst) return;
+  await lastFont(forst);
+  const fri = finn();
+  if (!fri) return;
+  const r = nyTekstramme(fri.ramme, fri.justering, forhold, (b) => maalTekstHoyde(fri, b), MIN_FRI_MM);
+  const lik = (a: number, b: number) => Math.abs(a - b) < 0.05;
+  if (!lik(r.x, fri.ramme.x) || !lik(r.b, fri.ramme.b) || !lik(r.h, fri.ramme.h))
+    useSkilt.getState().endreFri(id, { ramme: r });
+}
 
 function TekstEgenskaper({ fri }: { fri: FriTekst }) {
   const { endreFri } = useSkilt.getState();
-  const endre = (patch: Partial<FriTekst>) => endreFri(fri.id, patch);
-  const format = useSkilt((t) => t.skilt!.format);
-  const u = Math.min(format.bredde_mm, format.hoyde_mm) / 594;
-  const antallPt = Math.round((fri.storrelse / u) * 10) / 10;
+  const u = useSkilt((t) => enhet(t.skilt!.format));
+  const endre = (patch: Partial<FriTekst>) => {
+    endreFri(fri.id, patch);
+    if (PLASSFELT.some((f) => f in patch))
+      void tilpassTekstboks(fri.id, patch.storrelse ? patch.storrelse / fri.storrelse : 1);
+  };
 
   return (
     <Seksjon tittel="Fri tekst">
@@ -111,82 +127,10 @@ function TekstEgenskaper({ fri }: { fri: FriTekst }) {
         />
       </Felt>
       <p className="text-stone-500">*kursiv* og **fet** kan brukes i teksten.</p>
-      <Felt etikett="Font">
-        <select
-          className={input}
-          style={{ fontFamily: fontfamilie(fri.font) }}
-          value={fri.font}
-          onChange={(e) => endre({ font: e.target.value as Fontnavn })}
-        >
-          {FONTER.map((f) => (
-            <option key={f.id} value={f.id} style={{ fontFamily: f.familie }}>
-              {f.navn}
-            </option>
-          ))}
-        </select>
-      </Felt>
-      <Felt etikett={`Størrelse: ${antallPt} mm (ved A1)`}>
-        <div className="flex items-center gap-2">
-          <input
-            type="range"
-            className="min-w-0 flex-1"
-            aria-label="Skriftstørrelse"
-            min={2}
-            max={60}
-            step={0.5}
-            value={antallPt}
-            onChange={(e) => endre({ storrelse: Number(e.target.value) * u })}
-          />
-          <input
-            type="number"
-            aria-label="Skriftstørrelse som tall"
-            className={`${input} w-16`}
-            min={1}
-            max={200}
-            step={0.5}
-            value={antallPt}
-            onChange={(e) => {
-              const verdi = Number(e.target.value);
-              if (verdi > 0) endre({ storrelse: verdi * u });
-            }}
-          />
-        </div>
-      </Felt>
-      <div className="flex items-center gap-2">
-        <IkonKnapp
-          ikon={Bold}
-          navn={fri.fet ? 'Fjern fet' : 'Fet'}
-          onClick={() => endre({ fet: !fri.fet })}
-        />
-        <IkonKnapp
-          ikon={Italic}
-          navn={fri.kursiv ? 'Fjern kursiv' : 'Kursiv'}
-          onClick={() => endre({ kursiv: !fri.kursiv })}
-        />
-        <input
-          type="color"
-          aria-label="Tekstfarge"
-          title="Tekstfarge"
-          className="ml-auto h-8 w-12"
-          value={fri.farge}
-          onChange={(e) => endre({ farge: e.target.value })}
-        />
-      </div>
-      <Gruppe etikett="Justering">
-        <div className="grid grid-cols-3 gap-1">
-          {JUSTERINGER.map((j) => (
-            <IkonKnapp
-              key={j.verdi}
-              ikon={j.ikon}
-              navn={j.navn}
-              onClick={() => endre({ justering: j.verdi })}
-            />
-          ))}
-        </div>
-      </Gruppe>
+      <TekstKontroller stil={fri} u={u} onEndre={endre} />
       <Felles fri={fri} />
       <p className="text-stone-500">
-        Dra for å flytte, dra i hjørnene for å endre størrelsen på tekstboksen.
+        Boksen følger teksten når den endres. Dra for å flytte, dra i hjørnene for å endre bredden.
       </p>
     </Seksjon>
   );
