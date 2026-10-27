@@ -153,3 +153,59 @@ test('linja fra et card til kartet går under andre cards', async ({ page }) => 
   });
   expect(underCards).toBe(true);
 });
+
+test('foto-bylinen har samme skriftvalg som tekstbokser, og gjelder alle bilder', async ({ page }) => {
+  await apneDemo(page);
+  await page.getByTestId('card-1').click();
+  await page.getByLabel('Kreditering (vises på skiltet)').fill('Foto: Ola');
+  const byline = page.getByTestId('card-1').getByTestId('byline');
+  await expect(byline).toHaveText('Foto: Ola');
+  await expect(byline).toHaveCSS('color', 'rgb(255, 255, 255)');
+
+  await liste(page).getByRole('button', { name: '🪧 Skilt' }).click();
+  const foer = await byline.evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+  await page.getByLabel('Tekstfarge').fill('#ffff00');
+  await expect(byline).toHaveCSS('color', 'rgb(255, 255, 0)');
+  await page.getByLabel('Skriftstørrelse som tall').fill('8');
+  await expect
+    .poll(() => byline.evaluate((el) => parseFloat(getComputedStyle(el).fontSize)))
+    .toBeGreaterThan(foer);
+  await page.getByRole('button', { name: 'Fet', exact: true }).click();
+  await expect(byline).toHaveCSS('font-weight', '700');
+  await page.getByRole('button', { name: 'Venstrejustert' }).click();
+  await expect(byline).toHaveCSS('text-align', 'left');
+
+  await page.getByRole('checkbox', { name: 'Kontur' }).uncheck();
+  await expect(byline).toHaveCSS('text-shadow', 'none');
+  await page.getByRole('checkbox', { name: 'Kontur' }).check();
+  await page.getByRole('slider', { name: 'Konturtykkelse' }).fill('1');
+  await expect.poll(() => byline.evaluate((el) => getComputedStyle(el).textShadow)).not.toBe('none');
+});
+
+test('foto-bylinen kan overstyres på ett bilde uten å endre de andre', async ({ page }) => {
+  await apneDemo(page);
+  for (const nr of [1, 2]) {
+    await page.getByTestId(`card-${nr}`).click();
+    await page.getByLabel('Kreditering (vises på skiltet)').fill(`Foto ${nr}`);
+  }
+  const byline1 = page.getByTestId('card-1').getByTestId('byline');
+  const byline2 = page.getByTestId('card-2').getByTestId('byline');
+
+  await page.getByTestId('card-1').click();
+  await expect(page.getByText('Bruker skiltets felles foto-byline.')).toBeVisible();
+  await page.getByRole('checkbox', { name: 'Egen skrift for denne krediteringen' }).check();
+  await page.getByLabel('Tekstfarge').fill('#00ff00');
+  await expect(byline1).toHaveCSS('color', 'rgb(0, 255, 0)');
+  await expect(byline2).toHaveCSS('color', 'rgb(255, 255, 255)');
+
+  // Felles endring gjelder bare bildene uten egen skrift
+  await liste(page).getByRole('button', { name: '🪧 Skilt' }).click();
+  await page.getByLabel('Tekstfarge').fill('#ffff00');
+  await expect(byline2).toHaveCSS('color', 'rgb(255, 255, 0)');
+  await expect(byline1).toHaveCSS('color', 'rgb(0, 255, 0)');
+
+  // Slås overstyringen av, følger bildet den felles bylinen igjen
+  await page.getByTestId('card-1').click();
+  await page.getByRole('checkbox', { name: 'Egen skrift for denne krediteringen' }).uncheck();
+  await expect(byline1).toHaveCSS('color', 'rgb(255, 255, 0)');
+});

@@ -10,7 +10,14 @@ import { KartgrunnlagSeksjon } from '../kart/KartgrunnlagPanel';
 import { CardEgenskaper } from './CardPanel';
 import { Flervalg } from './FlervalgPanel';
 import { FriEgenskaper } from './FriPanel';
-import { AlleCards, BannerEgenskaper, DekorEgenskaper, TemaOgOppsett, Tilpass } from './UtseendePanel';
+import {
+  AlleCards,
+  BannerEgenskaper,
+  DekorEgenskaper,
+  FotoByline,
+  TemaOgOppsett,
+  Tilpass,
+} from './UtseendePanel';
 import { KartlagSeksjoner, RuteEgenskaper, StedsnavnEgenskaper, Stilprove } from './RutePanel';
 import { DpiVarsel, Felt, input, knapp, Seksjon } from './Skjema';
 import { useForhandsvisning } from './useForhandsvisning';
@@ -272,6 +279,7 @@ function SkiltEgenskaper({ skilt }: { skilt: Skilt }) {
     <>
       <Tilpass />
       <AlleCards skilt={skilt} />
+      <FotoByline skilt={skilt} />
       <TemaOgOppsett skilt={skilt} />
 
       <Seksjon tittel="Prosjekt">

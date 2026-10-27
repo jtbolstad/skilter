@@ -1,6 +1,9 @@
 import { delRotasjon, klem, MAKS_ZOOM, roterKvart, type Storrelse } from '../geometri/utsnitt';
+import { bylinestil, enhet as enhetFor } from '../modell/tekststil';
 import type { Bildeutsnitt } from '../modell/typer';
+import { useSkilt } from '../store';
 import { DpiVarsel, Felt, input, knapp, Seksjon, valgKnapp } from './Skjema';
+import { TekstKontroller } from './TekstKontroller';
 import { useForhandsvisning } from './useForhandsvisning';
 
 interface Props {
@@ -20,6 +23,10 @@ export function BildeInnstillinger({ utsnitt: u, ramme, beskjaerer, settBeskjaer
   const bilde: Storrelse | undefined = f && { b: f.bredde, h: f.hoyde };
   const sett = (ny: Bildeutsnitt) => onEndre(bilde ? klem(ny, ramme, bilde) : ny);
   const { kvart, fin } = delRotasjon(u.rotasjon);
+  const tema = useSkilt((t) => t.skilt!.tema);
+  const format = useSkilt((t) => t.skilt!.format);
+  const felles = bylinestil(tema, format);
+  const enhet = enhetFor(format);
 
   return (
     <Seksjon tittel="Bilde">
@@ -103,6 +110,29 @@ export function BildeInnstillinger({ utsnitt: u, ramme, beskjaerer, settBeskjaer
           onChange={(e) => onEndre({ ...u, kreditering: e.target.value || undefined })}
         />
       </Felt>
+      {u.kreditering && (
+        <>
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={u.byline !== undefined}
+              onChange={(e) => onEndre({ ...u, byline: e.target.checked ? felles : undefined })}
+            />
+            Egen skrift for denne krediteringen
+          </label>
+          {u.byline ? (
+            <TekstKontroller
+              stil={u.byline}
+              u={enhet}
+              min={1}
+              maks={15}
+              onEndre={(patch) => onEndre({ ...u, byline: { ...u.byline!, ...patch } })}
+            />
+          ) : (
+            <p className="text-stone-500">Bruker skiltets felles foto-byline.</p>
+          )}
+        </>
+      )}
       {onFjern && (
         <button className={`${knapp} text-rose-700`} onClick={onFjern}>
           Fjern bilde

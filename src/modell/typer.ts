@@ -26,6 +26,8 @@ export interface Bildeutsnitt {
   speilvendt?: boolean;
   tilpass: 'fyll' | 'vis-hele';
   kreditering?: string;
+  /** Egen skrift for krediteringen på dette bildet. Mangler = skiltets felles foto-byline. */
+  byline?: Tekststil;
 }
 
 export interface Kalibrering {
@@ -210,13 +212,17 @@ export interface FriBilde {
 
 export type Tekstjustering = 'venstre' | 'midt' | 'hoyre';
 
-/** Fri tekst (nettadresse, bildetekst o.l.) med egen font og størrelse. */
-export interface FriTekst {
-  id: string;
-  type: 'tekst';
-  ramme: Rektangel;
-  /** Enkel markering: *kursiv* og **fet**. Tom linje skiller avsnitt. */
-  tekst: string;
+/** Kontur rundt bokstavene, i mm på skiltet */
+export interface Kontur {
+  farge: string;
+  /** Tykkelse */
+  bredde: number;
+  /** Uskarphet (blur) */
+  uskarphet: number;
+}
+
+/** Skriftinnstillingene som deles av frie tekster og foto-bylinen. */
+export interface Tekststil {
   font: Fontnavn;
   /** Skriftstørrelse i mm på skiltet */
   storrelse: number;
@@ -224,6 +230,17 @@ export interface FriTekst {
   kursiv: boolean;
   farge: string;
   justering: Tekstjustering;
+  /** Mangler = ingen kontur */
+  kontur?: Kontur;
+}
+
+/** Fri tekst (nettadresse, bildetekst o.l.) med egen font og størrelse. */
+export interface FriTekst extends Tekststil {
+  id: string;
+  type: 'tekst';
+  ramme: Rektangel;
+  /** Enkel markering: *kursiv* og **fet**. Tom linje skiller avsnitt. */
+  tekst: string;
   bak?: boolean;
 }
 
@@ -242,8 +259,10 @@ export interface Tema {
   lenkebredde: number;
   /** Bildene i cards får samme hjørneradius som cardene */
   avrundedeBilder: boolean;
-  /** Størrelse på foto-bylinen (krediteringen) på alle bilder, uavhengig av tekststørrelsen i cards. Mangler = 1. */
+  /** Eldre skalering av foto-bylinen. Brukes bare som utgangspunkt når `byline` mangler. */
   bylinestorrelse?: number;
+  /** Skriften i foto-bylinen (krediteringen) på alle bilder. Mangler = standard, se `bylinestil`. */
+  byline?: Partial<Tekststil>;
 }
 
 export interface Skilt {

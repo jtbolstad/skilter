@@ -73,3 +73,44 @@ test('tekst og bilde kan rettes inn sammen med ikonknappene', async ({ page }) =
     .evaluateAll((els) => els.map((e) => e.getBoundingClientRect().x));
   expect(x[0]).toBeCloseTo(x[1]!, 0);
 });
+
+test('tekstboksen følger teksten: mer tekst gir høyere boks, større skrift gir større boks', async ({
+  page,
+}) => {
+  await apneDemo(page);
+  await page.getByRole('button', { name: '+ Tekst' }).click();
+  const tekst = page.getByTestId('fritekst');
+  const foer = (await tekst.boundingBox())!;
+
+  await page.getByLabel('Tekstinnhold').fill('www.eksempel.no\n\nEn linje til\n\nOg enda en');
+  await expect.poll(async () => (await tekst.boundingBox())!.height).toBeGreaterThan(foer.height * 2);
+  // Teksten får plass i boksen
+  expect(await tekst.evaluate((el) => el.scrollHeight <= el.clientHeight + 1)).toBe(true);
+
+  const hoy = (await tekst.boundingBox())!;
+  await page.getByLabel('Skriftstørrelse som tall').fill('16');
+  await expect.poll(async () => (await tekst.boundingBox())!.width).toBeGreaterThan(hoy.width * 1.5);
+  const stor = (await tekst.boundingBox())!;
+  expect(stor.height).toBeGreaterThan(hoy.height * 1.5);
+  // Midtstilt tekst vokser like mye til begge sider
+  expect(stor.x + stor.width / 2).toBeCloseTo(hoy.x + hoy.width / 2, 0);
+});
+
+test('tekst kan få kontur med farge, tykkelse og uskarphet', async ({ page }) => {
+  await apneDemo(page);
+  await page.getByRole('button', { name: '+ Tekst' }).click();
+  const tekst = page.getByTestId('fritekst');
+  await expect(tekst).toHaveCSS('text-shadow', 'none');
+
+  await page.getByRole('checkbox', { name: 'Kontur' }).check();
+  await page.getByLabel('Konturfarge').fill('#ff0000');
+  await page.getByRole('slider', { name: 'Konturtykkelse' }).fill('2');
+  await page.getByRole('slider', { name: 'Konturens uskarphet' }).fill('1');
+  const skygge = await tekst.evaluate((el) => getComputedStyle(el).textShadow);
+  expect(skygge).toContain('rgb(255, 0, 0)');
+  // En ring av skygger rundt bokstavene
+  expect(skygge.split('rgb(').length - 1).toBeGreaterThanOrEqual(8);
+
+  await page.getByRole('checkbox', { name: 'Kontur' }).uncheck();
+  await expect(tekst).toHaveCSS('text-shadow', 'none');
+});

@@ -21,6 +21,11 @@ export function nyttUtsnitt(fil: string): Bildeutsnitt {
   return { fil, sentrumX: 0.5, sentrumY: 0.5, zoom: 1, rotasjon: 0, tilpass: 'fyll' };
 }
 
+/** Nytt utsnitt for en annen fil, med krediteringen og byline-stilen fra bildet det erstatter */
+export function byttBildefil(fil: string, gammelt: Bildeutsnitt | undefined): Bildeutsnitt {
+  return { ...nyttUtsnitt(fil), kreditering: gammelt?.kreditering, byline: gammelt?.byline };
+}
+
 /** Mappe som hører til seksjon N: første undermappe som starter med «N ». */
 export function mappeForSeksjon(filer: string[], nummer: number): string | undefined {
   const mapper = [...new Set(filer.filter((f) => f.includes('/')).map((f) => f.split('/')[0]!))].sort();

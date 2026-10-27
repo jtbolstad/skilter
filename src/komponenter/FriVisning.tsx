@@ -1,12 +1,10 @@
-import { fontfamilie } from '../modell/fonter';
-import { delAvsnitt, parseAvsnitt } from '../modell/riktekst';
+import { enhet, konturPlass } from '../modell/tekststil';
 import type { FriBilde, FriElement, FriTekst } from '../modell/typer';
 import { MIN_FRI_MM, useSkilt } from '../store';
 import { Bildevisning } from './Bildevisning';
 import { Flyttbar } from './Flyttbar';
+import { Avsnitt, Byline, friTekstCss } from './Tekst';
 import { useEksport, useSkala } from './visning';
-
-const JUSTERING = { venstre: 'left', midt: 'center', hoyre: 'right' } as const;
 
 /** Fritt bilde eller fri tekst på skiltet. */
 export function FriVisning({ fri }: { fri: FriElement }) {
@@ -33,6 +31,7 @@ export function FriVisning({ fri }: { fri: FriElement }) {
 
 function BildeInnhold({ fri, beskjaerer }: { fri: FriBilde; beskjaerer: boolean }) {
   const { endreFri, settModus } = useSkilt.getState();
+  const u = useSkilt((t) => enhet(t.skilt!.format));
   return (
     <div
       data-testid="fribilde"
@@ -51,40 +50,20 @@ function BildeInnhold({ fri, beskjaerer }: { fri: FriBilde; beskjaerer: boolean 
           onEndre={(bilde) => endreFri(fri.id, { bilde })}
         />
       )}
+      <Byline bilde={fri.bilde} kant={1.5 * u} />
     </div>
   );
 }
 
 function TekstInnhold({ fri }: { fri: FriTekst }) {
   const skala = useSkala();
-  const storrelse = fri.storrelse * skala;
   return (
     <div
       data-testid="fritekst"
-      className="size-full cursor-move overflow-hidden leading-tight"
-      style={{
-        fontFamily: fontfamilie(fri.font),
-        fontSize: storrelse,
-        fontWeight: fri.fet ? 700 : undefined,
-        fontStyle: fri.kursiv ? 'italic' : undefined,
-        color: fri.farge,
-        textAlign: JUSTERING[fri.justering],
-        whiteSpace: 'pre-line',
-      }}
+      className="size-full cursor-move overflow-hidden"
+      style={{ ...friTekstCss(fri, skala), padding: konturPlass(fri.kontur) * skala }}
     >
-      {delAvsnitt(fri.tekst).map((avsnitt, i) => (
-        <p key={i} style={{ marginTop: i ? storrelse * 0.5 : 0 }}>
-          {parseAvsnitt(avsnitt).map((bit, j) =>
-            bit.fet ? (
-              <strong key={j}>{bit.tekst}</strong>
-            ) : bit.kursiv ? (
-              <em key={j}>{bit.tekst}</em>
-            ) : (
-              <span key={j}>{bit.tekst}</span>
-            ),
-          )}
-        </p>
-      ))}
+      <Avsnitt tekst={fri.tekst} storrelse={fri.storrelse * skala} />
     </div>
   );
 }
