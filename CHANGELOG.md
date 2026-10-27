@@ -5,6 +5,24 @@ og versjonsnumrene følger [semantisk versjonering](https://semver.org/lang/no/)
 
 ## [Ikke utgitt]
 
+## [0.9.0] – 2026-10-27
+
+### Lagt til
+
+- **Foto-byline med full skriftstyring**: egen seksjon i skiltpanelet med font, størrelse, fet/kursiv,
+  farge og justering – de samme valgene som for frie tekster. Gjelder krediteringen på alle bilder.
+- **Egen byline per bilde**: «Egen skrift for denne krediteringen» i bildepanelet overstyrer den felles
+  bylinen for akkurat det bildet. Stilen følger med når bildet byttes.
+- **Kontur** på frie tekster og foto-byline, med farge, tykkelse og uskarphet.
+- **Kreditering på frie bilder** vises nå på skiltet, som på bildene i cards.
+
+### Endret
+
+- **Tekstbokser følger teksten**: mer tekst gir høyere boks, og større skrift gir større boks (forankret
+  etter justeringen). Bredden kan fortsatt endres med håndtakene.
+- Glidebryteren «Foto-byline» under «Alle cards» er erstattet av den nye byline-seksjonen. Eldre skilt
+  ser ut som før til bylinen endres.
+
 ## [0.8.0] – 2026-10-09
 
 ### Lagt til
